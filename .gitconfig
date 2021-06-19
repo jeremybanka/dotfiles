@@ -1,16 +1,16 @@
 [filter "lfs"]
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+  clean = git-lfs clean -- %f
 [user]
-	name = Jeremy Banka
-	email = hello@jeremybanka.com
+  name = Jeremy Banka
+  email = hello@jeremybanka.com
 [core]
-	excludesfile = /Users/jeremybanka/.gitignore
-	pager = diff-so-fancy | less --tabs=4 -RFX
+  excludesfile = /Users/jeremybanka/.gitignore
+  pager = diff-so-fancy | less --tabs=4 -RFX
 [init]
-	defaultBranch = main
+  defaultBranch = main
 [rebase]
   autosquash = true
 [alias]
@@ -19,34 +19,34 @@
   b = branch
   bn = checkout -b
   c = commit
-	ca = commit --amend
+  ca = commit --amend
   ch = checkout
-	cm = commit -m
-	d = diff
-	dn = pull
-	l = log --oneline
-	la = log --oneline --abbrev-commit --all --graph --decorate --color
-	ll = log
-	on = push --set-upstream
-	onhi = push --set-upstream origin main
-	r = reset
-	ra = reset .
-	rmc = rm -r --cached .
-	rv = remote -v
-	s = status
-	up = push
+  cm = commit -m
+  d = diff
+  dn = pull
+  l = log --oneline
+  la = log --oneline --abbrev-commit --all --graph --decorate --color
+  ll = log
+  on = push --set-upstream
+  onhi = push --set-upstream origin main
+  r = reset
+  ra = reset .
+  rmc = rm -r --cached .
+  rv = remote -v
+  s = status
+  up = push
 [color]
-	ui = true
+  ui = true
 [color "diff-highlight"]
-	oldNormal = red bold
-	oldHighlight = red bold reverse
-	newNormal = green bold
-	newHighlight = green bold reverse
+  oldNormal = red bold
+  oldHighlight = red bold reverse
+  newNormal = green bold
+  newHighlight = green bold reverse
 [color "diff"]
-	meta = 11
-	frag = magenta bold
-	func = 146 bold
-	commit = yellow bold
-	old = red bold
-	new = green bold
-	whitespace = red reverse
+  meta = 11
+  frag = magenta bold
+  func = 146 bold
+  commit = yellow bold
+  old = red bold
+  new = green bold
+  whitespace = red reverse
