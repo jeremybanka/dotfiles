@@ -2,7 +2,7 @@
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/jeremybanka/.oh-my-zsh"
+export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -97,9 +97,9 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-alias cfg="/usr/bin/git --git-dir=/Users/jeremybanka/.cfg/ --work-tree=/Users/jeremybanka"
+alias cfg="/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME"
 alias nab='(){ curl -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/$1/$2/contents/$3 -o $3 ;}'
 alias my='(){ nab jeremybanka $1 $2 ;}'
 alias c='(){ my cfg $1 ;}'
 
-[ -f "/Users/jeremybanka/.ghcup/env" ] && source "/Users/jeremybanka/.ghcup/env" # ghcup-env
+[ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env" # ghcup-env
