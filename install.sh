@@ -15,7 +15,6 @@ else
 fi
 rsync -a "${clone_path}/." "${HOME}"
 
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || true
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 brew install diff-so-fancy
 brew install fzf
