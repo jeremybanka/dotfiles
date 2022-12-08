@@ -7,10 +7,12 @@
   name = Jeremy Banka
   email = hello@jeremybanka.com
 [core]
-  excludesfile = /Users/jeremybanka/.gitignore
+  excludesfile = ~/.gitignore
   pager = diff-so-fancy | less --tabs=4 -RFX
 [init]
   defaultBranch = main
+[pull]
+  rebase = true
 [rebase]
   autosquash = true
 [alias]
@@ -21,20 +23,28 @@
   c = commit
   ca = commit --amend
   ch = checkout
+  cidffx = clean -idffx
   cm = commit -m
   d = diff
   dn = pull
+  f = fetch
+  k = ls-files --deleted | xargs git add
   l = log --oneline
   la = log --oneline --abbrev-commit --all --graph --decorate --color
   ll = log
+  main = branch -m master main
   on = push --set-upstream
   onhi = push --set-upstream origin main
-  r = reset
+  r = reset -- 
   ra = reset .
+  rb = rebase
+  rbc = rebase --continue
+  rbs = rebase --skip
   rmc = rm -r --cached .
   rv = remote -v
   s = status
   up = push
+  x = !git branch --merged | egrep -v \"(^\\*|main|develop|releases)\" | xargs git branch -d
 [color]
   ui = true
 [color "diff-highlight"]
