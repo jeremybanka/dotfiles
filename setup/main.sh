@@ -110,21 +110,21 @@ setup_symlinks() {
     done
 
     echo -e
-    info "installing to ~/.config"
-    if [ ! -d "$HOME/.config" ]; then
-        info "Creating ~/.config"
-        mkdir -p "$HOME/.config"
+    info "installing to ~ ($HOME)"
+    if [ ! -d "$HOME/.prev-config" ]; then
+        info "Creating ~/.prev-config"
+        mkdir -p "$HOME/.prev-config"
     fi
-
+    
     config_files=$(find "$DOTFILES/config" -maxdepth 1 2>/dev/null)
     for config in $config_files; do
-        target="$HOME/.config/$(basename "$config")"
+        target="$HOME/$(basename "$config")"
         if [ -e "$target" ]; then
-            info "~${target#"$HOME"} already exists... Skipping."
-        else
-            info "Creating symlink for $config"
-            ln -s "$config" "$target"
+            info "~${target#"$HOME"} already exists... Moving to ~/.prev-config"
+            mv "$target" "$HOME/.prev-config"
         fi
+        info "Creating symlink for $config at $target"
+        ln -s "$config" "$target"
     done
 }
 
