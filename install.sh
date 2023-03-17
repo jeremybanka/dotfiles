@@ -176,7 +176,7 @@ setup_homebrew() {
     # install fzf
     echo -e
     info "Installing fzf"
-    "$(brew --prefix)"/opt/diff-so-fancy/install --key-bindings --completion --no-update-rc --no-bash --no-fish
+    "$(brew --prefix)"/opt/fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish
 }
 
 # fetch_catppuccin_theme() {

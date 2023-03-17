@@ -29,6 +29,7 @@ tap "homebrew/core"
 # brew "bat" # better cat
 # brew "cloc" # lines of code counter
 # brew "git-delta" # a better git diff
+brew "diff-so-fancy" # a better git diff
 # brew "entr" # file watcher / command runner
 # brew "exa" # ls alternative
 # brew "fd" # find alternative
