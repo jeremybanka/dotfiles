@@ -1,3 +1,5 @@
+# Fig pre block. Keep at the top of this file.
+[[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -68,7 +70,7 @@ ZSH_THEME="kolo"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(git yarn)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -103,3 +105,27 @@ alias my='(){ nab jeremybanka $1 $2 ;}'
 alias c='(){ my cfg $1 ;}'
 
 [ -f "/Users/jeremybanka/.ghcup/env" ] && source "/Users/jeremybanka/.ghcup/env" # ghcup-env
+
+# fnm
+eval "$(fnm env --use-on-cd)"
+
+# brew
+export PATH=/usr/local/bin:$PATH
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/jem/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/jem/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/jem/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/jem/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+
+# pnpm
+export PNPM_HOME="/Users/jem/Library/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+# pnpm end
+
+# Fig post block. Keep at the bottom of this file.
+[[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
