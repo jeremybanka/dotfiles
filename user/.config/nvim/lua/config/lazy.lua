@@ -19,6 +19,14 @@ require("lazy").setup({
     -- add your colorschemes here
     { "morhetz/gruvbox" },
     { "altercation/vim-colors-solarized" },
+    {
+      "supermaven-inc/supermaven-nvim",
+      config = function()
+        require("supermaven-nvim").setup({
+          accept_suggestion = "<Tab>",
+        })
+      end,
+    },
   },
   defaults = {
     -- By default, only LazyVim plugins will be lazy-loaded. Your custom plugins will load during startup.
