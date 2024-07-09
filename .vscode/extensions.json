@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "sumneko.lua",
-    "timonwong.shellcheck"
+    "timonwong.shellcheck",
+    "idleberg.applescript"
   ]
 }
