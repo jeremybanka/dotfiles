@@ -65,11 +65,6 @@
   # build your own internet
     export PATH=$PATH:~/dojo/study/build-your-own-internet/bin
 
-  # gcloud
-    if [ -f '/Users/jem/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/jem/Downloads/google-cloud-sdk/path.zsh.inc'; fi
-    # completions
-      if [ -f '/Users/jem/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/jem/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
-
 ######
 # post
 ######
