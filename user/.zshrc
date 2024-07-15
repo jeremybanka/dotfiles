@@ -11,7 +11,6 @@
     plugins=(git)
     source $ZSH/oh-my-zsh.sh
 
-
   # zplug
     export ZPLUG_HOME=/opt/homebrew/opt/zplug
     source $ZPLUG_HOME/init.zsh
