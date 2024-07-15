@@ -1,3 +1,15 @@
+#################
+# package manager
+#################
+
+  # brew
+    if [[ $(uname -m) == 'arm64' ]]; then
+        echo "arm64"
+        HOMEBREW_ROOT=/opt/homebrew/opt
+    else
+        HOMEBREW_ROOT=/usr/local/opt
+    fi
+
 #######
 # shell
 #######
@@ -12,7 +24,7 @@
     source $ZSH/oh-my-zsh.sh
 
   # zplug
-    export ZPLUG_HOME=/opt/homebrew/opt/zplug
+    export ZPLUG_HOME=$HOMEBREW_ROOT/zplug
     source $ZPLUG_HOME/init.zsh
 
 ###########
@@ -21,7 +33,7 @@
 
   # node
     # pnpm
-      export PNPM_HOME="/Users/jem/Library/pnpm"
+      export PNPM_HOME="${HOME}/Library/pnpm"
       case ":$PATH:" in
         *":$PNPM_HOME:"*) ;;
         *) export PATH="$PNPM_HOME:$PATH" ;;
@@ -34,7 +46,7 @@
     export PATH="$BUN_INSTALL/bin:$PATH"
     export PATH="~/.local/bin/lvim/:$PATH"
     # completions
-      [ -s "/Users/jem/.bun/_bun" ] && source "/Users/jem/.bun/_bun"
+      [ -s "${HOME}/.bun/_bun" ] && source "${HOME}/.bun/_bun"
 
   # zig
     export ZVM_INSTALL="$HOME/.zvm/self"
@@ -42,7 +54,7 @@
     export PATH="$PATH:$ZVM_INSTALL/"
 
   # haskell
-    [ -f "/Users/jeremybanka/.ghcup/env" ] && source "/Users/jeremybanka/.ghcup/env"
+    [ -f "${HOME}/.ghcup/env" ] && source "${HOME}/.ghcup/env"
 
 ##############
 # applications
@@ -51,10 +63,10 @@
   export PATH="/usr/local/bin:$PATH"
 
   # postgresql
-    export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"
+    export PATH="$HOMEBREW_ROOT/postgresql@16/bin:$PATH"
 
   # console-ninja
-    PATH=~/.console-ninja/.bin:$PATH
+    PATH="${HOME}/.console-ninja/.bin:$PATH"
 
   # llvm
     export PATH="$PATH:$(brew --prefix llvm@15)/bin"
@@ -62,7 +74,7 @@
     export CPPFLAGS="$CPPFLAGS -I$(brew --prefix llvm@15)/include"
 
   # build your own internet
-    export PATH=$PATH:~/dojo/study/build-your-own-internet/bin
+    export PATH=$PATH:${HOME}/dojo/study/build-your-own-internet/bin
 
 ######
 # post
