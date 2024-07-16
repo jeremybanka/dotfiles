@@ -74,6 +74,7 @@ brew "derailed/k9s/k9s"
 brew "fastly/tap/fastly", link: false
 brew "qmk/qmk/qmk"
 brew "railwayapp/tap/nixpacks"
+cask "brave-browser"
 cask "copilot-for-xcode"
 cask "eloston-chromium"
 cask "fig"
