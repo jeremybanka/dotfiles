@@ -1,6 +1,21 @@
 -- Pull in the wezterm API
 local wezterm = require 'wezterm'
 
+local function get_appearance()
+  local handle = io.popen("defaults read -g AppleInterfaceStyle 2>/dev/null")
+  local result = handle:read("*a")
+  handle:close()
+
+  -- If the result is empty, it's in light mode
+  if result == "" then
+    return 1
+  else
+    return 0
+  end
+end
+
+local dark = get_appearance() == 0
+
 -- This will hold the configuration.
 local config = wezterm.config_builder()
 
@@ -9,47 +24,65 @@ local config = wezterm.config_builder()
 -- For example, changing the color scheme:
 config.color_schemes = {
   ['Custom'] = {
-    background = '#fff',
-    foreground = '#222',
+    background = dark and '#000' or '#fff',
+    foreground = dark and '#eee' or '#222',
     -- Overrides the cell background color when the current cell is occupied by the
   -- cursor and the cursor style is set to Block
-  cursor_bg = '#777',
+  cursor_bg = dark and '#555' or '#777',
   -- Overrides the text color when the current cell is occupied by the cursor
-  cursor_fg = 'white',
+  cursor_fg = dark and '#eee' or '#fff',
   -- Specifies the border color of the cursor when the cursor style is set to Block,
   -- or the color of the vertical or horizontal bar when the cursor style is set to
   -- Bar or Underline.
-  cursor_border = '#777',
+  cursor_border = dark and '#555' or '#777',
 
   -- the foreground color of selected text
-  selection_fg = 'black',
+  selection_fg = dark and 'white' or 'black',
   -- the background color of selected text
-  selection_bg = '#fd0',
+  selection_bg = dark and '#200' or '#fd0',
 
   -- The color of the scrollbar "thumb"; the portion that represents the current viewport
-  scrollbar_thumb = '#222222',
+  scrollbar_thumb = dark and '#222222' or '#444444',
 
   -- The color of the split lines between panes
-  split = '#444444',
+  split = dark and '#444444' or '#666666',
 
-  ansi = {
-    'white', --black
+  ansi = dark and {
+    '#333', -- black
+    '#c55', -- red
+    '#595', -- green
+    '#dc3', -- yellow
+    '#88f', -- blue
+    '#c7f', -- magenta
+    '#5af', -- cyan
+    '#ddd', -- white
+  } or {
+    '#fff', --black
     '#700', --red
     '#050', --green
     '#540', --yellow
     '#349', --blue
-    '#60a', --cyan
-    '#069', --magenta
+    '#609', --magenta
+    '#069', --cyan
     '#ccc', --white
   },
-  brights = {
+  brights = dark and {
+    '#666', -- black
+    '#f55', -- red
+    '#5c5', -- green
+    '#fc0', -- yellow
+    '#67f', -- blue
+    '#c5f', -- magenta
+    '#3af', -- cyan
+    '#fff', -- white
+  } or {
     '#777', --gray
     '#c00', --red
     '#080', --green
     '#a80', --yellow
     '#03f', --blue
-    '#90f', --cyan
-    '#0af', --magenta
+    '#90f', --magenta
+    '#0af', --cyan
     'white', --white
   },
 
