@@ -1,0 +1,24 @@
+{
+  "editor.wordSeparators": "./\\()\"'-:,.;<>~!@#%^&*|+=[]{}`~?", // $ is not a separator
+  "editor.fontFamily": "Theia 0.2.300",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 13,
+  "editor.formatOnSave": false,
+  "editor.tabSize": 2,
+  "terminal.integrated.fontFamily": "JetBrains Mono",
+  "typescript.tsserver.maxTsServerMemory": 8192,
+  "window.autoDetectColorScheme": true,
+  "workbench.preferredDarkColorTheme": "Default Dark Modern",
+  "workbench.preferredLightColorTheme": "Aeos",
+  "workbench.colorCustomizations": {
+    "[Aeos]": {
+      "editorBracketHighlight.foreground1": "#555",
+      "editorBracketHighlight.foreground2": "#790",
+      "editorBracketHighlight.foreground3": "#53f",
+      "editorBracketHighlight.foreground4": "#298",
+      "editorBracketHighlight.foreground5": "#a06"
+    }
+  },
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.productIconTheme": "fluent-icons"
+}

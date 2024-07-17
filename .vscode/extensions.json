@@ -1,6 +1,12 @@
 {
-  "recommendations": [
-    "sumneko.lua",
-    "timonwong.shellcheck"
-  ]
+	"recommendations": [
+		"sumneko.lua",
+		"timonwong.shellcheck",
+		"oven.bun-vscode",
+		"dbaeumer.vscode-eslint",
+		"streetsidesoftware.code-spell-checker",
+		"christian-kohler.npm-intellisense",
+		"miguelsolorio.fluent-icons",
+		"pkief.material-icon-theme"
+	]
 }

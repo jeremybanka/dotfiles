@@ -74,7 +74,7 @@
     export CPPFLAGS="$CPPFLAGS -I$(brew --prefix llvm@15)/include"
 
   # build your own internet
-    export PATH=$PATH:${HOME}/dojo/study/build-your-own-internet/bin
+    export PATH=$PATH:${HOME}/dojo/byoi/bin
 
 ######
 # post

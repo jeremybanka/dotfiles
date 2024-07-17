@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"types": ["node", "bun"],
+		"target": "ESNext",
+		"strict": true,
+		"noEmit": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true
+	},
+	"exclude": ["node_modules", "**/node_modules/*"]
+}
