@@ -6,6 +6,7 @@
   "editor.formatOnSave": false,
   "editor.tabSize": 2,
   "terminal.integrated.fontFamily": "JetBrains Mono",
+  "terminal.integrated.fontSize": 13,
   "typescript.tsserver.maxTsServerMemory": 8192,
   "window.autoDetectColorScheme": true,
   "workbench.preferredDarkColorTheme": "Default Dark Modern",
