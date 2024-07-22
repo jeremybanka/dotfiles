@@ -14,9 +14,6 @@
 # shell
 #######
 
-  # fig
-    [[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
-
   # zsh
     export ZSH="${HOME}/.oh-my-zsh"
     ZSH_THEME="kolo"
@@ -75,10 +72,3 @@
 
   # build your own internet
     export PATH=$PATH:${HOME}/dojo/byoi/bin
-
-######
-# post
-######
-
-  # fig
-    [[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"
