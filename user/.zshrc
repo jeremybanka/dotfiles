@@ -4,7 +4,6 @@
 
   # brew
     if [[ $(uname -m) == 'arm64' ]]; then
-        echo "arm64"
         HOMEBREW_ROOT=/opt/homebrew/opt
     else
         HOMEBREW_ROOT=/usr/local/opt
