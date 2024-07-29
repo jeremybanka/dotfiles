@@ -1,12 +1,13 @@
 {
 	"recommendations": [
-		"sumneko.lua",
-		"timonwong.shellcheck",
-		"oven.bun-vscode",
-		"dbaeumer.vscode-eslint",
-		"streetsidesoftware.code-spell-checker",
 		"christian-kohler.npm-intellisense",
+		"dbaeumer.vscode-eslint",
+		"eamodio.gitlens",
 		"miguelsolorio.fluent-icons",
-		"pkief.material-icon-theme"
+		"oven.bun-vscode",
+		"pkief.material-icon-theme",
+		"streetsidesoftware.code-spell-checker",
+		"sumneko.lua",
+		"timonwong.shellcheck"
 	]
 }
