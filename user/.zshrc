@@ -27,18 +27,14 @@
 # languages
 ###########
 
-  # node
-    # pnpm
-      export PNPM_HOME="${HOME}/Library/pnpm"
-      case ":$PATH:" in
-        *":$PNPM_HOME:"*) ;;
-        *) export PATH="$PNPM_HOME:$PATH" ;;
-      esac
-    # fnm
-      eval "$(fnm env --use-on-cd)"
+  # node via fnm
+    eval "$(fnm env --use-on-cd)"
 
   # bun
-    [ -s "${HOME}/.bun/_bun" ] && source "${HOME}/.bun/_bun"
+    export BUN_INSTALL="$HOME/.bun"
+    export PATH="$BUN_INSTALL/bin:$PATH"
+    # completions
+      [ -s "${HOME}/.bun/_bun" ] && source "${HOME}/.bun/_bun"
 
   # zig
     export ZVM_INSTALL="$HOME/.zvm/self"
