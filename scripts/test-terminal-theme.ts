@@ -1,4 +1,4 @@
-#! bun
+#!bun
 
 function printColorSpecimens() {
 	const colors: { [key: string]: string } = {
