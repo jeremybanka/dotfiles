@@ -37,20 +37,13 @@
     # fnm
       eval "$(fnm env --use-on-cd)"
 
-  # bun (and zig)
-    export BUN_INSTALL="$HOME/.bun"
-    export PATH="$BUN_INSTALL/bin:$PATH"
-    export PATH="~/.local/bin/lvim/:$PATH"
-    # completions
-      [ -s "${HOME}/.bun/_bun" ] && source "${HOME}/.bun/_bun"
+  # bun
+    [ -s "${HOME}/.bun/_bun" ] && source "${HOME}/.bun/_bun"
 
   # zig
     export ZVM_INSTALL="$HOME/.zvm/self"
     export PATH="$PATH:$HOME/.zvm/bin"
     export PATH="$PATH:$ZVM_INSTALL/"
-
-  # haskell
-    [ -f "${HOME}/.ghcup/env" ] && source "${HOME}/.ghcup/env"
 
 ##############
 # applications
