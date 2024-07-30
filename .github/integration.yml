@@ -1,0 +1,35 @@
+name: Integration
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    types: [opened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  Lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2.0.1
+
+      - name: Install Dependencies
+        run: bun i
+
+      - name: ESLint
+        run: bun lint:eslint
+
+      - name: Type Check
+        run: bun lint:types
