@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!bun
 
 import { existsSync, lstatSync, mkdirSync, readdirSync } from "node:fs"
 import { rename, symlink, unlink } from "node:fs/promises"
@@ -7,8 +7,44 @@ import { join, resolve } from "node:path"
 
 const appConfigDir = join(import.meta.dirname, `..`, `apps`)
 
+await configureBun()
 await configureVSCodium()
 await configureIllustrator()
+
+async function configureBun() {
+	const sourceDir = resolve(appConfigDir, `bun`)
+	const targetDir = join(homedir(), `.bun`, `install`, `global`)
+	for (const filename of [`package.json`, `bun.lockb`]) {
+		const sourcePath = join(sourceDir, filename)
+		const targetPath = join(targetDir, filename)
+		console.log(`Configuring Bun`, { appConfigDir, sourcePath, targetPath })
+		try {
+			if (!existsSync(sourcePath)) {
+				throw new Error(`Source file does not exist: ${sourcePath}`)
+			}
+
+			if (existsSync(targetPath)) {
+				const isSymlink = lstatSync(targetPath).isSymbolicLink()
+				if (isSymlink) {
+					console.log(`Symlink already exists: ${targetPath}`)
+					return
+				} else {
+					console.log(`Removing existing file: ${targetPath}`)
+					await unlink(targetPath)
+				}
+			}
+
+			await symlink(sourcePath, targetPath)
+			console.log(`Symlink created: ${sourcePath} -> ${targetPath}`)
+		} catch (thrown) {
+			if (thrown instanceof Error) {
+				console.error(thrown.message)
+			} else {
+				console.error(thrown)
+			}
+		}
+	}
+}
 
 async function configureVSCodium() {
 	const sourcePath = resolve(appConfigDir, `VSCodium`, `settings.json`)
