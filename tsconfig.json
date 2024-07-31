@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"allowJs": true,
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
 		"types": ["node", "bun"],
@@ -10,5 +11,6 @@
 		"strictFunctionTypes": true,
 		"skipLibCheck": true
 	},
+	"include": ["**/*.ts", "eslint.config.js"],
 	"exclude": ["node_modules", "**/node_modules/*"]
 }
