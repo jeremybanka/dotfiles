@@ -6,6 +6,12 @@
 	<string>2189</string>
 	<key>preferences</key>
 	<dict>
+		<key>Battery.Menubar.Mode.HorizontalGraph.Graph.Charging.Value.Light.Color</key>
+		<string>0.3843137254901961 0.7294117647058823 0.2745098039215687 1</string>
+		<key>Battery.Menubar.Mode.HorizontalGraph.Graph.Draining.Low.Light.Color</key>
+		<string>1 0.7942859180425472 0.1509488821029663 1</string>
+		<key>Battery.Menubar.Mode.VerticalGraph.Graph.Background.State.Light</key>
+		<integer>0</integer>
 		<key>CPU.Menubar.Mode.Cores.Graph.Background.State.Light</key>
 		<integer>0</integer>
 		<key>CPU.Menubar.Mode.Cores.Graph.Border.Light.Color</key>
@@ -14,6 +20,18 @@
 		<string>0 0.1704832315444946 1 1</string>
 		<key>CPU.Menubar.Mode.Cores.Graph.Performance.Light.Color</key>
 		<string>0 0 0 1</string>
+		<key>Combined.Menu.Items</key>
+		<array>
+			<string>sensors-overview</string>
+			<string>cpu-cpu</string>
+			<string>cpu-gpu</string>
+			<string>memory-memory</string>
+			<string>memory-overview</string>
+			<string>network-ping</string>
+			<string>network-bandwidth</string>
+			<string>disks-physical</string>
+			<string>disks-activity</string>
+		</array>
 		<key>Device.Auth-Identifier</key>
 		<string>5F09C065-AA83-462E-AAD4-1795AB6C5307</string>
 		<key>Device.Device</key>
@@ -26,6 +44,7 @@
 		<integer>0</integer>
 		<key>GPU.Menubar.Mode.HistoryGraph.Processor.Graph.Border.Light.Color</key>
 		<string>0 0 0 0</string>
+<!--omitted license information-->
 		<key>Memory.Menubar.Mode.CircularGraph.Memory.Graph.App.Light.Color</key>
 		<string>0 0 0 1</string>
 		<key>Memory.Menubar.Mode.CircularGraph.Memory.Graph.Background.State.Light</key>
@@ -38,8 +57,12 @@
 		<string>0 0 0 0</string>
 		<key>Memory.Menubar.Mode.CircularGraph.Pressure.Graph.Pressure.Light.Color</key>
 		<string>0 0 0 1</string>
+		<key>Menu.Theme.Dark</key>
+		<string>dark</string>
 		<key>Menu.Theme.Light</key>
 		<string>system</string>
+		<key>Menubar.Global.ReducePadding</key>
+		<integer>1</integer>
 		<key>Menubar.Style</key>
 		<integer>1</integer>
 		<key>Migration.Profiles</key>
@@ -90,6 +113,36 @@
 		</array>
 		<key>Profiles.Available.identifier</key>
 		<string>default</string>
+		<key>Profiles.Settings.default.Battery.Menubar.Batteries</key>
+		<array>
+			<dict>
+				<key>key</key>
+				<string>fb-fe-1e-66-da-f5</string>
+				<key>name</key>
+				<string>MX Master 3 Mac</string>
+			</dict>
+			<dict>
+				<key>internal</key>
+				<true/>
+				<key>key</key>
+				<string>F8Y4166N36W0J9TBA</string>
+				<key>name</key>
+				<string>Internal Battery</string>
+			</dict>
+		</array>
+		<key>Profiles.Settings.default.Battery.Menubar.DetailedState</key>
+		<integer>1</integer>
+		<key>Profiles.Settings.default.Battery.Menubar.Enabled</key>
+		<integer>1</integer>
+		<key>Profiles.Settings.default.Battery.Menubar.Items.AirPods</key>
+		<array>
+			<dict>
+				<key>source</key>
+				<integer>13</integer>
+				<key>type</key>
+				<integer>8</integer>
+			</dict>
+		</array>
 		<key>Profiles.Settings.default.Battery.Menubar.Items.Bluetooth</key>
 		<array>
 			<dict>
@@ -103,6 +156,59 @@
 				<integer>12</integer>
 				<key>type</key>
 				<integer>3</integer>
+			</dict>
+		</array>
+		<key>Profiles.Settings.default.Battery.Menubar.Items.Charged</key>
+		<array>
+			<dict>
+				<key>source</key>
+				<integer>8</integer>
+				<key>type</key>
+				<integer>4</integer>
+			</dict>
+		</array>
+		<key>Profiles.Settings.default.Battery.Menubar.Items.Charging</key>
+		<array>
+			<dict>
+				<key>options</key>
+				<dict>
+					<key>type</key>
+					<integer>0</integer>
+				</dict>
+				<key>source</key>
+				<integer>8</integer>
+				<key>subtype</key>
+				<integer>6</integer>
+				<key>type</key>
+				<integer>7</integer>
+			</dict>
+			<dict>
+				<key>source</key>
+				<integer>8</integer>
+				<key>type</key>
+				<integer>4</integer>
+			</dict>
+		</array>
+		<key>Profiles.Settings.default.Battery.Menubar.Items.Draining</key>
+		<array>
+			<dict>
+				<key>options</key>
+				<dict>
+					<key>type</key>
+					<integer>0</integer>
+				</dict>
+				<key>source</key>
+				<integer>8</integer>
+				<key>subtype</key>
+				<integer>6</integer>
+				<key>type</key>
+				<integer>7</integer>
+			</dict>
+			<dict>
+				<key>source</key>
+				<integer>8</integer>
+				<key>type</key>
+				<integer>4</integer>
 			</dict>
 		</array>
 		<key>Profiles.Settings.default.Battery.Menubar.Items.Standard</key>
@@ -245,12 +351,16 @@
 				<integer>7</integer>
 			</dict>
 		</array>
+		<key>Sensors.Global.Degrees.Format</key>
+		<integer>1</integer>
 		<key>Sensors.Global.DetailLevel</key>
 		<integer>1</integer>
 		<key>Status.Build.Last</key>
 		<real>2189</real>
 		<key>Status.Version.Last</key>
 		<real>7</real>
+		<key>UpdateFrequency</key>
+		<integer>2</integer>
 		<key>Weather.Global.AvailableProviders</key>
 		<array>
 			<dict>
