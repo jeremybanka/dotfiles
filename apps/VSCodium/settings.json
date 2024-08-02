@@ -6,6 +6,7 @@
 	"editor.formatOnSave": false,
 	"editor.minimap.enabled": false,
 	"editor.tabSize": 2,
+	"haskell.manageHLS": "GHCup",
 	"terminal.integrated.fontFamily": "JetBrains Mono",
 	"terminal.integrated.fontSize": 13,
 	"typescript.tsserver.maxTsServerMemory": 8192,

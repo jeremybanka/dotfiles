@@ -41,6 +41,9 @@
     export PATH="$PATH:$HOME/.zvm/bin"
     export PATH="$PATH:$ZVM_INSTALL/"
 
+  # haskell
+    export PATH="$HOME/.ghcup/bin:$PATH"
+
 ##############
 # applications
 ##############
