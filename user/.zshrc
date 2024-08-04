@@ -1,22 +1,21 @@
 #######
 # shell
 #######
-
-  # brew
-    HOMEBREW_ROOT=$(brew --prefix)
   
   # zplug
-    export ZPLUG_HOME=$HOMEBREW_ROOT/opt/zplug
+    export ZPLUG_HOME=$(brew --prefix)/opt/zplug
     source $ZPLUG_HOME/init.zsh
 
   # brew completions 
-    FPATH=$HOMEBREW_ROOT/share/zsh/site-functions:${FPATH}
+    FPATH=$(brew --prefix)/share/zsh/site-functions:${FPATH}
+  
+  # ni/nr
+    FPATH="$FPATH:$HOME/dotfiles/apps/ni"
   
   # oh-my-zsh
-    export OMZ_ROOT="${HOME}/.oh-my-zsh"
-    ZSH_THEME="kolo"
+  ZSH_THEME="kolo"
     plugins=(git)
-    source $OMZ_ROOT/oh-my-zsh.sh
+    source ${HOME}/.oh-my-zsh/oh-my-zsh.sh
 
 ###########
 # languages
@@ -24,15 +23,13 @@
 
   # node via fnm
     eval "$(fnm env --use-on-cd)"
-
+  
   # bun
-    export BUN_INSTALL="$HOME/.bun"
-    export PATH="$BUN_INSTALL/bin:$PATH"
+    export PATH="$HOME/.bun/bin:$PATH"
 
   # zig
-    export ZVM_INSTALL="$HOME/.zvm/self"
-    export PATH="$PATH:$HOME/.zvm/bin"
-    export PATH="$PATH:$ZVM_INSTALL/"
+    export PATH="$HOME/.zvm/bin:$PATH"
+    export PATH="$HOME/.zvm/self:$PATH"
 
   # haskell
     export PATH="$HOME/.ghcup/bin:$PATH"
@@ -44,7 +41,7 @@
   export PATH="/usr/local/bin:$PATH"
 
   # postgresql
-    export PATH="$HOMEBREW_ROOT/opt/postgresql@16/bin:$PATH"
+    export PATH="$(brew --prefix postgresql@16)/bin:$PATH"
 
   # console-ninja
     PATH="${HOME}/.console-ninja/.bin:$PATH"

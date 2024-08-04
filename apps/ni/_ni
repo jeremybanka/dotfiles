@@ -1,0 +1,306 @@
+#compdef ni
+
+_ni_completion() {
+    _arguments -s -C \
+        '1: :->cmd1' \
+        '--config[Load config(bunfig.toml)]: :->config' \
+        '-c[Load config(bunfig.toml)]: :->config' \
+        '--yarn[Write a yarn.lock file (yarn v1)]' \
+        '-y[Write a yarn.lock file (yarn v1)]' \
+        '--production[Don'"'"'t install devDependencies]' \
+        '-p[Don'"'"'t install devDependencies]' \
+        '--no-save[Don'"'"'t save a lockfile]' \
+        '--save[Save to package.json]' \
+        '--dry-run[Don'"'"'t install anything]' \
+        '--frozen-lockfile[Disallow changes to lockfile]' \
+        '--force[Always request the latest versions from the registry & reinstall all dependencies]' \
+        '-f[Always request the latest versions from the registry & reinstall all dependencies]' \
+        '--cache-dir[Store & load cached data from a specific directory path]:cache-dir' \
+        '--no-cache[Ignore manifest cache entirely]' \
+        '--silent[Don'"'"'t log anything]' \
+        '--verbose[Excessively verbose logging]' \
+        '--no-progress[Disable the progress bar]' \
+        '--no-summary[Don'"'"'t print a summary]' \
+        '--no-verify[Skip verifying integrity of newly downloaded packages]' \
+        '--ignore-scripts[Skip lifecycle scripts in the package.json (dependency scripts are never run)]' \
+        '--global[Add a package globally]' \
+        '-g[Add a package globally]' \
+        '--cwd[Set a specific cwd]:cwd' \
+        '--backend[Platform-specific optimizations for installing dependencies]:backend:("copyfile" "hardlink" "symlink")' \
+        '--link-native-bins[Link "bin" from a matching platform-specific dependency instead. Default: esbuild, turbo]:link-native-bins' \
+        '--help[Print this help menu]' \
+        '--dev[Add dependence to "devDependencies]' \
+        '-d[Add dependence to "devDependencies]' \
+        '--development[]' \
+        '-D[]' \
+        '--optional[Add dependency to "optionalDependencies]' \
+        '--exact[Add the exact version instead of the ^range]' &&
+        ret=0
+
+    case $state in
+    config)
+        _bun_list_bunfig_toml
+
+        ;;
+    esac
+}
+
+_ni() {
+    zstyle ':completion:*:*:bun:*' group-name ''
+    zstyle ':completion:*:*:bun-grouped:*' group-name ''
+
+    zstyle ':completion:*:*:bun::descriptions' format '%F{green}-- %d --%f'
+    zstyle ':completion:*:*:bun-grouped:*' format '%F{green}-- %d --%f'
+    # zstyle ':completion:*:options' list-colors '=^(-- *)=34'
+
+    local program=ni
+    typeset -A opt_args
+    local curcontext="$curcontext" state line context
+
+    # ---- Command:
+    _arguments -s \
+        '*: :->args' &&
+        ret=0
+        # '1: :->cmd' \
+
+    case $state in
+    cmd)
+        local -a scripts_list
+        IFS=$'\n' scripts_list=($(SHELL=zsh bun getcompletes i))
+        scripts="scripts:scripts:(($scripts_list))"
+        IFS=$'\n' files_list=($(SHELL=zsh bun getcompletes j))
+
+        main_commands=(
+            'run\:"Run JavaScript with Bun, a package.json script, or a bin" '
+            'test\:"Run unit tests with Bun" '
+            'x\:"Install and execute a package bin (bunx)" '
+            'repl\:"Start a REPL session with Bun" '
+            'init\:"Start an empty Bun project from a blank template" '
+            'create\:"Create a new project from a template (bun c)" '
+            'install\:"Install dependencies for a package.json (bun i)" '
+            'add\:"Add a dependency to package.json (bun a)" '
+            'remove\:"Remove a dependency from package.json (bun rm)" '
+            'update\:"Update outdated dependencies & save to package.json" '
+            'link\:"Link an npm package globally" '
+            'unlink\:"Globally unlink an npm package" '
+            'pm\:"More commands for managing packages" '
+            'build\:"Bundle TypeScript & JavaScript into a single file" '
+            'upgrade\:"Get the latest version of bun" '
+            'help\:"Show all supported flags and commands" '
+        )
+        main_commands=($main_commands)
+        _alternative "$scripts" "args:command:(($main_commands))" "files:files:(($files_list))"
+
+        ;;
+    args)
+        case $line[1] in
+        add|a)
+            _bun_add_completion
+
+            ;;
+        unlink)
+            _bun_unlink_completion
+
+            ;;
+        link)
+            _bun_link_completion
+
+            ;;
+        bun)
+            _bun_bun_completion
+
+            ;;
+        init)
+            _bun_init_completion
+
+            ;;
+        create|c)
+            _bun_create_completion
+
+            ;;
+        x)
+            _arguments -s -C \
+                '1: :->cmd' \
+                '2: :->cmd2' \
+                '*: :->args' &&
+                ret=0
+            ;;
+        pm)
+            _bun_pm_completion
+
+            ;;
+        install|i)
+            _bun_install_completion
+
+            ;;
+        remove|rm)
+            _bun_remove_completion
+
+            ;;
+        run)
+            _bun_run_completion
+
+            ;;
+        upgrade)
+            _bun_upgrade_completion
+
+            ;;
+        build)
+            _bun_build_completion
+
+            ;;
+        update)
+            _bun_update_completion
+
+            ;;
+        'test')
+            _bun_test_completion
+
+            ;;
+        help)
+            # ---- Command: help
+            _arguments -s -C \
+                '1: :->cmd' \
+                '2: :->cmd2' \
+                '*: :->args' &&
+                ret=0
+
+            case $state in
+            cmd2)
+                curcontext="${curcontext%:*:*}:bun-grouped"
+                _alternative "args:command:(($main_commands))"
+
+                ;;
+            args)
+                case $line[2] in
+                add)
+                    _bun_add_completion
+
+                    ;;
+                unlink)
+                    _bun_unlink_completion
+
+                    ;;
+                link)
+                    _bun_link_completion
+
+                    ;;
+                bun)
+                    _bun_bun_completion
+
+                    ;;
+                init)
+                    _bun_init_completion
+
+                    ;;
+                create)
+                    _bun_create_completion
+
+                    ;;
+                x)
+                    _arguments -s -C \
+                        '1: :->cmd' \
+                        '2: :->cmd2' \
+                        '*: :->args' &&
+                        ret=0
+                    ;;
+                pm)
+                    _bun_pm_completion
+
+                    ;;
+                install)
+                    _ni_completion
+
+                    ;;
+                remove)
+                    _bun_remove_completion
+
+                    ;;
+                run)
+                    _bun_run_completion
+
+                    ;;
+                upgrade)
+                    _bun_upgrade_completion
+
+                    ;;
+                build)
+                    _bun_build_completion
+
+                    ;;
+                update)
+                    _bun_update_completion
+
+                    ;;
+                'test')
+                    _bun_test_completion
+
+                    ;;
+                esac
+
+                ;;
+            esac
+
+            ;;
+        esac
+
+        ;;
+    esac
+}
+
+_bun_list_bunfig_toml() {
+    # _alternative "files:file:_files -g '*.toml'"
+    _files
+}
+
+_bun_add_param_package_completion() {
+
+    IFS=$'\n' inexact=($(history -n bun | grep -E "^bun add " | cut -c 9- | uniq))
+    IFS=$'\n' exact=($($inexact | grep -E "^$words[$CURRENT]"))
+    IFS=$'\n' packages=($(SHELL=zsh bun getcompletes a $words[$CURRENT]))
+
+    to_print=$inexact
+    if [ ! -z "$exact" -a "$exact" != " " ]; then
+        to_print=$exact
+    fi
+
+    if [ ! -z "$to_print" -a "$to_print" != " " ]; then
+        if [ ! -z "$packages" -a "$packages" != " " ]; then
+            _describe -1 -t to_print 'History' to_print
+            _describe -1 -t packages "Popular" packages
+            return
+        fi
+
+        _describe -1 -t to_print 'History' to_print
+        return
+    fi
+
+    if [ ! -z "$packages" -a "$packages" != " " ]; then
+        _describe -1 -t packages "Popular" packages
+        return
+    fi
+
+}
+
+# __bun_dynamic_comp() {
+#     local comp=""
+
+#     for arg in scripts; do
+#         local line
+#         while read -r line; do
+#             local name="$line"
+#             local desc="$line"
+#             name="${name%$'\t'*}"
+#             desc="${desc/*$'\t'/}"
+#             echo
+#         done <<<"$arg"
+#     done
+
+#     return $comp
+# }
+
+# if ! command -v compinit >/dev/null; then
+#     autoload -U compinit && compinit
+# fi
+
+compdef _ni ni
