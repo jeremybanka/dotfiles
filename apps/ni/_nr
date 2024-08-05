@@ -1,0 +1,88 @@
+#compdef ni
+
+_nr_completion() {
+    _arguments -s -C \
+        '1: :->cmd' \
+        '2: :->script' \
+        '*: :->other' \
+        '--help[Display this help and exit]' \
+        '-h[Display this help and exit]' \
+        '--bun[Force a script or package to use Bun'"'"'s runtime instead of Node.js (via symlinking node)]' \
+        '-b[Force a script or package to use Bun'"'"'s runtime instead of Node.js (via symlinking node)]' \
+        '--cwd[Absolute path to resolve files & entry points from. This just changes the process cwd]:cwd' \
+        '--config[Config file to load bun from (e.g. -c bunfig.toml]: :->config' \
+        '-c[Config file to load bun from (e.g. -c bunfig.toml]: :->config' \
+        '--env-file[Load environment variables from the specified file(s)]:env-file' \
+        '--extension-order[Defaults to: .tsx,.ts,.jsx,.js,.json]:extension-order' \
+        '--jsx-factory[Changes the function called when compiling JSX elements using the classic JSX runtime]:jsx-factory' \
+        '--jsx-fragment[Changes the function called when compiling JSX fragments]:jsx-fragment' \
+        '--jsx-import-source[Declares the module specifier to be used for importing the jsx and jsxs factory functions. Default: "react"]:jsx-import-source' \
+        '--jsx-runtime["automatic" (default) or "classic"]: :->jsx-runtime' \
+        '--preload[Import a module before other modules are loaded]:preload' \
+        '-r[Import a module before other modules are loaded]:preload' \
+        '--main-fields[Main fields to lookup in package.json. Defaults to --target dependent]:main-fields' \
+        '--no-summary[Don'"'"'t print a summary]' \
+        '--version[Print version and exit]' \
+        '-v[Print version and exit]' \
+        '--revision[Print version with revision and exit]' \
+        '--tsconfig-override[Load tsconfig from path instead of cwd/tsconfig.json]:tsconfig-override' \
+        '--define[Substitute K:V while parsing, e.g. --define process.env.NODE_ENV:"development". Values are parsed as JSON.]:define' \
+        '-d[Substitute K:V while parsing, e.g. --define process.env.NODE_ENV:"development". Values are parsed as JSON.]:define' \
+        '--external[Exclude module from transpilation (can use * wildcards). ex: -e react]:external' \
+        '-e[Exclude module from transpilation (can use * wildcards). ex: -e react]:external' \
+        '--loader[Parse files with .ext:loader, e.g. --loader .js:jsx. Valid loaders: js, jsx, ts, tsx, json, toml, text, file, wasm, napi]:loader' \
+        '--packages[Exclude dependencies from bundle, e.g. --packages external. Valid options: bundle, external]:packages' \
+        '-l[Parse files with .ext:loader, e.g. --loader .js:jsx. Valid loaders: js, jsx, ts, tsx, json, toml, text, file, wasm, napi]:loader' \
+        '--origin[Rewrite import URLs to start with --origin. Default: ""]:origin' \
+        '-u[Rewrite import URLs to start with --origin. Default: ""]:origin' \
+        '--port[Port to serve bun'"'"'s dev server on. Default: '"'"'3000'"'"']:port' \
+        '-p[Port to serve bun'"'"'s dev server on. Default: '"'"'3000'"'"']:port' \
+        '--smol[Use less memory, but run garbage collection more often]' \
+        '--minify[Minify (experimental)]' \
+        '--minify-syntax[Minify syntax and inline data (experimental)]' \
+        '--minify-whitespace[Minify Whitespace (experimental)]' \
+        '--minify-identifiers[Minify identifiers]' \
+        '--no-macros[Disable macros from being executed in the bundler, transpiler and runtime]' \
+        '--target[The intended execution environment for the bundle. "browser", "bun" or "node"]: :->target' \
+        '--inspect[Activate Bun'"'"'s Debugger]:inspect' \
+        '--inspect-wait[Activate Bun'"'"'s Debugger, wait for a connection before executing]:inspect-wait' \
+        '--inspect-brk[Activate Bun'"'"'s Debugger, set breakpoint on first line of code and wait]:inspect-brk' \
+        '--hot[Enable auto reload in bun'"'"'s JavaScript runtime]' \
+        '--watch[Automatically restart bun'"'"'s JavaScript runtime on file change]' \
+        '--no-install[Disable auto install in bun'"'"'s JavaScript runtime]' \
+        '--install[Install dependencies automatically when no node_modules are present, default: "auto". "force" to ignore node_modules, fallback to install any missing]: :->install_' \
+        '-i[Automatically install dependencies and use global cache in bun'"'"'s runtime, equivalent to --install=fallback'] \
+        '--prefer-offline[Skip staleness checks for packages in bun'"'"'s JavaScript runtime and resolve from disk]' \
+        '--prefer-latest[Use the latest matching versions of packages in bun'"'"'s JavaScript runtime, always checking npm]' \
+        '--silent[Don'"'"'t repeat the command for bun run]' \
+        '--dump-environment-variables[Dump environment variables from .env and process as JSON and quit. Useful for debugging]' \
+        '--dump-limits[Dump system limits. Userful for debugging]' &&
+        ret=0
+
+    case $state in
+    script)
+        curcontext="${curcontext%:*:*}:bun-grouped"
+        _bun_run_param_script_completion
+
+        ;;
+    jsx-runtime)
+        _alternative 'args:cmd3:((classic automatic))'
+
+        ;;
+    target)
+        _alternative 'args:cmd3:((browser bun node))'
+
+        ;;
+    install_)
+        _alternative 'args:cmd3:((auto force fallback))'
+
+        ;;
+    other)
+        _files
+
+        ;;
+    esac
+
+}
+
+compdef _nr_completion nr
