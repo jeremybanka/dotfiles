@@ -7,7 +7,6 @@
   name = Jeremy Banka
   email = hello@jeremybanka.com
 [core]
-  excludesfile = /Users/jeremybanka/.gitignore
   pager = diff-so-fancy | less --tabs=4 -RFX
 [init]
   defaultBranch = main
@@ -15,13 +14,13 @@
   autosquash = true
 [alias]
   a = add
-  aa = add .
+  aa = add --all
   b = branch
-  bn = checkout -b
+  bn = checkout --branch
   c = commit
   ca = commit --amend
   ch = checkout
-  cm = commit -m
+  cm = commit --message
   d = diff
   dn = pull
   l = log --oneline
@@ -34,10 +33,12 @@
   rb = rebase
   rba = rebase --abort
   rbc = rebase --continue
-  rbi = rebase -i
+  rbi = rebase --interactive
+  rf = reflog
   rmc = rm -r --cached .
-  rv = remote -v
+  rv = remote --verbose
   s = status
+  sh = stash
   up = push
 [color]
   ui = true
