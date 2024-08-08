@@ -3,6 +3,7 @@ local wezterm = require 'wezterm'
 
 local function get_appearance()
   local handle = io.popen("defaults read -g AppleInterfaceStyle 2>/dev/null")
+  if not handle then return 1 end
   local result = handle:read("*a")
   handle:close()
 
@@ -116,10 +117,30 @@ config.color_schemes = {
   }
 }
 config.color_scheme = 'Custom'
-config.font_size = 17
+config.font_size = 13.5
+config.font = wezterm.font('Theia 0.2.500')
 config.window_decorations = 'RESIZE'
 
 config.hide_tab_bar_if_only_one_tab = true
+
+config.keys = {
+  {
+    key = 'LeftArrow',
+    mods = 'ALT',
+    action = wezterm.action.SendKey {
+      key = 'b',
+      mods = 'ALT',
+    },
+  },
+  {
+    key = 'RightArrow',
+    mods = 'ALT',
+    action = wezterm.action.SendKey {
+      key = 'f',
+      mods = 'ALT',
+    },
+  }
+}
 
 -- and finally, return the configuration to wezterm
 return config
