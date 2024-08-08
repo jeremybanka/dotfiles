@@ -1,4 +1,4 @@
-/* @ts-check */
+// @ts-check
 
 import TypeScriptPlugin from "@typescript-eslint/eslint-plugin"
 import parser from "@typescript-eslint/parser"
@@ -153,7 +153,7 @@ const commonRules = {
 	"quotes": [ERROR, `backtick`],
 }
 
-/** @type {(import("eslint").Linter.FlatConfig)[]} */
+/** @type {(import("eslint").Linter.Config)[]} */
 const configs = [
 	{
 		ignores: [
