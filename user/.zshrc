@@ -1,51 +1,39 @@
-#######
-# shell
-#######
-  
+# shell ########################################################################
+
   # zplug
     source $(brew --prefix zplug)/init.zsh
 
   # brew completions 
-    FPATH=$(brew --prefix)/share/zsh/site-functions:${FPATH}
+    FPATH=$FPATH:$(brew --prefix)/share/zsh/site-functions
   
   # oh-my-zsh
     ZSH_THEME="kolo"
     plugins=(git)
     source ${HOME}/.oh-my-zsh/oh-my-zsh.sh
 
-###########
-# languages
-###########
+# applications #################################################################
 
-  # node via fnm
-    eval "$(fnm env --use-on-cd)"
-  
-  # npm global packages via bun
-    PATH="$PATH:$HOME/.bun/bin"
-
-  # zig via zvm
-    PATH="$PATH:$HOME/.zvm/bin"
-    PATH="$PATH:$HOME/.zvm/self"
-
-  # haskell
-    PATH="$HOME/.ghcup/bin:$PATH"
-
-##############
-# applications
-##############
-
-  PATH="$PATH:/usr/local/bin"
+  # system
+    PATH="$PATH:/usr/local/bin"
 
   # postgresql
     PATH="$PATH:$(brew --prefix postgresql@16)/bin"
 
-  # console-ninja
-    PATH="${HOME}/.console-ninja/.bin:$PATH"
+# languages ####################################################################
 
-  # llvm
-    PATH="$PATH:$(brew --prefix llvm@15)/bin"
-    LDFLAGS="$LDFLAGS -L $(brew --prefix llvm@15)/lib"
-    CPPFLAGS="$CPPFLAGS -I $(brew --prefix llvm@15)/include"
+  # node <- schniz/fnm 
+    eval "$(fnm env --use-on-cd)"
+  
+  # global node_modules <- bun
+    PATH="$PATH:$HOME/.bun/bin"
+
+  # zig <- hendriknielaender/zvm
+    PATH="$PATH:$HOME/.zvm/bin:$HOME/.zvm/self"
+
+  # haskell <- ghcup
+    PATH="$PATH:$HOME/.ghcup/bin"
+
+# projects #####################################################################
 
   # build your own internet
-    PATH=$PATH:${HOME}/dojo/byoi/bin
+    [[ -d "$HOME/dojo/byoi/bin" ]] && PATH="$PATH:$HOME/dojo/byoi/bin"
