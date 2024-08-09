@@ -1,6 +1,6 @@
 {
 	"dependencies": {
-		"@antfu/ni": "0.22.0",
+		"@antfu/ni": "0.22.1",
 		"yalc": "1.0.0-pre.53"
 	}
 }
