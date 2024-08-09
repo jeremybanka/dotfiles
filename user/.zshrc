@@ -30,6 +30,10 @@
   # zig <- hendriknielaender/zvm
     PATH="$PATH:$HOME/.zvm/bin:$HOME/.zvm/self"
 
+  # opam <- ocaml/opam
+     [[ ! -r '/Users/jem/.opam/opam-init/init.zsh' ]] \
+     || source '/Users/jem/.opam/opam-init/init.zsh' > /dev/null 2> /dev/null
+
   # haskell <- ghcup
     PATH="$PATH:$HOME/.ghcup/bin"
 
