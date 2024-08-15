@@ -11,6 +11,6 @@
 		"strictFunctionTypes": true,
 		"skipLibCheck": true
 	},
-	"include": ["**/*.ts", "eslint.config.js"],
+	"include": ["**/*.ts"],
 	"exclude": ["node_modules", "**/node_modules/*"]
 }

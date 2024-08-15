@@ -1,20 +1,17 @@
-// @ts-check
-
-import TypeScriptPlugin from "@typescript-eslint/eslint-plugin"
-import parser from "@typescript-eslint/parser"
-import ImportPlugin from "eslint-plugin-import"
-import eslintPluginPrettier from "eslint-plugin-prettier"
-import SimpleImportSortPlugin from "eslint-plugin-simple-import-sort"
+import * as TypeScriptPlugin from "@typescript-eslint/eslint-plugin"
+import * as parser from "@typescript-eslint/parser"
+import type { Linter } from "eslint"
+import * as ImportPlugin from "eslint-plugin-import"
+import * as eslintPluginPrettier from "eslint-plugin-prettier"
+import * as SimpleImportSortPlugin from "eslint-plugin-simple-import-sort"
 
 const ERROR = 2
 
-/** @type {import("@typescript-eslint/parser").ParserOptions} */
 const parserOptions = {
 	project: [`./tsconfig.json`],
 	sourceType: `module`,
-}
+} satisfies parser.ParserOptions
 
-/** @type {import("eslint").Linter.Config["rules"]} */
 const commonRules = {
 	"@typescript-eslint/adjacent-overload-signatures": ERROR,
 	"@typescript-eslint/array-type": 0,
@@ -151,9 +148,8 @@ const commonRules = {
 
 	"no-mixed-spaces-and-tabs": 0,
 	"quotes": [ERROR, `backtick`],
-}
+} satisfies Linter.Config[`rules`]
 
-/** @type {(import("eslint").Linter.Config)[]} */
 const configs = [
 	{
 		ignores: [
@@ -175,6 +171,6 @@ const configs = [
 		},
 		rules: commonRules,
 	},
-]
+] satisfies Linter.Config[]
 
 export default configs

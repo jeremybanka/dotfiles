@@ -2,6 +2,9 @@
 	"biome.enabled": false,
 	"cSpell.words": ["ergata", "manufab", "theia", "uruz", "webfonts"],
 	"typescript.tsdk": "node_modules/typescript/lib",
+	"eslint.options": {
+		"flags": ["unstable_ts_config"]
+	},
 	"[javascript]": {
 		"editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" }
 	},
