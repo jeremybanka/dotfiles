@@ -1,7 +1,7 @@
 import * as TypeScriptPlugin from "@typescript-eslint/eslint-plugin"
 import * as parser from "@typescript-eslint/parser"
 import type { Linter } from "eslint"
-import * as ImportPlugin from "eslint-plugin-import"
+import * as ImportPlugin from "eslint-plugin-import-x"
 import * as eslintPluginPrettier from "eslint-plugin-prettier"
 import * as SimpleImportSortPlugin from "eslint-plugin-simple-import-sort"
 
@@ -140,6 +140,7 @@ const commonRules = {
 	"@typescript-eslint/unified-signatures": ERROR,
 
 	"import/no-duplicates": ERROR,
+	"import/newline-after-import": ERROR,
 
 	"simple-import-sort/imports": ERROR,
 	"simple-import-sort/exports": ERROR,
