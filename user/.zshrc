@@ -3,8 +3,9 @@
   # zplug
     source $(brew --prefix zplug)/init.zsh
 
-  # brew completions 
+  # homebrew settings 
     FPATH=$FPATH:$(brew --prefix)/share/zsh/site-functions
+    export HOMEBREW_EDITOR="codium"
   
   # oh-my-zsh
     ZSH_THEME="kolo"
@@ -15,7 +16,7 @@
 
   # system
     PATH="$PATH:/usr/local/bin"
-
+  
   # postgresql
     PATH="$PATH:$(brew --prefix postgresql@16)/bin"
 
