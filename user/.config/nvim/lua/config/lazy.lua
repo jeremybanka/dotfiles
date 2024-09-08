@@ -19,6 +19,7 @@ require("lazy").setup({
     -- add your colorschemes here
     { "morhetz/gruvbox" },
     { "altercation/vim-colors-solarized" },
+    { "nvim-lua/plenary.nvim" },
     {
       "supermaven-inc/supermaven-nvim",
       config = function()
