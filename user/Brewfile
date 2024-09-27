@@ -57,7 +57,7 @@ brew "tcl-tk"
 brew "pillow"
 brew "pipx"
 brew "podman"
-brew "postgresql@16", restart_service: true
+brew "postgresql@17", restart_service: true
 brew "protobuf"
 brew "rust"
 brew "spotify_player"

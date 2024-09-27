@@ -18,7 +18,7 @@
     PATH="$PATH:/usr/local/bin"
   
   # postgresql
-    PATH="$PATH:$(brew --prefix postgresql@16)/bin"
+    PATH="$PATH:$(brew --prefix postgresql@17)/bin"
 
 # languages ####################################################################
 
