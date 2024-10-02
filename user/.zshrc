@@ -42,3 +42,9 @@
 
   # build your own internet
     [[ -d "$HOME/dojo/byoi/bin" ]] && PATH="$PATH:$HOME/dojo/byoi/bin"
+
+# deal with the intractable issue of my option-key being stuck down ############
+
+  if [[ "$(scutil --get ComputerName)" == "Eris" ]];
+    hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000E2,"HIDKeyboardModifierMappingDst":0x700000000}]}'
+  fi
