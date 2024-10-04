@@ -1,9 +1,9 @@
-import * as TypeScriptPlugin from "@typescript-eslint/eslint-plugin"
+import { default as TypeScriptPlugin } from "@typescript-eslint/eslint-plugin"
 import * as parser from "@typescript-eslint/parser"
 import type { Linter } from "eslint"
-import * as ImportPlugin from "eslint-plugin-import-x"
-import * as eslintPluginPrettier from "eslint-plugin-prettier"
-import * as SimpleImportSortPlugin from "eslint-plugin-simple-import-sort"
+import { default as ImportPlugin } from "eslint-plugin-import-x"
+import { default as eslintPluginPrettier } from "eslint-plugin-prettier"
+import { default as SimpleImportSortPlugin } from "eslint-plugin-simple-import-sort"
 
 const ERROR = 2
 
