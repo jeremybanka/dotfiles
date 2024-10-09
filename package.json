@@ -10,7 +10,7 @@
 	"devDependencies": {
 		"@eslint/eslintrc": "3.1.0",
 		"@eslint/js": "9.12.0",
-		"@types/bun": "1.1.10",
+		"@types/bun": "1.1.11",
 		"@types/eslint": "9.6.1",
 		"@types/node": "22.7.5",
 		"@typescript-eslint/eslint-plugin": "8.8.1",
