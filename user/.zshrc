@@ -20,6 +20,9 @@
   # postgresql
     PATH="$PATH:$(brew --prefix postgresql@17)/bin"
 
+  # lms (LM Studio CLI)
+    PATH="$PATH:$HOME/.cache/lm-studio/bin"
+
 # languages ####################################################################
 
   # node <- schniz/fnm 
