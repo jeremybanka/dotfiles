@@ -1,6 +1,7 @@
 {
 	"dependencies": {
 		"@antfu/ni": "0.23.0",
+		"sass-migrator": "2.2.0",
 		"yalc": "1.0.0-pre.53"
 	}
 }
