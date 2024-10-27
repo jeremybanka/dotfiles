@@ -6,10 +6,8 @@
 	"editor.formatOnSave": false,
 	"editor.minimap.enabled": false,
 	"editor.tabSize": 2,
-	"haskell.manageHLS": "GHCup",
 	"terminal.integrated.fontFamily": "JetBrains Mono",
 	"terminal.integrated.fontSize": 13,
-	"typescript.tsserver.maxTsServerMemory": 8192,
 	"window.autoDetectColorScheme": true,
 	"workbench.activityBar.location": "top",
 	"workbench.preferredDarkColorTheme": "Default Dark Modern",
@@ -24,5 +22,13 @@
 		}
 	},
 	"workbench.iconTheme": "material-icon-theme",
-	"workbench.productIconTheme": "fluent-icons"
+	"workbench.productIconTheme": "fluent-icons",
+
+	// LANGUAGES ///////////////////////////////////////////////////////////////////
+	"haskell.manageHLS": "GHCup",
+	"typescript.tsserver.maxTsServerMemory": 8192,
+	"zig.zls.path": "zls",
+
+	// DATA SHARING ///////////////////////////////////////////////////////////////
+	"redhat.telemetry.enabled": false
 }
