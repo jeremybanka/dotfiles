@@ -1,6 +1,6 @@
 {
 	"editor.wordSeparators": "./\\()\"'-:,.;<>~!@#%^&*|+=[]{}`~?", // $ is not a separator
-	"editor.fontFamily": "Theia 0.2.300",
+	"editor.fontFamily": "Theia 0.2.400",
 	"editor.fontLigatures": true,
 	"editor.fontSize": 13,
 	"editor.formatOnSave": false,
