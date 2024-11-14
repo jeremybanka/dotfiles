@@ -41,6 +41,24 @@
   # haskell <- ghcup
     PATH="$PATH:$HOME/.ghcup/bin"
 
+  # python <- conda
+    __conda_setup="$('$(brew --prefix)/Caskroom/miniforge/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__conda_setup"
+    else
+        if [ -f "$(brew --prefix)/Caskroom/miniforge/base/etc/profile.d/conda.sh" ]; then
+            . "$(brew --prefix)/Caskroom/miniforge/base/etc/profile.d/conda.sh"
+        else
+            export PATH="$PATH:$(brew --prefix)/Caskroom/miniforge/base/bin"
+        fi
+    fi
+    unset __conda_setup
+
+  # google cloud sdk
+    PATH="$PATH:$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin"
+    export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+
+
 # projects #####################################################################
 
   # build your own internet
