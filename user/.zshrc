@@ -23,6 +23,9 @@
   # lms (LM Studio CLI)
     PATH="$PATH:$HOME/.cache/lm-studio/bin"
 
+  # colima
+    export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
+
 # languages ####################################################################
 
   # node <- schniz/fnm 
