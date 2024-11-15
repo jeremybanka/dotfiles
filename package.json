@@ -7,7 +7,7 @@
 		"lint": "bun run lint:eslint && bun run lint:types"
 	},
 	"devDependencies": {
-		"@eslint/eslintrc": "3.1.0",
+		"@eslint/eslintrc": "3.2.0",
 		"@eslint/js": "9.14.0",
 		"@types/eslint": "9.6.1",
 		"@types/node": "22.9.0",
