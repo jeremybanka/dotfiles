@@ -51,6 +51,7 @@ brew "libiconv"
 brew "neovim"
 brew "ninja"
 brew "nnn"
+brew "ollama", restart_service: true
 brew "opam"
 brew "tcl-tk"
 brew "pillow"
