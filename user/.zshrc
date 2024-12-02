@@ -38,7 +38,8 @@
     }
 
     setopt prompt_subst
-    PROMPT='$(conda_env)%B%F{magenta}%c%F{green}${vcs_info_msg_0_}%B%F{magenta} %{$reset_color%}%% '
+    PROMPT='$(conda_env)%B%F{magenta}%c%F{green}${vcs_info_msg_0_}%B%F{magenta} 
+%B%F{magenta}└▶ %{$reset_color%}'
 
     autoload -U add-zsh-hook
     add-zsh-hook precmd  theme_precmd
