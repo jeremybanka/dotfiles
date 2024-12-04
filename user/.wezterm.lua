@@ -120,8 +120,75 @@ config.color_scheme = 'Custom'
 config.font_size = 13.5
 config.font = wezterm.font('Theia 0.2.500')
 config.window_decorations = 'RESIZE'
+config.colors = {
+  tab_bar = {
+    -- The color of the inactive tab bar edge/divider
+    inactive_tab_edge = '#222',
+  },
+}
 
-config.hide_tab_bar_if_only_one_tab = true
+config.window_frame = {
+  -- The font used in the tab bar.
+  -- Roboto Bold is the default; this font is bundled
+  -- with wezterm.
+  -- Whatever font is selected here, it will have the
+  -- main font setting appended to it to pick up any
+  -- fallback fonts you may have used there.
+  font = wezterm.font { family = 'Fira Sans', weight = 600 },
+
+  -- The size of the font in the tab bar.
+  -- Default to 10.0 on Windows but 12.0 on other systems
+  font_size = 10.5,
+
+  -- The overall background color of the tab bar when
+  -- the window is focused
+  active_titlebar_bg = dark and '#222' or '#fff',
+
+  -- The overall background color of the tab bar when
+  -- the window is not focused
+  inactive_titlebar_bg = dark and '#161616' or '#fff',
+}
+
+-- config.hide_tab_bar_if_only_one_tab = true
+-- config.show_close_tab_button_in_tabs = false
+config.show_new_tab_button_in_tab_bar = false
+config.tab_and_split_indices_are_zero_based = true
+
+-- The filled in variant of the < symbol
+local SOLID_LEFT_ARROW = wezterm.nerdfonts.pl_right_hard_divider
+
+-- The filled in variant of the > symbol
+local SOLID_RIGHT_ARROW = wezterm.nerdfonts.pl_left_hard_divider
+config.tab_bar_style = {}
+
+-- This function returns the suggested title for a tab.
+-- It prefers the title that was set via `tab:set_title()`
+-- or `wezterm cli set-tab-title`, but falls back to the
+-- title of the active pane in that tab.
+function tab_title(tab_info)
+  local title = tab_info.tab_title
+  -- if the tab title is explicitly set, take that
+  if title and #title > 0 then
+    return title
+  end
+  -- Otherwise, use the title from the active pane
+  -- in that tab
+  return tab_info.active_pane.title
+end
+
+wezterm.on(
+  'format-tab-title',
+  function(tab, tabs, panes, config, hover, max_width)
+    local title = tab_title(tab)
+    if tab.is_active then
+      return {
+        { Background = { Color = dark and '#000' or '#fff' } },
+        { Text = ' ' .. title .. ' ' },
+      }
+    end
+    return title
+  end
+)
 
 config.keys = {
   {
