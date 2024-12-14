@@ -30,5 +30,10 @@
 	"zig.zls.path": "zls",
 
 	// DATA SHARING ///////////////////////////////////////////////////////////////
-	"redhat.telemetry.enabled": false
+	"redhat.telemetry.enabled": false,
+	"cmake.pinnedCommands": [
+		"workbench.action.tasks.configureTaskRunner",
+		"workbench.action.tasks.runTask"
+	],
+	"workbench.layoutControl.enabled": false
 }

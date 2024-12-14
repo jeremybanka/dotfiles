@@ -51,6 +51,9 @@
   
   # postgresql
     PATH="$PATH:$(brew --prefix postgresql@17)/bin"
+  
+  # clang
+    PATH="$PATH:$(brew --prefix llvm@18)/bin"
 
   # lms (LM Studio CLI)
     PATH="$PATH:$HOME/.cache/lm-studio/bin"
@@ -124,6 +127,9 @@
 
   # build your own internet
     [[ -d "$HOME/dojo/byoi/bin" ]] && PATH="$PATH:$HOME/dojo/byoi/bin"
+
+  # bun-debug
+    PATH="$PATH:$HOME/dojo/oss/bun/build/debug"
 
 # deal with the intractable issue of my option-key being stuck down ############
 
