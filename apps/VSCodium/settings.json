@@ -35,5 +35,6 @@
 		"workbench.action.tasks.configureTaskRunner",
 		"workbench.action.tasks.runTask"
 	],
-	"workbench.layoutControl.enabled": false
+	"workbench.layoutControl.enabled": false,
+	"chat.commandCenter.enabled": false
 }
