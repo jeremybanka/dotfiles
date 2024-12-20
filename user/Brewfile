@@ -54,6 +54,7 @@ brew "lcov"
 brew "libiconv"
 brew "lnav"
 brew "neovim"
+brew "nginx", restart_service: true
 brew "ninja"
 brew "nnn"
 brew "ollama", restart_service: true
