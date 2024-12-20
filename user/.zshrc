@@ -69,7 +69,7 @@
   # global node_modules <- bun
     PATH="$PATH:$HOME/.bun/bin"
 
-  # zig <- hendriknielaender/zvm
+  # zig <- tristanisham/zvm
     PATH="$PATH:$HOME/.zvm/bin:$HOME/.zvm/self"
 
   # opam <- ocaml/opam
