@@ -50,7 +50,7 @@ jobs:
         shell: zsh {0}
 
       - name: Run Setup
-        run: ./setup.sh
+        run: ${DOTFILES_DIR}/setup.sh
         shell: zsh {0}
         env:
           VIRTUAL_HOME: ${DOTFILES_DIR}/home
@@ -63,5 +63,5 @@ jobs:
         shell: zsh {0}
 
       - name: Use Brewfile
-        run: ./scripts/brewfile-use.sh
+        run: ${DOTFILES_DIR}/scripts/brewfile-use.sh
         shell: zsh {0}
