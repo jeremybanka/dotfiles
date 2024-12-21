@@ -35,7 +35,7 @@ jobs:
         run: bun lint:types
   
   Test:
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 2
     steps:
       - name: Checkout
