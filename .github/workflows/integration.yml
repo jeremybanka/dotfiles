@@ -49,6 +49,11 @@ jobs:
         run: ./setup.sh
         shell: zsh {0}
 
+      - run: |
+          ls $HOME
+          ls .
+        shell: zsh {0}
+
       - name: Use Brewfile
         run: ./scripts/brewfile-use.sh
         shell: zsh {0}
