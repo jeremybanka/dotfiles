@@ -37,9 +37,13 @@ jobs:
   Test:
     runs-on: macos-15
     timeout-minutes: 2
+    env:
+      DOTFILES_DIR: ${{ github.workspace }}/dotfiles
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
+        with:
+          path: DOTFILES_DIR
       
       - name: Install Homebrew
         run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -48,10 +52,14 @@ jobs:
       - name: Run Setup
         run: ./setup.sh
         shell: zsh {0}
+        env:
+          VIRTUAL_HOME: ${DOTFILES_DIR}/home
 
       - run: |
-          ls $HOME
-          ls .
+          echo "HOME: $HOME"
+          ls -la $HOME
+          echo "Current Directory: $PWD"
+          ls -la .
         shell: zsh {0}
 
       - name: Use Brewfile
