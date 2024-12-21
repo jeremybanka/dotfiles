@@ -43,6 +43,8 @@ jobs:
       
       - name: Install Homebrew
         run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        shell: zsh {0}
 
       - name: Use Brewfile
         run: ./scripts/brewfile-use.sh
+        shell: zsh {0}
