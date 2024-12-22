@@ -33,7 +33,7 @@ jobs:
 
       - name: Type Check
         run: bun lint:types
-  
+
   Test:
     runs-on: macos-15
     timeout-minutes: 10
@@ -56,6 +56,10 @@ jobs:
         run: |
           brew tap oven-sh/bun
           brew install bun
+        shell: zsh {0}
+
+      - name: Configure Apps
+        run: ${{ github.workspace }}/scripts/configure-apps.ts
         shell: zsh {0}
 
       - name: Install NPM Globals
