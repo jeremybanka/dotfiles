@@ -1,8 +1,8 @@
 #!/bin/bash
 
-DOTFILES_DIR=~/dotfiles/user
+VIRTUAL_HOME=${VIRTUAL_HOME:-$HOME/dotfiles}
 
-for item in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.[^.]*; do
+for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	if [ -e "$item" ]; then
 		target="$HOME/$(basename "$item")"
 		

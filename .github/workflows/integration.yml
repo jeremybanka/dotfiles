@@ -33,3 +33,35 @@ jobs:
 
       - name: Type Check
         run: bun lint:types
+
+  Test:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      
+      - name: Install Homebrew
+        run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        shell: zsh {0}
+
+      - name: Run Setup
+        run: ${{ github.workspace }}/setup.sh
+        shell: zsh {0}
+        env:
+          VIRTUAL_HOME: ${{ github.workspace }}/home
+
+      - name: Install Bun
+        run: |
+          brew tap oven-sh/bun
+          brew install bun
+        shell: zsh {0}
+
+      - name: Configure Apps
+        run: ${{ github.workspace }}/scripts/configure-apps.ts
+        shell: zsh {0}
+
+      - name: Install NPM Globals
+        run: ${{ github.workspace }}/scripts/install-npm-globals.ts
+        shell: zsh {0}

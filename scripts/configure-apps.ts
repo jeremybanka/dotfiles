@@ -14,10 +14,15 @@ await configureIllustrator()
 async function configureBun() {
 	const sourceDir = resolve(appConfigDir, `bun`)
 	const targetDir = join(homedir(), `.bun`, `install`, `global`)
+	console.log(`Configuring Bun`, { appConfigDir, sourceDir, targetDir })
+	if (!existsSync(targetDir)) {
+		console.log(`Creating target directory: ${targetDir}`)
+		mkdirSync(targetDir, { recursive: true })
+	}
 	for (const filename of [`package.json`, `bun.lockb`]) {
 		const sourcePath = join(sourceDir, filename)
 		const targetPath = join(targetDir, filename)
-		console.log(`Configuring Bun`, { appConfigDir, sourcePath, targetPath })
+		console.log(`Linking File`, { appConfigDir, sourcePath, targetPath })
 		try {
 			if (!existsSync(sourcePath)) {
 				throw new Error(`Source file does not exist: ${sourcePath}`)
@@ -48,15 +53,19 @@ async function configureBun() {
 
 async function configureVSCodium() {
 	const sourcePath = resolve(appConfigDir, `VSCodium`, `settings.json`)
-	const targetPath = join(
+	const targetDir = join(
 		homedir(),
 		`Library`,
 		`Application Support`,
 		`VSCodium`,
-		`User`,
-		`settings.json`
+		`User`
 	)
+	const targetPath = join(targetDir, `settings.json`)
 	console.log(`Configuring VSCodium`, { appConfigDir, sourcePath, targetPath })
+	if (!existsSync(targetDir)) {
+		console.log(`Creating target directory: ${targetDir}`)
+		mkdirSync(targetDir, { recursive: true })
+	}
 	try {
 		if (!existsSync(sourcePath)) {
 			throw new Error(`Source file does not exist: ${sourcePath}`)

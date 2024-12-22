@@ -1,6 +1,6 @@
-user/.config/containers
-user/.config/gh/hosts.yml
-user/.config/gcloud
+home/.config/containers
+home/.config/gh/hosts.yml
+home/.config/gcloud
 
 # OS generated files #
 ######################
