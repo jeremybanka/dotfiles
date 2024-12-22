@@ -52,13 +52,12 @@ jobs:
         env:
           VIRTUAL_HOME: ${{ github.workspace }}/home
 
-      - run: |
-          echo "HOME: $HOME"
-          ls -la $HOME
-          echo "Current Directory: $PWD"
-          ls -la .
+      - name: Install Bun
+        run: |
+          brew tap oven-sh/bun
+          brew install bun
         shell: zsh {0}
 
-      - name: Use Brewfile
-        run: ${{ github.workspace }}/scripts/brewfile-use.sh
+      - name: Install NPM Globals
+        run: ${{ github.workspace }}/scripts/install-npm-globals.sh
         shell: zsh {0}
