@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VIRTUAL_HOME=${VIRTUAL_HOME:-$HOME/dotfiles}
+VIRTUAL_HOME=${VIRTUAL_HOME:-$HOME/dotfiles/home}
 
 for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	if [ -e "$item" ]; then
