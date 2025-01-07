@@ -64,7 +64,7 @@
 # languages ####################################################################
 
   # node <- schniz/fnm 
-    eval "$(fnm env --use-on-cd)"
+    eval "$(fnm env --use-on-cd --corepack-enabled)"
   
   # global node_modules <- bun
     PATH="$PATH:$HOME/.bun/bin"
