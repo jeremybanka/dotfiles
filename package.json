@@ -2,7 +2,7 @@
 	"name": "dotfiles",
 	"type": "module",
 	"scripts": {
-		"lint:eslint": "eslint --flag unstable_ts_config -- .",
+		"lint:eslint": "eslint -- .",
 		"lint:types": "tsc --noEmit",
 		"lint": "bun run lint:eslint && bun run lint:types"
 	},
