@@ -20,7 +20,7 @@ async function configureBun() {
 		console.log(`Creating target directory: ${targetDir}`)
 		mkdirSync(targetDir, { recursive: true })
 	}
-	for (const filename of [`package.json`, `bun.lockb`]) {
+	for (const filename of [`package.json`, `bun.lock`]) {
 		const sourcePath = join(sourceDir, filename)
 		const targetPath = join(targetDir, filename)
 		console.log(`Linking File`, { appConfigDir, sourcePath, targetPath })
