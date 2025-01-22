@@ -33,7 +33,6 @@ async function configureBun() {
 				const isSymlink = lstatSync(targetPath).isSymbolicLink()
 				if (isSymlink) {
 					console.log(`Symlink already exists: ${targetPath}`)
-					return
 				} else {
 					console.log(`Removing existing file: ${targetPath}`)
 					await unlink(targetPath)
@@ -76,7 +75,6 @@ async function configureVSCodium() {
 			const isSymlink = lstatSync(targetPath).isSymbolicLink()
 			if (isSymlink) {
 				console.log(`Symlink already exists: ${targetPath}`)
-				return
 			} else {
 				console.log(`Removing existing file: ${targetPath}`)
 				await unlink(targetPath)
