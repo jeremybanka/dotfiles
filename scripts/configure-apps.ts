@@ -20,7 +20,7 @@ async function configureBun() {
 		console.log(`Creating target directory: ${targetDir}`)
 		mkdirSync(targetDir, { recursive: true })
 	}
-	for (const filename of [`package.json`, `bun.lockb`]) {
+	for (const filename of [`package.json`, `bun.lock`]) {
 		const sourcePath = join(sourceDir, filename)
 		const targetPath = join(targetDir, filename)
 		console.log(`Linking File`, { appConfigDir, sourcePath, targetPath })
@@ -33,7 +33,6 @@ async function configureBun() {
 				const isSymlink = lstatSync(targetPath).isSymbolicLink()
 				if (isSymlink) {
 					console.log(`Symlink already exists: ${targetPath}`)
-					return
 				} else {
 					console.log(`Removing existing file: ${targetPath}`)
 					await unlink(targetPath)
@@ -76,7 +75,6 @@ async function configureVSCodium() {
 			const isSymlink = lstatSync(targetPath).isSymbolicLink()
 			if (isSymlink) {
 				console.log(`Symlink already exists: ${targetPath}`)
-				return
 			} else {
 				console.log(`Removing existing file: ${targetPath}`)
 				await unlink(targetPath)
