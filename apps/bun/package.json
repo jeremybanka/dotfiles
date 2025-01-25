@@ -1,6 +1,6 @@
 {
 	"dependencies": {
-		"@antfu/ni": "23.2.0",
+		"@antfu/ni": "23.3.0",
 		"repomix": "0.2.23",
 		"sass-migrator": "2.3.1",
 		"yalc": "1.0.0-pre.53"
