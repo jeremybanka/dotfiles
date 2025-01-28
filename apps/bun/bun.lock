@@ -4,7 +4,7 @@
     "": {
       "dependencies": {
         "@antfu/ni": "23.3.0",
-        "repomix": "0.2.23",
+        "repomix": "0.2.24",
         "sass-migrator": "2.3.1",
         "yalc": "1.0.0-pre.53",
       },
@@ -219,8 +219,6 @@
 
     "onetime": ["onetime@6.0.0", "", { "dependencies": { "mimic-fn": "^4.0.0" } }, "sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ=="],
 
-    "p-map": ["p-map@7.0.3", "", {}, "sha512-VkndIv2fIB99swvQoA65bm+fsmt6UNdGeIB0oxBs+WhAhdh08QA04JXpI7rbB9r08/nkbysKoya9rtDERYOYMA=="],
-
     "path-is-absolute": ["path-is-absolute@1.0.1", "", {}, "sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg=="],
 
     "path-key": ["path-key@3.1.1", "", {}, "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="],
@@ -235,7 +233,7 @@
 
     "queue-microtask": ["queue-microtask@1.2.3", "", {}, "sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A=="],
 
-    "repomix": ["repomix@0.2.23", "", { "dependencies": { "@clack/prompts": "^0.9.1", "@secretlint/core": "^9.0.0", "@secretlint/secretlint-rule-preset-recommend": "^9.0.0", "cli-spinners": "^2.9.2", "clipboardy": "^4.0.0", "commander": "^13.0.0", "fast-xml-parser": "^4.5.1", "globby": "^14.0.2", "handlebars": "^4.7.8", "iconv-lite": "^0.6.3", "istextorbinary": "^9.5.0", "jschardet": "^3.1.4", "log-update": "^6.1.0", "minimatch": "^10.0.1", "p-map": "^7.0.3", "picocolors": "^1.1.1", "piscina": "^4.8.0", "strip-comments": "^2.0.1", "strip-json-comments": "^5.0.1", "tiktoken": "^1.0.18", "zod": "^3.24.1" }, "bin": { "repomix": "bin/repomix.cjs" } }, "sha512-7lGHyfPjG3i2DfSEtSpF6mW/QJIxEUZ1z1oZZVlMlDnIb1Obg9DPIS4i8SBlePKgac9w88rj/sSBeIcbUSdglg=="],
+    "repomix": ["repomix@0.2.24", "", { "dependencies": { "@clack/prompts": "^0.9.1", "@secretlint/core": "^9.0.0", "@secretlint/secretlint-rule-preset-recommend": "^9.0.0", "cli-spinners": "^2.9.2", "clipboardy": "^4.0.0", "commander": "^13.1.0", "fast-xml-parser": "^4.5.1", "globby": "^14.0.2", "handlebars": "^4.7.8", "iconv-lite": "^0.6.3", "istextorbinary": "^9.5.0", "jschardet": "^3.1.4", "log-update": "^6.1.0", "minimatch": "^10.0.1", "picocolors": "^1.1.1", "piscina": "^4.8.0", "strip-comments": "^2.0.1", "strip-json-comments": "^5.0.1", "tiktoken": "^1.0.18", "zod": "^3.24.1" }, "bin": { "repomix": "bin/repomix.cjs" } }, "sha512-bd8XBp8pfNQnSSebhBHdzAi0q4Mq6QK4W2fExrhPaBPFVBMNCNOUB2Y+YPmez2UkTHZGEAjD8FQpROzAghF41w=="],
 
     "require-directory": ["require-directory@2.1.1", "", {}, "sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q=="],
 
