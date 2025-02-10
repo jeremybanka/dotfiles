@@ -29,5 +29,8 @@
 			"strings": true
 		}
 	},
-	"haskell.manageHLS": "GHCup"
+	"haskell.manageHLS": "GHCup",
+	"files.associations": {
+		"**/cabal/config": "cabal"
+	}
 }
