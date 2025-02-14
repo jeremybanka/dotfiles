@@ -2,6 +2,8 @@ home/.config/containers
 home/.config/gh/hosts.yml
 home/.config/gcloud
 home/.config/lnav
+home/.config/zed/*
+!home/.config/zed/settings.json
 
 # OS generated files #
 ######################
