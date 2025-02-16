@@ -63,5 +63,5 @@ jobs:
         shell: zsh {0}
 
       - name: Install NPM Globals
-        run: ${{ github.workspace }}/scripts/install-npm-globals.ts
+        run: ${{ github.workspace }}/scripts/npm-i.ts
         shell: zsh {0}
