@@ -72,6 +72,9 @@
   # zig <- tristanisham/zvm
     PATH="$PATH:$HOME/.zvm/bin:$HOME/.zvm/self"
 
+  # global go packages
+    PATH="$PATH:$HOME/go/bin"
+
   # opam <- ocaml/opam
      [[ ! -r "$HOME/.opam/opam-init/init.zsh" ]] \
      || source "$HOME/.opam/opam-init/init.zsh" > /dev/null 2> /dev/null
