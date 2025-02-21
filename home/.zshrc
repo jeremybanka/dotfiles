@@ -61,6 +61,10 @@
   # colima
     export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
 
+  # google cloud sdk
+    PATH="$PATH:$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin"
+    export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+
 # languages ####################################################################
 
   # node <- schniz/fnm 
@@ -120,11 +124,6 @@
     autoload -U add-zsh-hook
     add-zsh-hook chpwd conda_auto_env
     conda_auto_env
-
-  # google cloud sdk
-    PATH="$PATH:$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin"
-    export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-
 
 # projects #####################################################################
 
