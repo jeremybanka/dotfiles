@@ -7,16 +7,17 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "icon_theme": "Catppuccin Macchiato",
   "features": {
-    "inline_completion_provider": "supermaven"
+    "edit_prediction_provider": "zed"
   },
-  "ui_font_size": 16,
-  "ui_font_family": "Theia 0.2.300",
-  "buffer_font_family": "Theia 0.2.400",
+  "ui_font_size": 14,
+  "ui_font_family": "Theia 0.2.500",
+  "buffer_font_family": "Theia 0.2.500",
   "buffer_font_size": 14.0,
   "theme": {
     "mode": "system",
-    "light": "One Light",
-    "dark": "One Dark"
+    "light": "Catppuccin Latte (Blur)",
+    "dark": "Catppuccin Espresso (Blur)"
   }
 }
