@@ -4,7 +4,7 @@
     "": {
       "dependencies": {
         "@antfu/ni": "23.3.1",
-        "repomix": "0.2.31",
+        "repomix": "0.2.33",
         "sass-migrator": "2.3.1",
         "yalc": "1.0.0-pre.53",
       },
@@ -249,7 +249,7 @@
 
     "queue-microtask": ["queue-microtask@1.2.3", "", {}, "sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A=="],
 
-    "repomix": ["repomix@0.2.31", "", { "dependencies": { "@clack/prompts": "^0.9.1", "@secretlint/core": "^9.0.0", "@secretlint/secretlint-rule-preset-recommend": "^9.0.0", "cli-spinners": "^2.9.2", "clipboardy": "^4.0.0", "commander": "^13.1.0", "fast-xml-parser": "^5.0.6", "git-url-parse": "^16.0.0", "globby": "^14.0.2", "handlebars": "^4.7.8", "iconv-lite": "^0.6.3", "istextorbinary": "^9.5.0", "jschardet": "^3.1.4", "json5": "^2.2.3", "log-update": "^6.1.0", "minimatch": "^10.0.1", "picocolors": "^1.1.1", "piscina": "^4.8.0", "strip-comments": "^2.0.1", "strip-json-comments": "^5.0.1", "tiktoken": "^1.0.19", "tree-sitter-wasms": "^0.1.12", "web-tree-sitter": "^0.24.7", "zod": "^3.24.1" }, "bin": { "repomix": "bin/repomix.cjs" } }, "sha512-b4V17YLFRZSo4cYy/JTJ2W3ZrVpaTNCg3auGUCKo37/KLSM1uPmB3LfxjGDoW7Yn8V0CGbWhinEhJHSzWG4aIg=="],
+    "repomix": ["repomix@0.2.33", "", { "dependencies": { "@clack/prompts": "^0.9.1", "@secretlint/core": "^9.0.0", "@secretlint/secretlint-rule-preset-recommend": "^9.0.0", "cli-spinners": "^2.9.2", "clipboardy": "^4.0.0", "commander": "^13.1.0", "fast-xml-parser": "^5.0.6", "git-url-parse": "^16.0.0", "globby": "^14.0.2", "handlebars": "^4.7.8", "iconv-lite": "^0.6.3", "istextorbinary": "^9.5.0", "jschardet": "^3.1.4", "json5": "^2.2.3", "log-update": "^6.1.0", "minimatch": "^10.0.1", "picocolors": "^1.1.1", "piscina": "^4.8.0", "strip-comments": "^2.0.1", "strip-json-comments": "^5.0.1", "tiktoken": "^1.0.19", "tree-sitter-wasms": "^0.1.12", "web-tree-sitter": "^0.24.7", "zod": "^3.24.1" }, "bin": { "repomix": "bin/repomix.cjs" } }, "sha512-gKptGk1xDZIRM5VKSv8Wo6loYl2GiRIioVE6D+xNwKLVJdd3Trlg5Pu9j78D3l2hHDJrxP8Wqb3f2YqXpMXz1g=="],
 
     "require-directory": ["require-directory@2.1.1", "", {}, "sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q=="],
 
