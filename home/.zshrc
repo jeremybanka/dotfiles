@@ -49,6 +49,9 @@
   # system
     PATH="$PATH:/usr/local/bin"
   
+  # vscodium
+    alias c="open $1 -a \"VSCodium\""
+  
   # postgresql
     PATH="$PATH:$(brew --prefix postgresql@17)/bin"
   
