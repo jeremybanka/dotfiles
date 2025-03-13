@@ -1,7 +1,7 @@
 {
 	"dependencies": {
 		"@antfu/ni": "24.1.0",
-		"repomix": "0.2.38",
+		"repomix": "0.2.39",
 		"sass-migrator": "2.3.1",
 		"yalc": "1.0.0-pre.53"
 	}
