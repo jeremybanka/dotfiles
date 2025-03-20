@@ -48,6 +48,7 @@
 
   # system
     PATH="$PATH:/usr/local/bin"
+    PATH="$PATH:/$HOME/.local/bin"
   
   # vscodium
     alias c="open $1 -a \"VSCodium\""
