@@ -124,7 +124,7 @@ installdir: /Users/jem/.local/bin
 -- username:
 -- password:
 -- password-command:
--- multi-repl:
+multi-repl: True
 -- builddir:
 
 haddock
