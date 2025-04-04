@@ -25,7 +25,6 @@
 	"workbench.productIconTheme": "fluent-icons",
 
 	// LANGUAGES ///////////////////////////////////////////////////////////////////
-	"haskell.manageHLS": "GHCup",
 	"typescript.tsserver.maxTsServerMemory": 8192,
 	"zig.zls.path": "zls",
 
