@@ -50,5 +50,6 @@
 		"*.sdb": "${capture}.${extname}-*",
 		"*.s3db": "${capture}.${extname}-*"
 	},
-	"explorer.fileNesting.enabled": true
+	"explorer.fileNesting.enabled": true,
+	"terminal.integrated.inheritEnv": false
 }
