@@ -4,7 +4,7 @@
     "": {
       "dependencies": {
         "@antfu/ni": "25.0.0",
-        "repomix": "0.3.8",
+        "repomix": "0.3.9",
         "sass-migrator": "2.3.2",
         "yalc": "1.0.0-pre.53",
       },
@@ -363,7 +363,7 @@
 
     "raw-body": ["raw-body@3.0.0", "", { "dependencies": { "bytes": "3.1.2", "http-errors": "2.0.0", "iconv-lite": "0.6.3", "unpipe": "1.0.0" } }, "sha512-RmkhL8CAyCRPXCE28MMH0z2PNWQBNk2Q09ZdxM9IOOXwxwZbN+qbWaatPkdkWIKL2ZVDImrN/pK5HTRz2PcS4g=="],
 
-    "repomix": ["repomix@0.3.8", "", { "dependencies": { "@clack/prompts": "^0.10.1", "@modelcontextprotocol/sdk": "^1.11.0", "@secretlint/core": "^9.3.1", "@secretlint/secretlint-rule-preset-recommend": "^9.3.1", "cli-spinners": "^2.9.2", "clipboardy": "^4.0.0", "commander": "^14.0.0", "fast-xml-parser": "^5.2.0", "git-url-parse": "^16.1.0", "globby": "^14.1.0", "handlebars": "^4.7.8", "iconv-lite": "^0.6.3", "istextorbinary": "^9.5.0", "jschardet": "^3.1.4", "json5": "^2.2.3", "log-update": "^6.1.0", "minimatch": "^10.0.1", "picocolors": "^1.1.1", "piscina": "^4.9.2", "strip-comments": "^2.0.1", "strip-json-comments": "^5.0.1", "tiktoken": "^1.0.20", "tree-sitter-wasms": "^0.1.12", "web-tree-sitter": "^0.24.7", "zod": "^3.24.3" }, "bin": { "repomix": "bin/repomix.cjs" } }, "sha512-SJGsgy/7POg0jP34Y29Xz8PdBME3ilWoKqKAkh4qAqryNSXBX3BeoYAEj5/rhvFaBUbs3DiyUQACbS7wv12A+A=="],
+    "repomix": ["repomix@0.3.9", "", { "dependencies": { "@clack/prompts": "^0.10.1", "@modelcontextprotocol/sdk": "^1.11.0", "@secretlint/core": "^9.3.1", "@secretlint/secretlint-rule-preset-recommend": "^9.3.1", "cli-spinners": "^2.9.2", "clipboardy": "^4.0.0", "commander": "^14.0.0", "fast-xml-parser": "^5.2.0", "git-url-parse": "^16.1.0", "globby": "^14.1.0", "handlebars": "^4.7.8", "iconv-lite": "^0.6.3", "istextorbinary": "^9.5.0", "jschardet": "^3.1.4", "json5": "^2.2.3", "log-update": "^6.1.0", "minimatch": "^10.0.1", "picocolors": "^1.1.1", "piscina": "^4.9.2", "strip-comments": "^2.0.1", "strip-json-comments": "^5.0.1", "tiktoken": "^1.0.20", "tree-sitter-wasms": "^0.1.12", "web-tree-sitter": "^0.24.7", "zod": "^3.24.3" }, "bin": { "repomix": "bin/repomix.cjs" } }, "sha512-Olo/vORZChL98HOC3tZaE5+kwSaoox8KoF9N+lfQRb7dWT4qNa/SLFHT40Xq54cbZ7l9qTIZhXWmU1d/AtwqGQ=="],
 
     "require-directory": ["require-directory@2.1.1", "", {}, "sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q=="],
 
