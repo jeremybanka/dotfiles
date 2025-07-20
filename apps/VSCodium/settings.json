@@ -1,4 +1,5 @@
 {
+	// EDITOR /////////////////////////////////////////////////////////////////////
 	"editor.wordSeparators": "./\\()\"'-:,.;<>~!@#%^&*|+=[]{}`~?", // $ is not a separator
 	"editor.fontFamily": "Theia 0.2.400",
 	"editor.fontLigatures": true,
@@ -6,10 +7,14 @@
 	"editor.formatOnSave": false,
 	"editor.minimap.enabled": false,
 	"editor.tabSize": 2,
+
+	// TERMINAL ///////////////////////////////////////////////////////////////////
 	"terminal.integrated.fontFamily": "JetBrains Mono",
 	"terminal.integrated.fontSize": 13,
+	"terminal.integrated.inheritEnv": false,
+
+	// LAYOUT /////////////////////////////////////////////////////////////////////
 	"window.autoDetectColorScheme": true,
-	"workbench.activityBar.location": "top",
 	"workbench.preferredDarkColorTheme": "Default Dark Modern",
 	"workbench.preferredLightColorTheme": "Aeos",
 	"workbench.colorCustomizations": {
@@ -23,32 +28,19 @@
 	},
 	"workbench.iconTheme": "material-icon-theme",
 	"workbench.productIconTheme": "fluent-icons",
+	"workbench.activityBar.location": "top",
+	"workbench.layoutControl.enabled": false,
 
-	// LANGUAGES ///////////////////////////////////////////////////////////////////
+	// LANGUAGES //////////////////////////////////////////////////////////////////
 	"typescript.tsserver.maxTsServerMemory": 8192,
 	"zig.zls.path": "zls",
 
-	// DATA SHARING ///////////////////////////////////////////////////////////////
+	// MISC ///////////////////////////////////////////////////////////////////////
+	"chat.commandCenter.enabled": false,
 	"redhat.telemetry.enabled": false,
 	"cmake.pinnedCommands": [
 		"workbench.action.tasks.configureTaskRunner",
 		"workbench.action.tasks.runTask"
 	],
-	"workbench.layoutControl.enabled": false,
-	"chat.commandCenter.enabled": false,
-	"explorer.fileNesting.patterns": {
-		"*.ts": "${capture}.js",
-		"*.js": "${capture}.js.map, ${capture}.min.js",
-		"*.d.ts": "${capture}.d.ts.map",
-		"tsconfig.json": "tsconfig.*.json",
-		"package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",
-		"*.sqlite": "${capture}.${extname}-*",
-		"*.db": "${capture}.${extname}-*",
-		"*.sqlite3": "${capture}.${extname}-*",
-		"*.db3": "${capture}.${extname}-*",
-		"*.sdb": "${capture}.${extname}-*",
-		"*.s3db": "${capture}.${extname}-*"
-	},
-	"explorer.fileNesting.enabled": true,
-	"terminal.integrated.inheritEnv": false
+	"githubPullRequests.pullBranch": "never"
 }
