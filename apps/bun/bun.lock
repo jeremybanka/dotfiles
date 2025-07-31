@@ -5,7 +5,7 @@
       "dependencies": {
         "@antfu/ni": "25.0.0",
         "repomix": "1.2.1",
-        "sass-migrator": "2.4.1",
+        "sass-migrator": "2.4.2",
         "yalc": "1.0.0-pre.53",
       },
     },
@@ -353,7 +353,7 @@
 
     "safer-buffer": ["safer-buffer@2.1.2", "", {}, "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg=="],
 
-    "sass-migrator": ["sass-migrator@2.4.1", "", { "bin": { "sass-migrator": "sass-migrator.js" } }, "sha512-+aGq0XTCTuyO8ZdtZ/EIkhuLxf1Nteav1GFHW81ebjbR1gudPVt9585/OsEBzcPwTAHwhvjHbt7tkc+uDNTJvQ=="],
+    "sass-migrator": ["sass-migrator@2.4.2", "", { "bin": { "sass-migrator": "sass-migrator.js" } }, "sha512-YNvfvXtlP91H1YJ/csKs9IL3SnGHfAJNU/en/AfJmKKcFpouYX8K1NsQ+3hqyo9rP1zGPrlNM3Lp7mteeXReyQ=="],
 
     "send": ["send@1.1.0", "", { "dependencies": { "debug": "^4.3.5", "destroy": "^1.2.0", "encodeurl": "^2.0.0", "escape-html": "^1.0.3", "etag": "^1.8.1", "fresh": "^0.5.2", "http-errors": "^2.0.0", "mime-types": "^2.1.35", "ms": "^2.1.3", "on-finished": "^2.4.1", "range-parser": "^1.2.1", "statuses": "^2.0.1" } }, "sha512-v67WcEouB5GxbTWL/4NeToqcZiAWEq90N888fczVArY8A79J0L4FD7vj5hm3eUMua5EpoQ59wa/oovY6TLvRUA=="],
 
