@@ -7,19 +7,19 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-  "theme": {
-    "mode": "system",
-    "light": "Lux Sunny",
-    "dark": "Lux New Moon"
-  },
-  "debugger": {
-    "dock": "left"
-  },
-  "vim_mode": true,
-  "icon_theme": "Material Icon Theme",
-  "features": {
-    "edit_prediction_provider": "zed"
-  },
-  "ui_font_family": "Theia 0.2.500",
-  "buffer_font_family": "Theia 0.2.500"
+	"theme": {
+		"mode": "system",
+		"light": "Lux Sunny",
+		"dark": "Lux New Moon"
+	},
+	"debugger": {
+		"dock": "left"
+	},
+	"vim_mode": true,
+	"icon_theme": "Material Icon Theme",
+	"features": {
+		"edit_prediction_provider": "zed"
+	},
+	"ui_font_family": "Noname Sans",
+	"buffer_font_family": "Theia 0.2.500"
 }
