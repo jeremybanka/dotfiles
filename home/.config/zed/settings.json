@@ -20,6 +20,23 @@
 	"features": {
 		"edit_prediction_provider": "zed"
 	},
-	"ui_font_family": "Noname Sans",
-	"buffer_font_family": "Theia 0.2.500"
+	"buffer_font_family": "Theia 0.2.500",
+	"buffer_line_height": {
+		"custom": 1.5
+	},
+	"tabs": {
+		"file_icons": true,
+		"show_diagnostics": "all",
+		"git_status": true
+	},
+	"terminal": {
+		"font_features": {
+			"calt": true
+		},
+		"line_height": {
+			"custom": 1.25
+		},
+		"minimum_contrast": 0
+	},
+	"ui_font_family": "Noname Sans"
 }
