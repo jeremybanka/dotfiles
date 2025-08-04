@@ -21,6 +21,7 @@
 		"edit_prediction_provider": "zed"
 	},
 	"buffer_font_family": "Theia 0.2.500",
+	"buffer_font_size": 13.5,
 	"buffer_line_height": {
 		"custom": 1.5
 	},
