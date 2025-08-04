@@ -3,10 +3,10 @@
   # zplug
     source $(brew --prefix zplug)/init.zsh
 
-  # homebrew settings 
+  # homebrew settings
     FPATH=$FPATH:$(brew --prefix)/share/zsh/site-functions
-    export HOMEBREW_EDITOR="codium"
-  
+    export HOMEBREW_EDITOR="zed"
+
   # oh-my-zsh
     plugins=(git)
     source ${HOME}/.oh-my-zsh/oh-my-zsh.sh
@@ -38,7 +38,7 @@
     }
 
     setopt prompt_subst
-    PROMPT='$(conda_env)%B%F{magenta}%c%F{green}${vcs_info_msg_0_}%B%F{magenta} 
+    PROMPT='$(conda_env)%B%F{magenta}%c%F{green}${vcs_info_msg_0_}%B%F{magenta}
 %B%F{magenta}└▶ %{$reset_color%}'
 
     autoload -U add-zsh-hook
@@ -49,13 +49,16 @@
   # system
     PATH="$PATH:/usr/local/bin"
     PATH="$PATH:/$HOME/.local/bin"
-  
+
+  # zed
+    alias z="zed"
+
   # vscodium
     alias c="open $1 -a \"VSCodium\""
-  
+
   # postgresql
     PATH="$PATH:$(brew --prefix postgresql@17)/bin"
-  
+
   # clang
     PATH="$PATH:$(brew --prefix llvm@18)/bin"
 
@@ -71,9 +74,9 @@
 
 # languages ####################################################################
 
-  # node <- schniz/fnm 
+  # node <- schniz/fnm
     eval "$(fnm env --use-on-cd --corepack-enabled)"
-  
+
   # global node_modules <- bun
     PATH="$PATH:$HOME/.bun/bin"
 
@@ -112,7 +115,7 @@
     function conda_auto_env() {
       if [ -f "environment.yml" ]; then
           env_name=$(grep -m 1 'name:' environment.yml | awk '{print $2}')
-          
+
           if [[ "$CONDA_DEFAULT_ENV" != "$env_name" ]]; then
               echo "Activating Conda environment \e[32m$env_name\e[0m"
               mamba activate "$env_name" || echo "Environment '$env_name' not found. Create it with 'mamba env create -f environment.yml'."
