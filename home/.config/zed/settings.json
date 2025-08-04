@@ -9,8 +9,8 @@
 {
 	"theme": {
 		"mode": "system",
-		"light": "Lux Sunny",
-		"dark": "Lux New Moon"
+		"light": "Lux White",
+		"dark": "Lux Black"
 	},
 	"debugger": {
 		"dock": "left"
