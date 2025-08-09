@@ -16,6 +16,7 @@ for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	fi
 done
 
+rm -rf "$HOME/.bun/install/global"
 ln -sf "$VIRTUAL_HOME"/.bun/install/global "$HOME/.bun/install/global"
 
 echo "All dotfiles and configurations have been symlinked."

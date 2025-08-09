@@ -41,9 +41,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.2.2
 
-      
       - name: Install Homebrew
         run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        shell: zsh {0}
+
+      - name: Install Bun
+        run: |
+          brew tap oven-sh/bun
+          brew install bun
         shell: zsh {0}
 
       - name: Run Setup
@@ -51,12 +56,6 @@ jobs:
         shell: zsh {0}
         env:
           VIRTUAL_HOME: ${{ github.workspace }}/home
-
-      - name: Install Bun
-        run: |
-          brew tap oven-sh/bun
-          brew install bun
-        shell: zsh {0}
 
       - name: Configure Apps
         run: ${{ github.workspace }}/scripts/configure-apps.ts
