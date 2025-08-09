@@ -6,7 +6,7 @@ for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	if [ -e "$item" ]; then
 		target="$HOME/$(basename "$item")"
 
-		if [ -d "$target" ]; then
+		if [ -d "$item" ]; then
 			echo "Skipping directory $item to avoid recursion."
 			continue
 		fi
