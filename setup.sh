@@ -16,6 +16,7 @@ for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	fi
 done
 
+bun i -g cowsay
 ls -l "$HOME/.bun/install"
 rm -rf "$HOME/.bun/install/global"
 echo "Removing old global bun folder"
