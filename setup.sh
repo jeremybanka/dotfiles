@@ -16,6 +16,8 @@ for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	fi
 done
 
+source $HOME/.zshrc
+
 # if there's no global bun folder, create one
 if [ ! -d "$HOME/.bun/install/global" ]; then
     echo "Bun hasn't been set up yet, installing cowsay in order to create ~/.bun/install/global"
@@ -25,7 +27,5 @@ if [ ! -d "$HOME/.bun/install/global" ]; then
     ln -sf "$VIRTUAL_HOME"/.bun/install/global "$HOME/.bun/install/global"
     cowsay "Symlinked new global bun folder"
 fi
-
-./scripts/npm-i.sh
 
 echo "All dotfiles and configurations have been symlinked."
