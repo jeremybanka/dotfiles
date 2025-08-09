@@ -18,14 +18,14 @@ done
 
 source $HOME/.zshrc
 
-# if there's no global bun folder, create one
 if [ ! -d "$HOME/.bun/install/global" ]; then
     echo "Bun hasn't been set up yet, installing cowsay in order to create ~/.bun/install/global"
     bun i -g cowsay
     cowsay "Job's done! Now we'll remove the global folder and link it out from the repo."
     rm -rf "$HOME/.bun/install/global"
+    echo "Removed old global bun folder."
     ln -sf "$VIRTUAL_HOME"/.bun/install/global "$HOME/.bun/install/global"
-    cowsay "Symlinked new global bun folder"
+    echo "Symlinked new global bun folder from dotfiles"
 fi
 
 echo "All dotfiles and configurations have been symlinked."
