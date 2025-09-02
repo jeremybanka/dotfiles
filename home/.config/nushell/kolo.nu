@@ -1,5 +1,3 @@
-# ~/.config/nushell/kolo.nu
-
 def git-dots [] {
     let result = (git status --porcelain --branch | complete)
 
