@@ -3,7 +3,7 @@
 		"@antfu/ni": "25.0.0",
 		"repomix": "1.4.2",
 		"sass-migrator": "2.4.2",
-		"vercel": "46.1.1",
+		"vercel": "47.0.1",
 		"yalc": "1.0.0-pre.53"
 	}
 }
