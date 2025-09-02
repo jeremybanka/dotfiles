@@ -28,4 +28,4 @@ export def prompt [] {
     $"(ansi magenta)($dir)(ansi reset)($gitinfo) "
 }
 
-export def prompt-indicator [] { "\r\n> " }
+export def prompt-indicator [] { $"\r\n(ansi magenta)>(ansi reset) " }
