@@ -1,25 +1,30 @@
 # ~/.config/nushell/kolo.nu
 
 def git-dots [] {
-    if (git rev-parse --is-inside-work-tree | complete | get stdout | str trim) == "true" {
-        let status = (git status --porcelain)
-        mut dots = ""
+    let result = (git status --porcelain --branch | complete)
 
-        if ($status | str contains "^[AMDR]." | into bool) {
-            $dots = $"($dots)(ansi green)●(ansi reset)"
-        }
-        if ($status | str contains "^.[MD]" | into bool) {
-            $dots = $"($dots)(ansi yellow)●(ansi reset)"
-        }
-        if ($status | lines | where { |line| $line | str starts-with "??" } | length) > 0 {
-            $dots = $"($dots)(ansi red)●(ansi reset)"
-        }
-
-        let branch = (git rev-parse --abbrev-ref HEAD | str trim)
-        return $" (ansi green)[($branch)(ansi reset)($dots)(ansi green)](ansi reset)"
-    } else {
+    if $result.exit_code != 0 {
         return ""
     }
+
+    # let status = (git status --porcelain)
+    let lines = ($result.stdout | lines)
+    let branch = ($lines | first | str replace '## ' '' | str trim)
+    mut dots = ""
+
+    if ($lines | where { |line| $line =~ ^[AMDRC] } | length) > 0 {
+        $dots = $"($dots)(ansi green)●(ansi reset)"
+    }
+    if ($lines | where { |line| $line =~ ^.[MD] } | length) > 0 {
+        $dots = $"($dots)(ansi yellow)●(ansi reset)"
+    }
+    if ($lines | where { |line| $line | str starts-with "??" } | length) > 0 {
+        $dots = $"($dots)(ansi red)●(ansi reset)"
+    }
+
+    let branch = (git rev-parse --abbrev-ref HEAD | str trim)
+    return $" (ansi green)[($branch)(ansi reset)($dots)(ansi green)](ansi reset)"
+   
 }
 
 export def prompt [] {
