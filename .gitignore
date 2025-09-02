@@ -3,6 +3,7 @@ home/.config/gh/hosts.yml
 home/.config/ghc
 home/.config/gcloud
 home/.config/lnav
+home/.config/nushell/history.txt
 home/.config/zed/*
 !home/.config/zed/settings.json
 
