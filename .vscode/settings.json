@@ -28,6 +28,10 @@
 			"strings": true
 		}
 	},
+	"[nushell]": {
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "TheNuProjectContributors.vscode-nushell-lang"
+	},
 	"files.associations": {
 		"**/cabal/config": "cabal"
 	}
