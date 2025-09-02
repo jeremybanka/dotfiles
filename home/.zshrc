@@ -92,3 +92,6 @@
   if [[ "$(scutil --get ComputerName)" == "Eris" ]]; then
     hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000E2,"HIDKeyboardModifierMappingDst":0x700000000}]}'
   fi
+
+# run nushell
+  exec nu
