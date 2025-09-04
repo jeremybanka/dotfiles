@@ -2,7 +2,7 @@ def git-dots [] {
     let result = (git status --porcelain --branch | complete)
 
     if $result.exit_code != 0 {
-        return ""
+        return "\r\n"
     }
 
     # let status = (git status --porcelain)
@@ -21,8 +21,7 @@ def git-dots [] {
     }
 
     let branch = (git rev-parse --abbrev-ref HEAD | str trim)
-    return $" (ansi green)[($branch)(ansi reset)($dots)(ansi green)](ansi reset)"
-   
+    return $" (ansi green)[($branch)(ansi reset)($dots)(ansi green)](ansi reset)\r\n"
 }
 
 export def prompt [] {
@@ -31,4 +30,4 @@ export def prompt [] {
     $"(ansi magenta)($dir)(ansi reset)($gitinfo) "
 }
 
-export def prompt-indicator [] { $"\r\n(ansi magenta)>(ansi reset) " }
+export def prompt-indicator [] { $"(ansi magenta)>(ansi reset) " }
