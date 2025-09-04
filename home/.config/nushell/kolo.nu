@@ -11,13 +11,13 @@ def git-dots [] {
     mut dots = ""
 
     if ($lines | where { |line| $line =~ ^[AMDRC] } | length) > 0 {
-        $dots = $"($dots)(ansi green)●(ansi reset)"
+        $dots = $"($dots)(ansi green_bold)●(ansi reset)"
     }
     if ($lines | where { |line| $line =~ ^.[MD] } | length) > 0 {
-        $dots = $"($dots)(ansi yellow)●(ansi reset)"
+        $dots = $"($dots)(ansi yellow_bold)●(ansi reset)"
     }
     if ($lines | where { |line| $line | str starts-with "??" } | length) > 0 {
-        $dots = $"($dots)(ansi red)●(ansi reset)"
+        $dots = $"($dots)(ansi red_bold)●(ansi reset)"
     }
 
     let branch = (git rev-parse --abbrev-ref HEAD | str trim)
