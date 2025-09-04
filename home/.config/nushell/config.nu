@@ -14,5 +14,6 @@ if not (which fnm | is-empty) {
 
 $env.PROMPT_COMMAND = { prompt }
 $env.PROMPT_INDICATOR = { prompt-indicator }
+$env.PROMPT_COMMAND_RIGHT = ""
 $env.config.buffer_editor = "codium"
 $env.config.show_banner = false
