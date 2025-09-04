@@ -27,7 +27,7 @@ def git-dots [] {
 export def prompt [] {
     let dir = (pwd | path basename)
     let gitinfo = (git-dots)
-    $"(ansi magenta)($dir)(ansi reset)($gitinfo) "
+    $"(ansi magenta)($dir)(ansi reset)($gitinfo)"
 }
 
 export def prompt-indicator [] { $"(ansi magenta)>(ansi reset) " }
