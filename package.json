@@ -5,7 +5,7 @@
 		"lint:eslint": "eslint -- .",
 		"lint:types": "tsc --noEmit",
 		"lint": "bun run lint:eslint && bun run lint:types",
-		"up": "./scripts/update.sh"
+		"up": "nu ./scripts/update.nu"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "3.3.1",
