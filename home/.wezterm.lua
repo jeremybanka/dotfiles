@@ -118,8 +118,22 @@ config.color_schemes = {
 }
 config.color_scheme = 'Custom'
 config.font_size = 13.5
-config.font = wezterm.font('Theia 0.2.500')
-config.window_decorations = 'RESIZE'
+config.font = wezterm.font('Theia 0.3.500')
+config.window_decorations = 'RESIZE | MACOS_FORCE_ENABLE_SHADOW'
+config.window_frame = {
+  border_left_width = 1,
+  border_right_width = 1,
+  border_bottom_height = 1,
+  border_top_height = 1,
+  border_left_color = dark and '#111111' or '#ffffff',
+  border_right_color = dark and '#111111' or '#ffffff',
+  border_bottom_color = dark and '#111111' or '#ffffff',
+  border_top_color = dark and '#111111' or '#ffffff',
+}
+
+config.window_background_opacity = .75
+config.macos_window_background_blur = 15
+
 
 config.hide_tab_bar_if_only_one_tab = true
 
