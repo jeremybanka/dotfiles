@@ -1,0 +1,33 @@
+def git-dots [] {
+    let result = (git status --porcelain --branch | complete)
+
+    if $result.exit_code != 0 {
+        return "\r\n"
+    }
+
+    # let status = (git status --porcelain)
+    let lines = ($result.stdout | lines)
+    let branch = ($lines | first | str replace '## ' '' | str trim)
+    mut dots = ""
+
+    if ($lines | where { |line| $line =~ ^[AMDRC] } | length) > 0 {
+        $dots = $"($dots)(ansi green_bold)●(ansi reset)"
+    }
+    if ($lines | where { |line| $line =~ ^.[MD] } | length) > 0 {
+        $dots = $"($dots)(ansi yellow_bold)●(ansi reset)"
+    }
+    if ($lines | where { |line| $line | str starts-with "??" } | length) > 0 {
+        $dots = $"($dots)(ansi red_bold)●(ansi reset)"
+    }
+
+    let branch = (git rev-parse --abbrev-ref HEAD | str trim)
+    return $" (ansi green)[($branch)(ansi reset)($dots)(ansi green)](ansi reset)\r\n"
+}
+
+export def prompt [] {
+    let dir = (pwd | path basename)
+    let gitinfo = (git-dots)
+    $"(ansi magenta)($dir)(ansi reset)($gitinfo)"
+}
+
+export def prompt-indicator [] { $"(ansi magenta)>(ansi reset) " }
