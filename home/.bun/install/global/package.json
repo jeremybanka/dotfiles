@@ -4,7 +4,7 @@
 		"eas-cli": "16.19.3",
 		"repomix": "1.6.0",
 		"sass-migrator": "2.4.2",
-		"vercel": "48.1.4",
+		"vercel": "48.1.6",
 		"yalc": "1.0.0-pre.53"
 	}
 }
