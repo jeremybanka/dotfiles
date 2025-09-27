@@ -57,7 +57,7 @@
     alias c="open $1 -a \"VSCodium\""
 
   # postgresql
-    PATH="$PATH:$(brew --prefix postgresql@17)/bin"
+    PATH="$PATH:$(brew --prefix postgresql@18)/bin"
 
   # clang
     PATH="$PATH:$(brew --prefix llvm@18)/bin"
