@@ -68,7 +68,7 @@ brew "ollama", restart_service: :changed
 brew "opam"
 brew "pillow"
 brew "pipx"
-brew "postgresql@17", restart_service: :changed
+brew "postgresql@18", restart_service: :changed
 brew "protobuf"
 brew "qemu"
 brew "rust"
