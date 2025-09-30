@@ -1,7 +1,7 @@
 {
 	"dependencies": {
 		"@antfu/ni": "26.1.0",
-		"eas-cli": "16.19.3",
+		"eas-cli": "16.20.0",
 		"repomix": "1.6.0",
 		"sass-migrator": "2.4.2",
 		"yalc": "1.0.0-pre.53"
