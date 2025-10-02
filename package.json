@@ -11,7 +11,7 @@
 		"@eslint/eslintrc": "3.3.1",
 		"@eslint/js": "9.36.0",
 		"@types/eslint": "9.6.1",
-		"@types/node": "24.6.1",
+		"@types/node": "24.6.2",
 		"@typescript-eslint/eslint-plugin": "8.45.0",
 		"@typescript-eslint/parser": "8.45.0",
 		"bun-types": "1.2.23",
