@@ -74,6 +74,9 @@
 
 # languages ####################################################################
 
+  # * <- mise
+    eval "$(mise activate zsh)"
+
   # node <- schniz/fnm
     eval "$(fnm env --use-on-cd --corepack-enabled)"
 
