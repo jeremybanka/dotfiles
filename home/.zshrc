@@ -77,6 +77,9 @@
   # * <- mise
     eval "$(mise activate zsh)"
 
+  # * <- nix
+    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+
   # global node_modules <- bun
     PATH="$PATH:$HOME/.bun/bin"
 
