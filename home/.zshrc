@@ -29,16 +29,8 @@
       vcs_info
     }
 
-    conda_env() {
-      if [[ -n $CONDA_DEFAULT_ENV ]]; then
-        if [[ $CONDA_DEFAULT_ENV != "base" ]]; then
-          echo "%F{green}%B$CONDA_DEFAULT_ENV:"
-        fi
-      fi
-    }
-
     setopt prompt_subst
-    PROMPT='$(conda_env)%B%F{magenta}%c%F{green}${vcs_info_msg_0_}%B%F{magenta}
+    PROMPT='%B%F{magenta}%c%F{green}${vcs_info_msg_0_}%B%F{magenta}
 %B%F{magenta}└▶ %{$reset_color%}'
 
     autoload -U add-zsh-hook
@@ -95,45 +87,6 @@
 
   # haskell <- ghcup
     PATH="$PATH:$HOME/.ghcup/bin"
-
-  # python <- conda + mamba
-    __conda_setup="$("$(brew --prefix)/Caskroom/miniforge/base/bin/conda" 'shell.zsh' 'hook' 2> /dev/null)"
-    if [ $? -eq 0 ]; then
-        eval "$__conda_setup"
-    else
-        if [ -f "$(brew --prefix)/Caskroom/miniforge/base/etc/profile.d/conda.sh" ]; then
-            . "$(brew --prefix)/Caskroom/miniforge/base/etc/profile.d/conda.sh"
-        else
-            export PATH="$PATH:$(brew --prefix)/Caskroom/miniforge/base/bin"
-        fi
-    fi
-    unset __conda_setup
-
-    if [ -f "$(brew --prefix)/Caskroom/miniforge/base/etc/profile.d/mamba.sh" ]; then
-      . "$(brew --prefix)/Caskroom/miniforge/base/etc/profile.d/mamba.sh"
-    fi
-
-    conda config --set changeps1 False # This is OMZ's job, not conda's
-
-    function conda_auto_env() {
-      if [ -f "environment.yml" ]; then
-          env_name=$(grep -m 1 'name:' environment.yml | awk '{print $2}')
-
-          if [[ "$CONDA_DEFAULT_ENV" != "$env_name" ]]; then
-              echo "Activating Conda environment \e[32m$env_name\e[0m"
-              mamba activate "$env_name" || echo "Environment '$env_name' not found. Create it with 'mamba env create -f environment.yml'."
-              export PY_ENV_DIR="$(pwd)"
-          fi
-      elif [[ $(pwd) != "$PY_ENV_DIR"* ]]; then
-          echo "Deactivating Conda environment \e[32m$CONDA_DEFAULT_ENV\e[0m"
-          mamba deactivate
-          unset PY_ENV_DIR
-      fi
-    }
-
-    autoload -U add-zsh-hook
-    add-zsh-hook chpwd conda_auto_env
-    conda_auto_env
 
 # projects #####################################################################
 
