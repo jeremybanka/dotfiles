@@ -42,6 +42,9 @@
     PATH="$PATH:/usr/local/bin"
     PATH="$PATH:/$HOME/.local/bin"
 
+  # nushell
+    export XDG_CONFIG_HOME="$HOME/.config"
+
   # zed
     alias z="zed"
 
@@ -101,3 +104,6 @@
   if [[ "$(scutil --get ComputerName)" == "Eris" ]]; then
     hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000E2,"HIDKeyboardModifierMappingDst":0x700000000}]}'
   fi
+
+# run nushell
+  exec nu
