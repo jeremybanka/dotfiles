@@ -75,9 +75,6 @@
   # global node_modules <- bun
     PATH="$PATH:$HOME/.bun/bin"
 
-  # zig <- tristanisham/zvm
-    PATH="$PATH:$HOME/.zvm/bin:$HOME/.zvm/self"
-
   # global go packages
     PATH="$PATH:$HOME/go/bin"
 
