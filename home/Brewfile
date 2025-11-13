@@ -56,6 +56,7 @@ brew "lcov"
 brew "libiconv"
 brew "llvm@18"
 brew "lnav"
+brew "mise"
 brew "mkcert"
 brew "neovim"
 brew "nginx", restart_service: :changed
