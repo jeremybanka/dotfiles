@@ -8,6 +8,7 @@ $env.config.buffer_editor = "codium"
 $env.config.show_banner = false
 $env.config.table.mode = 'rounded'
 $env.PATH = ($env.PATH | append "/nix/var/nix/profiles/default/bin")
+$env.PATH = ($env.PATH | append "~/.bun/bin")
 
 alias g = git
 
