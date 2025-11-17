@@ -9,6 +9,7 @@
 		"streetsidesoftware.code-spell-checker",
 		"sumneko.lua",
 		"timonwong.shellcheck",
-		"supermaven.supermaven"
+		"supermaven.supermaven",
+		"thenuprojectcontributors.vscode-nushell-lang"
 	]
 }
