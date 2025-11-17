@@ -9,5 +9,8 @@ $env.config.show_banner = false
 $env.config.table.mode = 'rounded'
 
 alias g = git
+def c [path: string] {
+    ^open $path -a "VSCodium"
+}
 
 source ~/.cache/carapace/init.nu
