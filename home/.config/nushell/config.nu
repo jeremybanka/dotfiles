@@ -1,4 +1,5 @@
 use ~/.config/nushell/kolo.nu *
+use ~/.config/nushell/mise.nu
 
 if not (which fnm | is-empty) {
     ^fnm env --json | from json | load-env
