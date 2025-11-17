@@ -94,4 +94,6 @@
   fi
 
 # run nushell
-  exec nu
+  if command -v nu > /dev/null; then
+    exec nu
+  fi
