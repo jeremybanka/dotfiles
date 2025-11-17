@@ -32,9 +32,9 @@
 
 # applications #################################################################
 
-  # system
-    PATH="$PATH:/usr/local/bin"
-    PATH="$PATH:/$HOME/.local/bin"
+  # # system
+  #   PATH="$PATH:/usr/local/bin"
+  #   PATH="$PATH:/$HOME/.local/bin"
 
   # nushell
     export XDG_CONFIG_HOME="$HOME/.config"
