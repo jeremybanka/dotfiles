@@ -48,7 +48,8 @@
 		"*.sqlite3": "${capture}.${extname}-*",
 		"*.db3": "${capture}.${extname}-*",
 		"*.sdb": "${capture}.${extname}-*",
-		"*.s3db": "${capture}.${extname}-*"
+		"*.s3db": "${capture}.${extname}-*",
+		"pyproject.toml": "uv.lock, poetry.lock"
 	},
 
 	// LANGUAGES //////////////////////////////////////////////////////////////////
