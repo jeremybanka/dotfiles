@@ -64,5 +64,7 @@
 		"workbench.action.tasks.configureTaskRunner",
 		"workbench.action.tasks.runTask"
 	],
-	"githubPullRequests.pullBranch": "never"
+	"githubPullRequests.pullBranch": "never",
+	"terminal.integrated.scrollback": 10000,
+	"git.blame.editorDecoration.enabled": true
 }
