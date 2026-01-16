@@ -27,7 +27,9 @@
 			"editorBracketHighlight.foreground2": "#790",
 			"editorBracketHighlight.foreground3": "#53f",
 			"editorBracketHighlight.foreground4": "#298",
-			"editorBracketHighlight.foreground5": "#a06"
+			"editorBracketHighlight.foreground5": "#a06",
+			"editor.wordHighlightBackground": "#ff0e",
+			"editor.selectionBackground": "#ff0e"
 		}
 	},
 	"workbench.iconTheme": "material-icon-theme",
