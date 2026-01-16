@@ -10,6 +10,8 @@ home/.config/zed/*
 apps/InDesign/Workspaces/Essentials_CurrentWorkspace.xml
 apps/InDesign/Workspaces/Start_CurrentWorkspace.xml
 
+repomix-output.xml
+
 # OS generated files #
 ######################
 .DS_Store
