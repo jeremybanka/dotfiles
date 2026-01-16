@@ -17,7 +17,7 @@ def --env "update-env" [] {
 }
 export-env {
   
-  "" | parse vars | update-env
+  '' | parse vars | update-env
   $env.MISE_SHELL = "nu"
   let mise_hook = {
     condition: { "MISE_SHELL" in $env }
