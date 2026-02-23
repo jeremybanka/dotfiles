@@ -8,7 +8,7 @@
 		"up": "nu ./scripts/update.nu"
 	},
 	"devDependencies": {
-		"@eslint/eslintrc": "3.3.3",
+		"@eslint/eslintrc": "3.3.4",
 		"@eslint/js": "10.0.1",
 		"@types/eslint": "9.6.1",
 		"@types/node": "25.3.0",
