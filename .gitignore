@@ -6,6 +6,8 @@ home/.config/lnav
 home/.config/nushell/history.txt
 home/.config/zed/*
 !home/.config/zed/settings.json
+home/.config/.wrangler
+home/.config/carapace
 
 apps/InDesign/Workspaces/Essentials_CurrentWorkspace.xml
 apps/InDesign/Workspaces/Start_CurrentWorkspace.xml
