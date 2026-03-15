@@ -1,9 +1,9 @@
 use std/util "path add"
 
 path add "~/.vite-plus/bin"
-$env.PATH = ($env.PATH | append "/nix/var/nix/profiles/default/bin")
-$env.PATH = ($env.PATH | append "~/.bun/bin")
-$env.PATH = ($env.PATH | append "/opt/homebrew/bin")
+path add "/nix/var/nix/profiles/default/bin"
+path add "~/.bun/bin"
+path add "/opt/homebrew/bin"
 
 $env.CARAPACE_BRIDGES = 'zsh,fish,bash,inshellisense' # optional
 mkdir ~/.cache/carapace
