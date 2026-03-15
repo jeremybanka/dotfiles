@@ -7,8 +7,7 @@ home/.config/nushell/history.txt
 home/.config/zed/*
 !home/.config/zed/settings.json
 
-apps/InDesign/Workspaces/Essentials_CurrentWorkspace.xml
-apps/InDesign/Workspaces/Start_CurrentWorkspace.xml
+apps/InDesign/Workspaces/*_CurrentWorkspace.xml
 
 repomix-output.xml
 
