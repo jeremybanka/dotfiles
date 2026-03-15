@@ -7,11 +7,7 @@
 	"[typescript]": {
 		"editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" }
 	},
-	"[json]": {
-		"editor.formatOnSave": true,
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[jsonc]": {
+	"[json,jsonc]": {
 		"editor.formatOnSave": true,
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
