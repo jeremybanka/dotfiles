@@ -1,3 +1,6 @@
+use std/util "path add"
+
+path add "~/.vite-plus/bin"
 $env.PATH = ($env.PATH | append "/nix/var/nix/profiles/default/bin")
 $env.PATH = ($env.PATH | append "~/.bun/bin")
 $env.PATH = ($env.PATH | append "/opt/homebrew/bin")
