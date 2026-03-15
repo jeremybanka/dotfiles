@@ -1,4 +1,4 @@
-#!bun
+#!/usr/bin/env bun
 
 import { existsSync, lstatSync, mkdirSync, readdirSync } from "node:fs"
 import { rename, symlink, unlink } from "node:fs/promises"

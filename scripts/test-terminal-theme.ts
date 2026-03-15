@@ -1,4 +1,4 @@
-#!bun
+#!/usr/bin/env bun
 
 function printColorSpecimens() {
 	const colors: { [key: string]: string } = {
