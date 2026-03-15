@@ -16,6 +16,7 @@
 	"terminal.integrated.env.osx": {
 		"XDG_CONFIG_HOME": "/Users/jem/.config"
 	},
+	"terminal.integrated.scrollback": 2000,
 
 	// LAYOUT /////////////////////////////////////////////////////////////////////
 	"window.autoDetectColorScheme": true,
@@ -56,17 +57,42 @@
 	},
 
 	// LANGUAGES //////////////////////////////////////////////////////////////////
+	"json.schemaDownload.trustedDomains": {
+		"https://schemastore.azurewebsites.net/": true,
+		"https://raw.githubusercontent.com/": true,
+		"https://www.schemastore.org/": true,
+		"https://json.schemastore.org/": true,
+		"https://json-schema.org/": true,
+		"https://biomejs.dev": true,
+		"https://turbo.build": true
+	},
 	"typescript.tsserver.maxTsServerMemory": 8192,
 	"zig.zls.path": "zls",
 
 	// MISC ///////////////////////////////////////////////////////////////////////
 	"chat.commandCenter.enabled": false,
-	"redhat.telemetry.enabled": false,
+
+	// EXTENSIONs //////////////////////////////////////////////////////////////////
+	"biome.suggestInstallingGlobally": false,
 	"cmake.pinnedCommands": [
 		"workbench.action.tasks.configureTaskRunner",
 		"workbench.action.tasks.runTask"
 	],
+	"git.path": "/opt/homebrew/bin/git",
 	"githubPullRequests.pullBranch": "never",
-	"terminal.integrated.scrollback": 10000,
-	"git.blame.editorDecoration.enabled": true
+	"redhat.telemetry.enabled": false,
+	"vsix.sources": {
+		"opn": {
+			"type": "marketplace",
+			"serviceUrl": "https://open-vsx.org/vscode/gallery"
+		},
+		"ms": {
+			"type": "marketplace",
+			"serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery"
+		}
+	},
+	"vsix.extensions": ["ms:typescriptteam.native-preview"],
+	"vsix.crons": {
+		"update": "0 12 * * *"
+	}
 }
