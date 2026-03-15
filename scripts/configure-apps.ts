@@ -8,6 +8,7 @@ import { join, resolve } from "node:path"
 const appConfigDir = join(import.meta.dirname, `..`, `apps`)
 
 await configureVSCodium()
+await configureCursor()
 await configureIllustrator()
 await configureInDesign()
 
@@ -39,6 +40,51 @@ async function configureVSCodium() {
 				console.log(`Removing existing file: ${targetPath}`)
 				await unlink(targetPath)
 			}
+		}
+
+		await symlink(sourcePath, targetPath)
+		console.log(`Symlink created: ${sourcePath} -> ${targetPath}`)
+	} catch (thrown) {
+		if (thrown instanceof Error) {
+			console.error(thrown.message)
+		} else {
+			console.error(thrown)
+		}
+	}
+}
+
+async function configureCursor() {
+	const sourcePath = resolve(appConfigDir, `VSCodium`, `settings.json`)
+	const targetDir = join(
+		homedir(),
+		`Library`,
+		`Application Support`,
+		`Cursor`,
+		`User`
+	)
+	const targetPath = join(targetDir, `settings.json`)
+
+	console.log(`Configuring Cursor`, { sourcePath, targetPath })
+
+	if (!existsSync(targetDir)) {
+		console.log(`Creating target directory: ${targetDir}`)
+		mkdirSync(targetDir, { recursive: true })
+	}
+
+	try {
+		if (!existsSync(sourcePath)) {
+			throw new Error(`Source file does not exist: ${sourcePath}`)
+		}
+
+		if (existsSync(targetPath)) {
+			const isSymlink = lstatSync(targetPath).isSymbolicLink()
+			if (isSymlink) {
+				console.log(`Symlink already exists: ${targetPath}`)
+				return
+			}
+
+			console.log(`Removing existing file: ${targetPath}`)
+			await unlink(targetPath)
 		}
 
 		await symlink(sourcePath, targetPath)
