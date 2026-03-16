@@ -35,15 +35,21 @@ export def "nu-complete nun dependencies" [] {
     | each {|name| { value: $name description: "dependency" } }
 }
 
-export def "nu-complete na agents" [] {
-    [
-        { value: "npm", description: "Use npm directly" }
-        { value: "pnpm", description: "Use pnpm directly" }
-        { value: "yarn", description: "Use yarn classic directly" }
-        { value: "yarn@berry", description: "Use Yarn Berry directly" }
-        { value: "bun", description: "Use Bun directly" }
-        { value: "deno", description: "Use Deno directly" }
-    ]
+export def "nu-complete na bins" [] {
+    let bin_dir = ("node_modules" | path join ".bin")
+    let entries = (do -i { ls $bin_dir })
+
+    if ($entries | is-empty) {
+        return []
+    }
+
+    $entries
+    | where type == symlink or type == file
+    | get name
+    | path basename
+    | uniq
+    | sort
+    | each {|name| { value: $name description: "local binary" } }
 }
 
 export extern "ni" [
@@ -90,7 +96,7 @@ export extern "nlx" [
 ]
 
 export extern "na" [
-    agent?: string@"nu-complete na agents"
+    bin?: string@"nu-complete na bins"
     ...args: string
 ]
 
