@@ -1,5 +1,6 @@
 use ~/.config/nushell/kolo.nu *
 use ~/.config/nushell/mise.nu
+use ~/.config/nushell/ni-completions.nu *
 
 $env.PROMPT_COMMAND = { prompt }
 $env.PROMPT_INDICATOR = { prompt-indicator }
