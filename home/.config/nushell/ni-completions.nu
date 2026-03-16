@@ -220,10 +220,7 @@ export extern "ni" [
     ...packages: string@"nu-complete ni packages"
 ]
 
-export extern "nci" [
-    package?: string
-    ...packages: string
-]
+export extern "nci" []
 
 export extern "nr" [
     script?: string@"nu-complete nr scripts"
