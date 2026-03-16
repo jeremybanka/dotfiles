@@ -53,12 +53,8 @@ export def "nu-complete na bins" [] {
 }
 
 export extern "ni" [
-    -D
-    -P
-    -g
-    -i
-    --frozen
-    --frozen-if-present
+    -DE
+    -gE
     package?: string
     ...packages: string
 ]
