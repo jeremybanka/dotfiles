@@ -129,7 +129,7 @@ config.window_frame = {
   border_right_color = dark and '#080808' or '#ffffff',
   border_bottom_color = dark and '#080808' or '#ffffff',
   border_top_color = dark and '#080808' or '#ffffff',
-  font_size = 12,
+  font_size = 15,
   font = wezterm.font { family = 'Noname Sans', weight = 600 },
   active_titlebar_bg = dark and '#181818' or '#6699cc',
   inactive_titlebar_bg = dark and '#181818' or '#6699cc',
