@@ -20,8 +20,8 @@
 
 	// LAYOUT /////////////////////////////////////////////////////////////////////
 	"window.autoDetectColorScheme": true,
-	"workbench.preferredDarkColorTheme": "Default Dark Modern",
-	"workbench.preferredLightColorTheme": "Aeos",
+	"workbench.preferredDarkColorTheme": "Experimental Dark",
+	"workbench.preferredLightColorTheme": "Experimental Light",
 	"workbench.colorCustomizations": {
 		"[Aeos]": {
 			"editorBracketHighlight.foreground1": "#555",
