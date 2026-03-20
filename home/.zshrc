@@ -87,12 +87,6 @@
   # # bun-debug
   #   PATH="$PATH:$HOME/dojo/oss/bun/build/debug"
 
-# deal with the intractable issue of my option-key being stuck down ############
-
-  if [[ "$(scutil --get ComputerName)" == "Eris" ]]; then
-    hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000E2,"HIDKeyboardModifierMappingDst":0x700000000}]}'
-  fi
-
 # run nushell
   if command -v nu > /dev/null; then
     exec nu
