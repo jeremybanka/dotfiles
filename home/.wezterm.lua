@@ -131,8 +131,8 @@ config.window_frame = {
   border_top_color = dark and '#080808' or '#ffffff',
   font_size = 15,
   font = wezterm.font { family = 'Noname Sans', weight = 600 },
-  active_titlebar_bg = dark and '#181818' or '#6699cc',
-  inactive_titlebar_bg = dark and '#181818' or '#6699cc',
+  active_titlebar_bg = dark and '#440066' or '#6699cc',
+  inactive_titlebar_bg = dark and '#440066' or '#6699cc',
 }
 
 config.window_background_opacity = .75
@@ -140,7 +140,7 @@ config.macos_window_background_blur = 15
 
 config.colors = {
   tab_bar = {
-    inactive_tab_edge = dark and '#181818' or '#6699cc',
+    inactive_tab_edge = dark and '#440066' or '#6699cc',
     active_tab = {
       bg_color = dark and '#000000' or '#ffffff',
       fg_color = dark and '#ffffff' or '#000000',
@@ -150,11 +150,11 @@ config.colors = {
       strikethrough = false,
     },
     inactive_tab = {
-      bg_color = dark and '#181818' or '#6699cc',
+      bg_color = dark and '#440066' or '#6699cc',
       fg_color = dark and '#bbbbbb' or '#ffffff',
     },
     inactive_tab_hover = {
-      bg_color = dark and '#333333' or '#88bbee',
+      bg_color = dark and '#662288' or '#88bbee',
       fg_color = dark and '#ffffff' or '#ffffff',
       intensity = 'Normal',
       underline = 'None',
@@ -164,7 +164,7 @@ config.colors = {
   },
 }
 
-config.hide_tab_bar_if_only_one_tab = true
+-- config.hide_tab_bar_if_only_one_tab = true
 -- config.show_close_tab_button_in_tabs = false -- still only available in nightly
 config.show_new_tab_button_in_tab_bar = false
 config.tab_and_split_indices_are_zero_based = true
