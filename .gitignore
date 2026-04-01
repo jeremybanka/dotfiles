@@ -8,6 +8,7 @@ home/.config/zed/*
 !home/.config/zed/settings.json
 home/.config/.wrangler
 home/.config/carapace
+home/.config/raycast/extensions
 
 apps/InDesign/Workspaces/*_CurrentWorkspace.xml
 
