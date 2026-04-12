@@ -3,7 +3,7 @@
 		"allowJs": true,
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
-		"types": ["node", "bun-types"],
+		"types": ["node", "bun"],
 		"target": "ESNext",
 		"strict": true,
 		"noEmit": true,
