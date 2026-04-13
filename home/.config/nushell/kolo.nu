@@ -101,6 +101,9 @@ def git-dots [] {
     if ($lines | where { |line| $line | str starts-with "??" } | length) > 0 {
         $dots = $"($dots)(ansi red_bold)●(ansi reset)"
     }
+    if ($lines | where { |line| $line =~ '^(DD|AU|UD|UA|DU|AA|UU) ' } | length) > 0 {
+        $dots = $"($dots)(ansi magenta_bold)●(ansi reset)"
+    }
 
     return $" (ansi green)[($branch)($mode)(ansi reset)($dots)(ansi green)](ansi reset)\r\n"
 }
