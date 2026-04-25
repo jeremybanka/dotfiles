@@ -16,45 +16,38 @@ def ni-package-cache-path [query: string] {
 
 def ni-popular-packages [] {
     [
-        { value: "@types/node", description: "popular TypeScript types" }
-        { value: "axios", description: "popular HTTP client" }
-        { value: "biome", description: "popular formatter and linter" }
-        { value: "chalk", description: "popular terminal styling" }
-        { value: "commander", description: "popular CLI framework" }
-        { value: "date-fns", description: "popular date utilities" }
-        { value: "dotenv", description: "popular env loader" }
-        { value: "drizzle-orm", description: "popular ORM" }
-        { value: "esbuild", description: "popular bundler" }
-        { value: "eslint", description: "popular linter" }
-        { value: "express", description: "popular web framework" }
-        { value: "fastify", description: "popular web framework" }
-        { value: "hono", description: "popular edge web framework" }
-        { value: "husky", description: "popular git hooks" }
-        { value: "jiti", description: "popular runtime loader" }
-        { value: "jsdom", description: "popular DOM implementation" }
-        { value: "lodash", description: "popular utility library" }
-        { value: "next", description: "popular React framework" }
-        { value: "nitropack", description: "popular server toolkit" }
-        { value: "playwright", description: "popular browser testing" }
-        { value: "prettier", description: "popular formatter" }
-        { value: "react", description: "popular UI library" }
-        { value: "react-dom", description: "popular UI renderer" }
-        { value: "rimraf", description: "popular rm replacement" }
-        { value: "rollup", description: "popular bundler" }
-        { value: "rxjs", description: "popular reactive library" }
-        { value: "shadcn-ui", description: "popular component tooling" }
-        { value: "tailwindcss", description: "popular utility CSS" }
-        { value: "ts-node", description: "popular TypeScript runner" }
-        { value: "tsx", description: "popular TypeScript runner" }
-        { value: "turbo", description: "popular monorepo task runner" }
-        { value: "typescript", description: "popular typed JavaScript" }
-        { value: "unbuild", description: "popular library builder" }
-        { value: "vite", description: "popular frontend build tool" }
-        { value: "vitest", description: "popular test runner" }
-        { value: "vue", description: "popular UI framework" }
-        { value: "webpack", description: "popular bundler" }
-        { value: "zod", description: "popular schema validation" }
-        { value: "zustand", description: "popular state management" }
+        { value: "@changesets/cli", description: "declarative release management" }
+        { value: "@types/node", description: "types for Node.js" }
+        { value: "@js-temporal/polyfill", description: "temporal implementation" }
+        { value: "atom.io", description: "state engine" }
+        { value: "arktype", description: "fast data validation" }
+        { value: "biome", description: "formatter and linter" }
+        { value: "cspell", description: "spell checker" }
+        { value: "drizzle-orm", description: "ORM runtime" }
+        { value: "drizzle-kit", description: "ORM toolkit" }
+        { value: "esbuild", description: "bundler" }
+        { value: "eslint", description: "linter" }
+        { value: "hono", description: "edge web framework" }
+        { value: "happy-dom", description: "DOM implementation" }
+        { value: "jiti", description: "runtime loader" }
+        { value: "jsdom", description: "DOM implementation" }
+        { value: "pin-dependencies-checker", description: "keep everything pinned" }
+        { value: "playwright", description: "browser testing" }
+        { value: "preact", description: "UI library" }
+        { value: "react", description: "UI library" }
+        { value: "react-dom", description: "UI renderer" }
+        { value: "rimraf", description: "cross-platform directory deletion" }
+        { value: "shadcn-ui", description: "component tooling" }
+        { value: "solid-js", description: "UI library" }
+        { value: "tailwindcss", description: "utility CSS" }
+        { value: "three", description: "3D rendering" }
+        { value: "treetrunks", description: "typesafe routing primitives" }
+        { value: "tsdown", description: "library builder" }
+        { value: "turbo", description: "monorepo task runner" }
+        { value: "typescript", description: "typed JavaScript" }
+        { value: "vite", description: "frontend build tool" }
+        { value: "vitest", description: "test runner" }
+        { value: "zod", description: "popular data validation" }
     ]
 }
 
