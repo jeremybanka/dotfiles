@@ -19,7 +19,7 @@ if (!existsSync(helixConfigDir)) {
 let reloadTimer: ReturnType<typeof setTimeout> | undefined
 let lastSnapshot = snapshotTomlFiles()
 
-console.log('Watching Helix config: ${helixConfigDir}')
+console.log(`Watching Helix config: ${helixConfigDir}`)
 console.log(`Save a config or theme file to reload running hx sessions.`)
 
 setInterval(() => {
