@@ -1,6 +1,5 @@
 use std/util "path add"
 
-path add "~/.vite-plus/bin"
 path add "/nix/var/nix/profiles/default/bin"
 path add "~/.bun/bin"
 path add "/opt/homebrew/bin"
