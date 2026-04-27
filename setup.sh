@@ -16,6 +16,29 @@ for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	fi
 done
 
+LAUNCH_AGENTS_SOURCE="$VIRTUAL_HOME/Library/LaunchAgents"
+LAUNCH_AGENTS_TARGET="$HOME/Library/LaunchAgents"
+
+if [ -d "$LAUNCH_AGENTS_SOURCE" ]; then
+	mkdir -p "$LAUNCH_AGENTS_TARGET"
+
+	for plist in "$LAUNCH_AGENTS_SOURCE"/*.plist; do
+		if [ -e "$plist" ]; then
+			target="$LAUNCH_AGENTS_TARGET/$(basename "$plist")"
+			label="$(basename "$plist" .plist)"
+
+			ln -sf "$plist" "$target"
+			echo "Symlinked LaunchAgent $plist to $target"
+
+			launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+			launchctl bootstrap "gui/$(id -u)" "$target"
+			launchctl enable "gui/$(id -u)/$label"
+			launchctl kickstart -k "gui/$(id -u)/$label"
+			echo "Loaded LaunchAgent $label"
+		fi
+	done
+fi
+
 source $HOME/.zshrc
 
 if [ ! -d "$HOME/.bun/install/global" ]; then

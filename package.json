@@ -2,6 +2,8 @@
 	"name": "dotfiles",
 	"type": "module",
 	"scripts": {
+		"helix:sync-theme": "bun scripts/sync-helix-theme.ts",
+		"helix:watch-appearance": "bun scripts/sync-helix-theme.ts --watch",
 		"helix:watch-theme": "bun scripts/watch-helix-theme.ts",
 		"lint:eslint": "eslint -- .",
 		"lint:types": "tsc --noEmit",
