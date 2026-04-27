@@ -1,0 +1,41 @@
+[language-server.vscode-eslint-language-server]
+command = "./node_modules/.bin/vscode-eslint-language-server"
+args = ["--stdio"]
+
+[language-server.vscode-eslint-language-server.config]
+validate = "on"
+useFlatConfig = true
+rulesCustomizations = []
+run = "onType"
+problems = { shortenToSingleLine = false }
+nodePath = ""
+
+[language-server.vscode-eslint-language-server.config.codeAction.disableRuleComment]
+enable = true
+location = "separateLine"
+
+[language-server.vscode-eslint-language-server.config.codeAction.showDocumentation]
+enable = true
+
+[language-server.vscode-eslint-language-server.config.workingDirectory]
+mode = "location"
+
+[language-server.typescript-language-server]
+command = "./node_modules/.bin/typescript-language-server"
+args = ["--stdio"]
+
+[[language]]
+name = "javascript"
+language-servers = ["typescript-language-server", "vscode-eslint-language-server"]
+
+[[language]]
+name = "jsx"
+language-servers = ["typescript-language-server", "vscode-eslint-language-server"]
+
+[[language]]
+name = "typescript"
+language-servers = ["typescript-language-server", "vscode-eslint-language-server"]
+
+[[language]]
+name = "tsx"
+language-servers = ["typescript-language-server", "vscode-eslint-language-server"]
