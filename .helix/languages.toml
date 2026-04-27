@@ -1,14 +1,19 @@
 [language-server.vscode-eslint-language-server]
-command = "./node_modules/.bin/vscode-eslint-language-server"
-args = ["--stdio"]
+command = "bun"
+args = ["/Users/jem/dotfiles/scripts/eslint-lsp-push-proxy.ts"]
 
 [language-server.vscode-eslint-language-server.config]
 validate = "on"
+packageManager = "bun"
 useFlatConfig = true
+experimental = { useFlatConfig = false }
 rulesCustomizations = []
 run = "onType"
 problems = { shortenToSingleLine = false }
 nodePath = ""
+options = {}
+codeActionOnSave = { mode = "all" }
+format = true
 
 [language-server.vscode-eslint-language-server.config.codeAction.disableRuleComment]
 enable = true
@@ -18,7 +23,7 @@ location = "separateLine"
 enable = true
 
 [language-server.vscode-eslint-language-server.config.workingDirectory]
-mode = "location"
+directory = "/Users/jem/dotfiles"
 
 [language-server.typescript-language-server]
 command = "./node_modules/.bin/typescript-language-server"
@@ -26,16 +31,52 @@ args = ["--stdio"]
 
 [[language]]
 name = "javascript"
-language-servers = ["typescript-language-server", "vscode-eslint-language-server"]
+auto-format = true
+language-servers = [
+	{ name = "vscode-eslint-language-server", only-features = [
+		"diagnostics",
+		"code-action",
+		"format",
+		"workspace-command",
+	] },
+	{ name = "typescript-language-server", except-features = ["format"] },
+]
 
 [[language]]
 name = "jsx"
-language-servers = ["typescript-language-server", "vscode-eslint-language-server"]
+auto-format = true
+language-servers = [
+	{ name = "vscode-eslint-language-server", only-features = [
+		"diagnostics",
+		"code-action",
+		"format",
+		"workspace-command",
+	] },
+	{ name = "typescript-language-server", except-features = ["format"] },
+]
 
 [[language]]
 name = "typescript"
-language-servers = ["typescript-language-server", "vscode-eslint-language-server"]
+auto-format = true
+language-servers = [
+	{ name = "vscode-eslint-language-server", only-features = [
+		"diagnostics",
+		"code-action",
+		"format",
+		"workspace-command",
+	] },
+	{ name = "typescript-language-server", except-features = ["format"] },
+]
 
 [[language]]
 name = "tsx"
-language-servers = ["typescript-language-server", "vscode-eslint-language-server"]
+auto-format = true
+language-servers = [
+	{ name = "vscode-eslint-language-server", only-features = [
+		"diagnostics",
+		"code-action",
+		"format",
+		"workspace-command",
+	] },
+	{ name = "typescript-language-server", except-features = ["format"] },
+]
