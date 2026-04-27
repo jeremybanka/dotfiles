@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { execFileSync } from "node:child_process"
+import { execFileSync, spawn } from "node:child_process"
 import {
 	existsSync,
 	lstatSync,
@@ -25,16 +25,7 @@ let lastMode = syncHelixTheme()
 
 if (shouldWatch) {
 	console.log(`Watching macOS appearance for Helix theme changes.`)
-
-	setInterval(() => {
-		const nextMode = getMacOSAppearance()
-		if (nextMode === lastMode) {
-			return
-		}
-
-		lastMode = syncHelixTheme()
-		reloadHelix()
-	}, 5000)
+	watchMacOSAppearance()
 } else {
 	console.log(`Helix is using ${lastMode} mode.`)
 }
@@ -83,6 +74,36 @@ function getMacOSAppearance() {
 	} catch {
 		return `light`
 	}
+}
+
+function watchMacOSAppearance() {
+	const listener = spawn(`/usr/bin/swift`, [
+		resolve(import.meta.dirname, `macos-appearance-listener.swift`),
+	])
+
+	listener.stdout.setEncoding(`utf8`)
+	listener.stdout.on(`data`, (output: string) => {
+		for (const line of output.split(`\n`)) {
+			if (line.trim() !== `changed`) {
+				continue
+			}
+
+			const nextMode = getMacOSAppearance()
+			if (nextMode === lastMode) {
+				continue
+			}
+
+			lastMode = syncHelixTheme()
+			reloadHelix()
+		}
+	})
+
+	listener.stderr.pipe(process.stderr)
+	listener.on(`exit`, (code, signal) => {
+		throw new Error(
+			`macOS appearance listener exited with code ${code ?? `null`} and signal ${signal ?? `null`}`
+		)
+	})
 }
 
 function reloadHelix() {
