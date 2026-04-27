@@ -2,9 +2,9 @@
 	"name": "dotfiles",
 	"type": "module",
 	"scripts": {
-		"helix:sync-theme": "bun scripts/sync-helix-theme.ts",
-		"helix:watch-appearance": "bun scripts/sync-helix-theme.ts --watch",
-		"helix:watch-theme": "bun scripts/watch-helix-theme.ts",
+		"helix:set-theme": "bun home/Library/LaunchAgents/com.jeremybanka.helix-theme/theme-switcher.ts",
+		"helix:theme-agent": "bun home/Library/LaunchAgents/com.jeremybanka.helix-theme/theme-switcher.ts --watch",
+		"helix:watch-config": "bun scripts/watch-helix-config.ts",
 		"lint:eslint": "eslint -- .",
 		"lint:types": "tsc --noEmit",
 		"lint": "bun run lint:eslint && bun run lint:types",

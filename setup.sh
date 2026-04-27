@@ -22,6 +22,15 @@ LAUNCH_AGENTS_TARGET="$HOME/Library/LaunchAgents"
 if [ -d "$LAUNCH_AGENTS_SOURCE" ]; then
 	mkdir -p "$LAUNCH_AGENTS_TARGET"
 
+	for support_dir in "$LAUNCH_AGENTS_SOURCE"/*; do
+		if [ -d "$support_dir" ]; then
+			target="$LAUNCH_AGENTS_TARGET/$(basename "$support_dir")"
+
+			ln -sfn "$support_dir" "$target"
+			echo "Symlinked LaunchAgent support directory $support_dir to $target"
+		fi
+	done
+
 	for plist in "$LAUNCH_AGENTS_SOURCE"/*.plist; do
 		if [ -e "$plist" ]; then
 			target="$LAUNCH_AGENTS_TARGET/$(basename "$plist")"

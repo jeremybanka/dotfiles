@@ -1,6 +1,6 @@
 [language-server.vscode-eslint-language-server]
 command = "bun"
-args = ["/Users/jem/dotfiles/scripts/eslint-lsp-push-proxy.ts"]
+args = ["/Users/jem/dotfiles/.helix/language-servers/eslint-adapter.ts"]
 
 [language-server.vscode-eslint-language-server.config]
 validate = "on"

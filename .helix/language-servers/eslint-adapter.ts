@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import { spawn } from "node:child_process"
+import { resolve } from "node:path"
 
 type JsonRpcMessage = {
 	id?: number | string
@@ -31,10 +32,13 @@ type CodeAction = {
 	}
 }
 
+const projectRoot = resolve(import.meta.dirname, `..`, `..`)
+
 const server = spawn(
 	`/opt/homebrew/bin/node`,
 	[`./node_modules/.bin/vscode-eslint-language-server`, `--stdio`],
 	{
+		cwd: projectRoot,
 		stdio: [`pipe`, `pipe`, `pipe`],
 	}
 )
@@ -249,8 +253,8 @@ function sendServerRequest(method: string, params: unknown) {
 		params,
 	})
 
-	return new Promise((resolve, reject) => {
-		serverRequests.set(id, { reject, resolve })
+	return new Promise((complete, reject) => {
+		serverRequests.set(id, { reject, resolve: complete })
 	})
 }
 

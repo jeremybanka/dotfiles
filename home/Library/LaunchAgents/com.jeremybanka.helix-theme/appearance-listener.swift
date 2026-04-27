@@ -14,4 +14,3 @@ DistributedNotificationCenter.default().addObserver(
 }
 
 RunLoop.main.run()
-

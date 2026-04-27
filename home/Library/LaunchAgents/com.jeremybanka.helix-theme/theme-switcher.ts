@@ -10,13 +10,8 @@ import {
 } from "node:fs"
 import { join, resolve } from "node:path"
 
-const helixConfigDir = resolve(
-	import.meta.dirname,
-	`..`,
-	`home`,
-	`.config`,
-	`helix`
-)
+const dotfilesRoot = resolve(import.meta.dirname, `..`, `..`, `..`, `..`)
+const helixConfigDir = join(dotfilesRoot, `home`, `.config`, `helix`)
 const activeConfigPath = join(helixConfigDir, `config.toml`)
 
 const shouldWatch = process.argv.includes(`--watch`)
@@ -78,7 +73,7 @@ function getMacOSAppearance() {
 
 function watchMacOSAppearance() {
 	const listener = spawn(`/usr/bin/swift`, [
-		resolve(import.meta.dirname, `macos-appearance-listener.swift`),
+		resolve(import.meta.dirname, `appearance-listener.swift`),
 	])
 
 	listener.stdout.setEncoding(`utf8`)
