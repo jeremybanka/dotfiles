@@ -33,3 +33,11 @@ left = ["mode", "spinner", "file-name", "read-only-indicator", "file-modificatio
 center = ["diagnostics"]
 right = ["selections", "register", "position", "file-encoding", "file-line-ending", "file-type"]
 
+[keys.insert]
+C-s = ":write"
+
+[keys.normal]
+C-s = ":write"
+
+[keys.select]
+C-s = ":write"

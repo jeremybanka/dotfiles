@@ -196,6 +196,14 @@ wezterm.on(
 
 config.keys = {
   {
+    key = 's',
+    mods = 'CMD',
+    action = wezterm.action.SendKey {
+      key = 's',
+      mods = 'CTRL',
+    },
+  },
+  {
     key = 'LeftArrow',
     mods = 'ALT',
     action = wezterm.action.SendKey {
