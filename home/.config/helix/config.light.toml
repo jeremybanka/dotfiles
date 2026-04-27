@@ -1,0 +1,35 @@
+theme = "banka_light"
+
+[editor]
+auto-save = true
+bufferline = "multiple"
+color-modes = true
+cursorline = true
+line-number = "relative"
+mouse = false
+true-color = true
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.file-picker]
+hidden = false
+
+[editor.indent-guides]
+render = true
+skip-levels = 1
+
+[editor.lsp]
+display-inlay-hints = true
+display-messages = true
+
+[editor.soft-wrap]
+enable = true
+
+[editor.statusline]
+left = ["mode", "spinner", "file-name", "read-only-indicator", "file-modification-indicator"]
+center = ["diagnostics"]
+right = ["selections", "register", "position", "file-encoding", "file-line-ending", "file-type"]
+
