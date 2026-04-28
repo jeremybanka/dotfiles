@@ -6,17 +6,17 @@
 	<string>com.jeremybanka.helix-theme</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/bin/zsh</string>
-		<string>-lc</string>
-		<string>exec /opt/homebrew/bin/bun "$HOME/dotfiles/home/Library/LaunchAgents/com.jeremybanka.helix-theme/theme-switcher.ts" --watch</string>
+		<string>{{BUN}}</string>
+		<string>{{THEME_SWITCHER}}</string>
+		<string>--watch</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>
 	<true/>
 	<key>StandardErrorPath</key>
-	<string>/tmp/com.jeremybanka.helix-theme.err.log</string>
+	<string>{{STDERR_LOG}}</string>
 	<key>StandardOutPath</key>
-	<string>/tmp/com.jeremybanka.helix-theme.out.log</string>
+	<string>{{STDOUT_LOG}}</string>
 </dict>
 </plist>

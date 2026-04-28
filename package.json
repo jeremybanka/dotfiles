@@ -2,8 +2,9 @@
 	"name": "dotfiles",
 	"type": "module",
 	"scripts": {
-		"helix:set-theme": "bun home/Library/LaunchAgents/com.jeremybanka.helix-theme/theme-switcher.ts",
-		"helix:theme-agent": "bun home/Library/LaunchAgents/com.jeremybanka.helix-theme/theme-switcher.ts --watch",
+		"helix:build-theme-agent": "bun home/.local/libexec/com.jeremybanka.helix-theme/build-plist.ts",
+		"helix:set-theme": "bun home/.local/libexec/com.jeremybanka.helix-theme/theme-switcher.ts",
+		"helix:theme-agent": "bun home/.local/libexec/com.jeremybanka.helix-theme/theme-switcher.ts --watch",
 		"helix:watch-config": "bun scripts/watch-helix-config.ts",
 		"lint:eslint": "eslint -- .",
 		"lint:types": "tsc --noEmit",

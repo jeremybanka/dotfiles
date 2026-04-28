@@ -10,8 +10,13 @@ import {
 } from "node:fs"
 import { join, resolve } from "node:path"
 
-const dotfilesRoot = resolve(import.meta.dirname, `..`, `..`, `..`, `..`)
-const helixConfigDir = join(dotfilesRoot, `home`, `.config`, `helix`)
+const home = process.env.HOME
+
+if (!home) {
+	throw new Error(`HOME is not set`)
+}
+
+const helixConfigDir = join(home, `.config`, `helix`)
 const activeConfigPath = join(helixConfigDir, `config.toml`)
 
 const shouldWatch = process.argv.includes(`--watch`)

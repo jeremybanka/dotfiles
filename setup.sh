@@ -16,28 +16,29 @@ for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	fi
 done
 
-LAUNCH_AGENTS_SOURCE="$VIRTUAL_HOME/Library/LaunchAgents"
+LIBEXEC_SOURCE="$VIRTUAL_HOME/.local/libexec"
+LIBEXEC_TARGET="$HOME/.local/libexec"
 LAUNCH_AGENTS_TARGET="$HOME/Library/LaunchAgents"
 
-if [ -d "$LAUNCH_AGENTS_SOURCE" ]; then
+if [ -d "$LIBEXEC_SOURCE" ]; then
+	mkdir -p "$LIBEXEC_TARGET"
 	mkdir -p "$LAUNCH_AGENTS_TARGET"
 
-	for support_dir in "$LAUNCH_AGENTS_SOURCE"/*; do
-		if [ -d "$support_dir" ]; then
-			target="$LAUNCH_AGENTS_TARGET/$(basename "$support_dir")"
+	for bundle in "$LIBEXEC_SOURCE"/*; do
+		if [ -d "$bundle" ]; then
+			target="$LIBEXEC_TARGET/$(basename "$bundle")"
 
-			ln -sfn "$support_dir" "$target"
-			echo "Symlinked LaunchAgent support directory $support_dir to $target"
+			ln -sfn "$bundle" "$target"
+			echo "Symlinked libexec bundle $bundle to $target"
 		fi
 	done
 
-	for plist in "$LAUNCH_AGENTS_SOURCE"/*.plist; do
-		if [ -e "$plist" ]; then
-			target="$LAUNCH_AGENTS_TARGET/$(basename "$plist")"
-			label="$(basename "$plist" .plist)"
+	for builder in "$LIBEXEC_TARGET"/*/build-plist.ts; do
+		if [ -e "$builder" ]; then
+			target="$(bun "$builder")"
+			label="$(basename "$target" .plist)"
 
-			ln -sf "$plist" "$target"
-			echo "Symlinked LaunchAgent $plist to $target"
+			echo "Generated LaunchAgent $target"
 
 			launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
 			launchctl bootstrap "gui/$(id -u)" "$target"
@@ -47,8 +48,6 @@ if [ -d "$LAUNCH_AGENTS_SOURCE" ]; then
 		fi
 	done
 fi
-
-source $HOME/.zshrc
 
 if [ ! -d "$HOME/.bun/install/global" ]; then
     echo "Bun hasn't been set up yet, installing cowsay in order to create ~/.bun/install/global"
