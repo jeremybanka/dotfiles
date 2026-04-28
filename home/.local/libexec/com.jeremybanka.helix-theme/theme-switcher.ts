@@ -84,7 +84,7 @@ function watchMacOSAppearance() {
 	listener.stdout.setEncoding(`utf8`)
 	listener.stdout.on(`data`, (output: string) => {
 		for (const line of output.split(`\n`)) {
-			if (line.trim() !== `changed`) {
+			if (![`appearance`, `wake`, `screens-wake`].includes(line.trim())) {
 				continue
 			}
 

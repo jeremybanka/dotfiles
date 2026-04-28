@@ -1,16 +1,35 @@
 #!/usr/bin/env swift
 
+import AppKit
 import Foundation
 
-let notificationName = Notification.Name("AppleInterfaceThemeChangedNotification")
+func notifyThemeMayHaveChanged(_ reason: String) {
+	print(reason)
+	fflush(stdout)
+}
 
 DistributedNotificationCenter.default().addObserver(
-	forName: notificationName,
+	forName: Notification.Name("AppleInterfaceThemeChangedNotification"),
 	object: nil,
 	queue: .main
 ) { _ in
-	print("changed")
-	fflush(stdout)
+	notifyThemeMayHaveChanged("appearance")
+}
+
+NSWorkspace.shared.notificationCenter.addObserver(
+	forName: NSWorkspace.didWakeNotification,
+	object: nil,
+	queue: .main
+) { _ in
+	notifyThemeMayHaveChanged("wake")
+}
+
+NSWorkspace.shared.notificationCenter.addObserver(
+	forName: NSWorkspace.screensDidWakeNotification,
+	object: nil,
+	queue: .main
+) { _ in
+	notifyThemeMayHaveChanged("screens-wake")
 }
 
 RunLoop.main.run()
