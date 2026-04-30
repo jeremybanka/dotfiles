@@ -1,0 +1,74 @@
+[user]
+name = "Jeremy Banka"
+email = "hello@jeremybanka.com"
+
+[aliases]
+# Your `g s` reflex becomes `jj st`. It shows the current change, parents,
+# bookmarks, conflicts, and working copy all in one place.
+s = ["status"]
+
+# Keep using diff as a bearings check while you learn the shape of the current
+# mutable change.
+d = ["diff"]
+
+# Your `g l` reflex stays available, while `stack` nudges you toward reading
+# history as a stack of editable changes.
+l = ["log"]
+
+# When you want the whole graph, keep the compact all-history gesture from your
+# Git config, but phrase the second alias in revset terms.
+la = ["log", "-r", "all()"]
+
+# Your `g dn` alias says "download"; in jj terms this is fetching Git refs into
+# the colocated repo.
+dn = ["git", "fetch"]
+f  = ["git", "fetch"]
+
+# Your `g up` habit maps to pushing the current change; this is the GitHub PR
+# friendly path for anonymous jj changes.
+up = ["git", "push", "--change"]
+
+# Instead of checking out a branch, `jj new main` creates a fresh mutable change
+# on top of main.
+ch = ["new"]
+n  = ["new"]
+
+# Your old `g bn topic` creates a topic branch; in jj, branches are bookmarks
+# attached to changes.
+bn = ["bookmark", "create", "-r", "@"]
+bm = ["bookmark", "create", "-r", "@"]
+
+# Your `g cm "msg"` loop becomes "describe this change, then make a new one";
+# `commit -m` does both in one step when you want the familiar checkpoint.
+cm = ["commit", "-m"]
+
+# Your `g ca` habit becomes editing the current change description without
+# needing an amend ceremony.
+ca = ["describe", "-m"]
+dm = ["describe", "-m"]
+
+# Your `g rb main` habit maps directly to moving the current stack onto a new
+# destination.
+rb = ["rebase", "-d"]
+
+# After conflicts, fix the files and ask jj to resolve them; the operation log
+# remains available if the whole attempt was wrong.
+rbc = ["resolve"]
+res = ["resolve"]
+
+# Your `g rba` safety move becomes operation restoration: pick an operation from
+# `jj op log` and move the repo back there.
+rba = ["op", "restore"]
+opr = ["op", "restore"]
+
+# Your `g reflog` safety blanket becomes the operation log, which tracks repo
+# operations rather than only commit pointers.
+ops = ["op", "log"]
+
+# Absorb current work into an adjacent change when the checkpoint was only
+# scaffolding.
+sq = ["squash"]
+
+# Split a too-large change into smaller, reviewable pieces instead of doing
+# reset/add/commit surgery.
+sp = ["split"]
