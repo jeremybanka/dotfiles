@@ -16,7 +16,38 @@ for item in "$VIRTUAL_HOME"/* "$VIRTUAL_HOME"/.[^.]*; do
 	fi
 done
 
-source $HOME/.zshrc
+LIBEXEC_SOURCE="$VIRTUAL_HOME/.local/libexec"
+LIBEXEC_TARGET="$HOME/.local/libexec"
+LAUNCH_AGENTS_TARGET="$HOME/Library/LaunchAgents"
+
+if [ -d "$LIBEXEC_SOURCE" ]; then
+	mkdir -p "$LIBEXEC_TARGET"
+	mkdir -p "$LAUNCH_AGENTS_TARGET"
+
+	for bundle in "$LIBEXEC_SOURCE"/*; do
+		if [ -d "$bundle" ]; then
+			target="$LIBEXEC_TARGET/$(basename "$bundle")"
+
+			ln -sfn "$bundle" "$target"
+			echo "Symlinked libexec bundle $bundle to $target"
+		fi
+	done
+
+	for builder in "$LIBEXEC_TARGET"/*/build-plist.ts; do
+		if [ -e "$builder" ]; then
+			target="$(bun "$builder")"
+			label="$(basename "$target" .plist)"
+
+			echo "Generated LaunchAgent $target"
+
+			launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+			launchctl bootstrap "gui/$(id -u)" "$target"
+			launchctl enable "gui/$(id -u)/$label"
+			launchctl kickstart -k "gui/$(id -u)/$label"
+			echo "Loaded LaunchAgent $label"
+		fi
+	done
+fi
 
 if [ ! -d "$HOME/.bun/install/global" ]; then
     echo "Bun hasn't been set up yet, installing cowsay in order to create ~/.bun/install/global"

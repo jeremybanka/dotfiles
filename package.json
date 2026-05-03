@@ -2,6 +2,10 @@
 	"name": "dotfiles",
 	"type": "module",
 	"scripts": {
+		"helix:build-theme-agent": "bun home/.local/libexec/com.jeremybanka.helix-theme/build-plist.ts",
+		"helix:set-theme": "bun home/.local/libexec/com.jeremybanka.helix-theme/theme-switcher.ts",
+		"helix:theme-agent": "bun home/.local/libexec/com.jeremybanka.helix-theme/theme-switcher.ts --watch",
+		"helix:watch-config": "bun scripts/watch-helix-config.ts",
 		"lint:eslint": "eslint -- .",
 		"lint:types": "tsc --noEmit",
 		"lint": "bun run lint:eslint && bun run lint:types",
@@ -21,7 +25,9 @@
 		"eslint-plugin-simple-import-sort": "13.0.0",
 		"jiti": "2.6.1",
 		"prettier": "3.8.3",
-		"typescript": "6.0.3"
+		"typescript": "6.0.3",
+		"typescript-language-server": "4.4.0",
+		"vscode-langservers-extracted": "4.10.0"
 	},
 	"packages": [
 		"packages/*"
