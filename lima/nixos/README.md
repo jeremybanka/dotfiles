@@ -64,6 +64,18 @@ SCRUBS_SEED_ISO="https://releases.nixos.org/nixos/25.11/nixos-25.11.9418.c7f4703
 That mounts [`lima/nixos/seed`](/Users/jem/dotfiles/lima/nixos/seed) into the
 installer VM at `/mnt/host-scrubs-seed`.
 
+If `~/.lima/scrubs-seed/iso` already exists, `seed.sh` reuses that local
+installer artifact instead of downloading the ISO again.
+
+If no ISO is specified, `seed.sh` next looks for a central cache file at:
+
+```sh
+~/Library/Caches/scrubs/nixos-minimal-aarch64.iso
+```
+
+It also normalizes `~`, `$HOME/...`, and `${HOME}/...` if those are passed in
+`SCRUBS_SEED_ISO`.
+
 Inside the installer console, run:
 
 ```sh
