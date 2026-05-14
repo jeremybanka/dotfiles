@@ -10,7 +10,9 @@ template_file="$scrubs_dir/lima.local.yaml"
 payload_dir="$cache_dir/scrubs-bootstrap"
 guest_apply="$payload_dir/guest-apply.sh"
 current_user=$(id -un)
+current_uid=$(id -u)
 guest_user="${SCRUBS_GUEST_USER:-$current_user}"
+guest_uid="${SCRUBS_GUEST_UID:-$current_uid}"
 bootstrap_user="${SCRUBS_BOOTSTRAP_USER:-$guest_user}"
 bootstrap_home="/home/$bootstrap_user"
 base_image="${SCRUBS_BASE_IMAGE:-}"
@@ -32,6 +34,7 @@ fi
 
 base_image="${SCRUBS_BASE_IMAGE:-$base_image}"
 guest_user="${SCRUBS_GUEST_USER:-$guest_user}"
+guest_uid="${SCRUBS_GUEST_UID:-$guest_uid}"
 bootstrap_user="${SCRUBS_BOOTSTRAP_USER:-$bootstrap_user}"
 bootstrap_home="/home/$bootstrap_user"
 guest_arch="${SCRUBS_ARCH:-$guest_arch}"
@@ -125,10 +128,12 @@ chmod +x "$guest_apply"
 
 escaped_image_location=$(printf '%s\n' "$image_location" | sed 's/[&|]/\\&/g')
 escaped_guest_user=$(printf '%s\n' "$guest_user" | sed 's/[&|]/\\&/g')
+escaped_guest_uid=$(printf '%s\n' "$guest_uid" | sed 's/[&|]/\\&/g')
 escaped_guest_arch=$(printf '%s\n' "$guest_arch" | sed 's/[&|]/\\&/g')
 sed \
   -e "s|REPLACE_WITH_BASE_IMAGE|$escaped_image_location|g" \
   -e "s|REPLACE_WITH_GUEST_USER|$escaped_guest_user|g" \
+  -e "s|REPLACE_WITH_GUEST_UID|$escaped_guest_uid|g" \
   -e "s|REPLACE_WITH_ARCH|$escaped_guest_arch|g" \
   "$scrubs_dir/lima.yaml" > "$template_file"
 

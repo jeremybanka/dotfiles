@@ -34,6 +34,81 @@ provision:
   - mode: boot
     script: |
       set -eu
+      mkdir -p /usr/local/bin
+      cat >/usr/local/bin/sudo <<'EOF'
+      #!/bin/sh
+      if [ "$(id -u)" -eq 0 ]; then
+        exec "$@"
+      fi
+      if [ -x /run/wrappers/bin/sudo ]; then
+        exec /run/wrappers/bin/sudo "$@"
+      fi
+      exec /run/current-system/sw/bin/sudo "$@"
+      EOF
+      chmod 755 /usr/local/bin/sudo
+      mkdir -p /var/lib/cloud/scripts/per-boot
+      cat >/var/lib/cloud/scripts/per-boot/00-lima-pre.sh <<'EOF'
+      #!/bin/sh
+      set -eu
+      command -v systemctl >/dev/null 2>&1 || exit 0
+
+      stub=/var/lib/cloud/scripts/per-boot/00-lima.boot.sh
+      if [ -f "$stub" ] && ! grep -q 'SCRUBS_LIMA_PATH_PATCH' "$stub"; then
+        tmp_stub="$(mktemp)"
+        {
+          IFS= read -r first_line || true
+          printf '%s\n' "$first_line"
+          printf '%s\n' '# SCRUBS_LIMA_PATH_PATCH'
+          printf '%s\n' 'export PATH=/usr/local/bin:/run/wrappers/bin:/run/current-system/sw/bin:$PATH'
+          cat
+        } <"$stub" >"$tmp_stub"
+        cat "$tmp_stub" >"$stub"
+        rm -f "$tmp_stub"
+      fi
+
+      mkdir -p /run/systemd/system/user@.service.d
+      cat >/run/systemd/system/user@.service.d/lima.conf <<'INNER_EOF'
+      [Service]
+      Delegate=yes
+      INNER_EOF
+      systemctl daemon-reload
+
+      for f in /etc/subuid /etc/subgid; do
+        touch "$f"
+        grep -qw "REPLACE_WITH_GUEST_USER" "$f" || \
+          echo "REPLACE_WITH_GUEST_USER:524288:1073741824" >>"$f"
+      done
+
+      systemctl start systemd-logind.service || true
+      loginctl enable-linger "REPLACE_WITH_GUEST_USER" || true
+      systemctl start "user@REPLACE_WITH_GUEST_UID.service" || true
+      EOF
+      chmod 755 /var/lib/cloud/scripts/per-boot/00-lima-pre.sh
+      cat >/var/lib/cloud/scripts/per-boot/99-lima-post.sh <<'EOF'
+      #!/bin/sh
+      set -eu
+      command -v systemctl >/dev/null 2>&1 || exit 0
+      [ -x /usr/local/bin/lima-guestagent ] || exit 0
+
+      cat >/run/systemd/system/lima-guestagent.service <<'INNER_EOF'
+      [Unit]
+      Description=Lima Guest Agent
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      ExecStart=/usr/local/bin/lima-guestagent daemon --debug=false
+      Restart=always
+      RestartSec=1
+
+      [Install]
+      WantedBy=multi-user.target
+      INNER_EOF
+
+      systemctl daemon-reload
+      systemctl restart lima-guestagent.service
+      EOF
+      chmod 755 /var/lib/cloud/scripts/per-boot/99-lima-post.sh
       mkdir -p /var/lib/cloud/scripts/per-instance
       cat >/var/lib/cloud/scripts/per-instance/00-lima-unlock-user.sh <<'EOF'
       #!/bin/sh
