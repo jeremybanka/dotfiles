@@ -54,6 +54,7 @@
       cloud_config_modules:
         - disk_setup
         - mounts
+        - users-groups
         - set-passwords
         - ssh
 
