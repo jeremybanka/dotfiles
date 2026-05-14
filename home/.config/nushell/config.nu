@@ -1,19 +1,11 @@
-use ~/.config/nushell/kolo.nu *
-use ~/.config/nushell/mise.nu
-use ~/.config/nushell/ni-completions.nu *
-use ~/.config/nushell/vite-plus.nu *
+source ~/.config/nushell/config.shared.nu
 
-$env.PROMPT_COMMAND = { prompt }
-$env.PROMPT_INDICATOR = { prompt-indicator }
-$env.PROMPT_COMMAND_RIGHT = ""
-$env.config.buffer_editor = "codium"
-$env.config.show_banner = false
-$env.config.table.mode = 'rounded'
+let host_os = ((sys host).name | str downcase)
 
-alias g = git
-alias lz = lazygit
-def c [path: string] {
-    ^open $path -a "VSCodium"
+if $host_os == "macos" {
+    source ~/.config/nushell/config.darwin.nu
 }
 
-source ~/.cache/carapace/init.nu
+if $host_os == "linux" {
+    source ~/.config/nushell/config.linux.nu
+}

@@ -1,0 +1,7 @@
+Host scrubs-dev
+  HostName 127.0.0.1
+  Port 60022
+  User REPLACE_WITH_GUEST_USER
+  ForwardAgent no
+  IdentitiesOnly yes
+  IdentityFile /path/to/dotfiles/lima/nixos/keys/scrubs-dev

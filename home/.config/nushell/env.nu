@@ -1,13 +1,11 @@
-use std/util "path add"
+source ~/.config/nushell/env.shared.nu
 
-path add "/nix/var/nix/profiles/default/bin"
-path add "~/.bun/bin"
-path add "/opt/homebrew/bin"
+let host_os = ((sys host).name | str downcase)
 
-$env.CARAPACE_BRIDGES = 'zsh,fish,bash,inshellisense' # optional
-mkdir ~/.cache/carapace
-carapace _carapace nushell | save --force ~/.cache/carapace/init.nu
-let mise_path = $nu.default-config-dir | path join mise.nu
-if not ($mise_path | path exists) {
-    ^mise activate nu | save $mise_path
+if $host_os == "macos" {
+    source ~/.config/nushell/env.darwin.nu
+}
+
+if $host_os == "linux" {
+    source ~/.config/nushell/env.linux.nu
 }

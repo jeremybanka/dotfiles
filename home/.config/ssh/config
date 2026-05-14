@@ -1,4 +1,5 @@
 Host *
   AddKeysToAgent yes
+  ForwardAgent no
   UseKeychain yes
   IdentityFile ~/.ssh/id_ed25519

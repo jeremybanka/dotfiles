@@ -1,0 +1,37 @@
+# Template for a reusable scrubs guest booted from a generic NixOS base image.
+#
+# `bootstrap.sh` writes a concrete `lima.local.yaml` by filling in the base
+# image path and the guest username before calling `limactl start`.
+
+vmType: "qemu"
+arch: "REPLACE_WITH_ARCH"
+cpus: 6
+memory: "12GiB"
+disk: "100GiB"
+
+images:
+  - location: "REPLACE_WITH_BASE_IMAGE"
+    arch: "REPLACE_WITH_ARCH"
+
+mountType: "9p"
+mounts: []
+
+user:
+  name: "REPLACE_WITH_GUEST_USER"
+  home: "/home/REPLACE_WITH_GUEST_USER"
+
+ssh:
+  localPort: 60022
+  loadDotSSHPubKeys: false
+  forwardAgent: false
+
+portForwards:
+  - guestPort: 3000
+    hostPort: 3000
+    proto: tcp
+  - guestPort: 5173
+    hostPort: 5173
+    proto: tcp
+  - guestPort: 8080
+    hostPort: 8080
+    proto: tcp
