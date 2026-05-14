@@ -7,6 +7,8 @@ seed_dir="$scrubs_dir/seed"
 instance_name="${1:-scrubs-seed}"
 template_file="$scrubs_dir/seed.local.yaml"
 seed_iso="${SCRUBS_SEED_ISO:-}"
+existing_iso="$HOME/.lima/$instance_name/iso"
+default_cache_iso="$HOME/Library/Caches/scrubs/nixos-minimal-aarch64.iso"
 
 if [ -f "$scrubs_dir/settings.env" ]; then
   # shellcheck disable=SC1090
@@ -15,12 +17,30 @@ fi
 
 seed_iso="${SCRUBS_SEED_ISO:-$seed_iso}"
 
+case "$seed_iso" in
+  "")
+    seed_iso="$default_cache_iso"
+    ;;
+  "~/"*)
+    seed_iso="$HOME/${seed_iso#~/}"
+    ;;
+  "\$HOME/"*)
+    seed_iso="$HOME/${seed_iso#\$HOME/}"
+    ;;
+  "\${HOME}/"*)
+    seed_iso="$HOME/${seed_iso#\$\{HOME\}/}"
+    ;;
+esac
+
 if [ -z "$seed_iso" ]; then
   echo "Set SCRUBS_SEED_ISO in the environment or lima/nixos/settings.env." >&2
   exit 1
 fi
 
-if printf '%s' "$seed_iso" | grep -Eq '^[A-Za-z][A-Za-z0-9+.-]*://'; then
+if [ -f "$existing_iso" ]; then
+  echo "Reusing local installer ISO at $existing_iso"
+  iso_location="$existing_iso"
+elif printf '%s' "$seed_iso" | grep -Eq '^[A-Za-z][A-Za-z0-9+.-]*://'; then
   iso_location="$seed_iso"
 else
   iso_location=$(cd "$(dirname "$seed_iso")" && pwd)/$(basename "$seed_iso")
