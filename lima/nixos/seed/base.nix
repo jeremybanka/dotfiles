@@ -13,9 +13,16 @@
     PermitRootLogin = "no";
     AllowAgentForwarding = false;
     X11Forwarding = false;
+    UsePAM = false;
   };
 
   services.qemuGuest.enable = true;
+  services.envfs = {
+    enable = true;
+    extraFallbackPathCommands = ''
+      ln -s ${pkgs.bashInteractive}/bin/bash $out/bash
+    '';
+  };
 
   security.sudo.wheelNeedsPassword = false;
 
