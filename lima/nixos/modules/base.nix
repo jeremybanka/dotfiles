@@ -15,6 +15,9 @@
     X11Forwarding = false;
   };
 
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = false;
+
   programs.git.enable = true;
 
   environment.systemPackages = with pkgs; [

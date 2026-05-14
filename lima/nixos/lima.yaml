@@ -19,11 +19,40 @@ mounts: []
 user:
   name: "REPLACE_WITH_GUEST_USER"
   home: "/home/REPLACE_WITH_GUEST_USER"
+  shell: "/bin/sh"
 
 ssh:
   localPort: 60022
   loadDotSSHPubKeys: false
   forwardAgent: false
+
+containerd:
+  system: false
+  user: false
+
+provision:
+  - mode: boot
+    script: |
+      set -eu
+      mkdir -p /var/lib/cloud/scripts/per-instance
+      cat >/var/lib/cloud/scripts/per-instance/00-lima-unlock-user.sh <<'EOF'
+      #!/bin/sh
+      set -eu
+      i=0
+      while [ "$i" -lt 120 ]; do
+        if id "REPLACE_WITH_GUEST_USER" >/dev/null 2>&1; then
+          break
+        fi
+        i=$((i + 1))
+        sleep 1
+      done
+      if ! id "REPLACE_WITH_GUEST_USER" >/dev/null 2>&1; then
+        exit 1
+      fi
+      pw="$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n')"
+      echo "REPLACE_WITH_GUEST_USER:$pw" | chpasswd
+      EOF
+      chmod 755 /var/lib/cloud/scripts/per-instance/00-lima-unlock-user.sh
 
 portForwards:
   - guestPort: 3000

@@ -146,6 +146,20 @@ If you see `Image type X64 can't be loaded on AARCH64 UEFI system`, your base
 image architecture and `SCRUBS_ARCH` do not match. Use an `aarch64` image or set
 `SCRUBS_ARCH=x86_64`.
 
+If the guest boots but Lima keeps reporting `Permission denied (publickey)`,
+delete and recreate the instance after updating the template metadata:
+
+```sh
+limactl delete scrubs-dev
+./lima/nixos/bootstrap.sh
+```
+
+That failure can come from Lima's generated cloud-init locking the bootstrap
+user account. The template includes a cloud-init per-instance script that waits
+for the bootstrap user to exist, replaces the locked password with a random
+one, and then lets SSH public-key login succeed while password authentication
+remains disabled.
+
 ## Next Layer
 
 The next step after this base flow is a small per-project extension mechanism,

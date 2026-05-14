@@ -17,6 +17,7 @@ base_image="${SCRUBS_BASE_IMAGE:-}"
 guest_arch="${SCRUBS_ARCH:-aarch64}"
 key_dir="$scrubs_dir/keys"
 key_path="$key_dir/scrubs-dev"
+start_timeout="${SCRUBS_START_TIMEOUT:-90s}"
 
 if [ -f "$settings_file" ]; then
   # shellcheck disable=SC1090
@@ -109,6 +110,7 @@ mkdir -p "\$HOME/.config/nushell" "\$HOME/.config/mise"
 cp "\$payload/home/.gitconfig" "\$HOME/.gitconfig"
 cp "\$payload/home/.config/mise/config.toml" "\$HOME/.config/mise/config.toml"
 cp "\$payload/home/.config/nushell/"* "\$HOME/.config/nushell/"
+cp /etc/nixos/hardware-configuration.nix "\$payload/lima/nixos/modules/runtime-hardware.nix"
 
 if ! sudo -n true >/dev/null 2>&1; then
   echo "Guest user '$bootstrap_user' needs passwordless sudo for bootstrap." >&2
@@ -131,7 +133,10 @@ sed \
   "$scrubs_dir/lima.yaml" > "$template_file"
 
 echo "Starting Lima instance $instance_name"
-limactl start --name="$instance_name" "$template_file"
+if ! limactl start --containerd=none --timeout="$start_timeout" --name="$instance_name" "$template_file"; then
+  echo "limactl start did not fully complete within $start_timeout." >&2
+  echo "Continuing because scrubs only requires SSH reachability for bootstrap." >&2
+fi
 
 echo "Waiting for SSH access to the guest"
 ready=0
