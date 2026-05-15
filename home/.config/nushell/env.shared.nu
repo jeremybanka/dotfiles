@@ -5,7 +5,7 @@ path add "~/.bun/bin"
 
 $env.CARAPACE_BRIDGES = "zsh,fish,bash,inshellisense"
 
-let carapace_cache = ($nu.home-path | path join ".cache" "carapace")
+let carapace_cache = ($env.HOME | path join ".cache" "carapace")
 let carapace_init = ($carapace_cache | path join "init.nu")
 
 mkdir $carapace_cache
