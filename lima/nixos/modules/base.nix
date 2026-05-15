@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, unstablePkgs, ... }:
 let
   pythonShim = pkgs.writeShellScriptBin "python" ''
     exec ${pkgs.python3}/bin/python3 "$@"
@@ -44,7 +44,7 @@ in
     helix
     jq
     lazygit
-    mise
+    unstablePkgs.mise
     ni
     nushell
     pkg-config
