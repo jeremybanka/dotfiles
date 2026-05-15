@@ -34,18 +34,23 @@ in
     carapace
     curl
     delta
+    diff-so-fancy
     fd
     gcc
     git
     gnumake
     gnupg
+    helix
     jq
+    lazygit
     mise
+    ni
     nushell
     pkg-config
     python3
     pythonShim
     ripgrep
+    tmux
     vim
     wget
   ];

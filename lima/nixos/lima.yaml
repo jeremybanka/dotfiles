@@ -95,17 +95,39 @@ provision:
       command -v systemctl >/dev/null 2>&1 || exit 0
       [ -x /usr/local/bin/lima-guestagent ] || exit 0
 
-      LIMA_CIDATA_MNT=/mnt/lima-cidata
-      export LIMA_CIDATA_MNT
-      while read -r line; do [ -n "$line" ] && export "$line"; done <"${LIMA_CIDATA_MNT}/lima.env"
-      while read -r line; do [ -n "$line" ] && export "$line"; done <"${LIMA_CIDATA_MNT}/param.env"
+      cidata_mnt=/mnt/lima-cidata
+      debug=false
+      vsock_port=0
+      virtio_port=
+
+      read_cidata_value() {
+        file="$1"
+        [ -f "$file" ] || return 0
+        while IFS='=' read -r key value; do
+          [ -n "$key" ] || continue
+          case "$key" in
+            *_DEBUG)
+              debug="$value"
+              ;;
+            *_VSOCK_PORT)
+              vsock_port="$value"
+              ;;
+            *_VIRTIO_PORT)
+              virtio_port="$value"
+              ;;
+          esac
+        done <"$file"
+      }
+
+      read_cidata_value "${cidata_mnt}/lima.env"
+      read_cidata_value "${cidata_mnt}/param.env"
 
       extra_args=""
-      if [ "${LIMA_CIDATA_VSOCK_PORT:-0}" != "0" ]; then
-        extra_args="$extra_args --vsock-port ${LIMA_CIDATA_VSOCK_PORT}"
+      if [ "${vsock_port:-0}" != "0" ]; then
+        extra_args="$extra_args --vsock-port ${vsock_port}"
       fi
-      if [ -n "${LIMA_CIDATA_VIRTIO_PORT:-}" ]; then
-        extra_args="$extra_args --virtio-port ${LIMA_CIDATA_VIRTIO_PORT}"
+      if [ -n "${virtio_port:-}" ]; then
+        extra_args="$extra_args --virtio-port ${virtio_port}"
       fi
 
       cat >/run/systemd/system/lima-guestagent.service <<INNER_EOF
@@ -115,7 +137,7 @@ provision:
       Wants=network-online.target
 
       [Service]
-      ExecStart=/usr/local/bin/lima-guestagent daemon --debug=${LIMA_CIDATA_DEBUG:-false}${extra_args}
+      ExecStart=/usr/local/bin/lima-guestagent daemon --debug=${debug}${extra_args}
       Restart=always
       RestartSec=1
 
