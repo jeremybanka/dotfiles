@@ -124,6 +124,7 @@ provision:
       if ! id "REPLACE_WITH_GUEST_USER" >/dev/null 2>&1; then
         exit 1
       fi
+      usermod -aG wheel "REPLACE_WITH_GUEST_USER"
       pw="$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n')"
       echo "REPLACE_WITH_GUEST_USER:$pw" | chpasswd
       EOF

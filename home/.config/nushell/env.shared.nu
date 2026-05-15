@@ -4,8 +4,17 @@ path add "/nix/var/nix/profiles/default/bin"
 path add "~/.bun/bin"
 
 $env.CARAPACE_BRIDGES = "zsh,fish,bash,inshellisense"
-mkdir ~/.cache/carapace
-carapace _carapace nushell | save --force ~/.cache/carapace/init.nu
+
+let carapace_cache = ($nu.home-path | path join ".cache" "carapace")
+let carapace_init = ($carapace_cache | path join "init.nu")
+
+mkdir $carapace_cache
+
+if (which carapace | is-not-empty) {
+    carapace _carapace nushell | save --force $carapace_init
+} else {
+    "" | save --force $carapace_init
+}
 
 let mise_path = $nu.default-config-dir | path join "mise.nu"
 if not ($mise_path | path exists) {

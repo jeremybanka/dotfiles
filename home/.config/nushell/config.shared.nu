@@ -12,6 +12,4 @@ $env.config.table.mode = "rounded"
 alias g = git
 alias lz = lazygit
 
-if ("~/.cache/carapace/init.nu" | path exists) {
-    source ~/.cache/carapace/init.nu
-}
+source ~/.cache/carapace/init.nu

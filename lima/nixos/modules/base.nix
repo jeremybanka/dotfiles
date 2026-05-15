@@ -20,8 +20,12 @@
 
   programs.git.enable = true;
 
+  security.sudo.wheelNeedsPassword = false;
+  users.mutableUsers = false;
+
   environment.systemPackages = with pkgs; [
     bun
+    carapace
     curl
     delta
     fd
