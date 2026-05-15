@@ -1,4 +1,9 @@
 { pkgs, ... }:
+let
+  pythonShim = pkgs.writeShellScriptBin "python" ''
+    exec ${pkgs.python3}/bin/python3 "$@"
+  '';
+in
 {
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
@@ -19,6 +24,7 @@
   boot.loader.efi.canTouchEfiVariables = false;
 
   programs.git.enable = true;
+  programs.nix-ld.enable = true;
 
   security.sudo.wheelNeedsPassword = false;
   users.mutableUsers = false;
@@ -29,10 +35,16 @@
     curl
     delta
     fd
+    gcc
     git
+    gnumake
+    gnupg
     jq
     mise
     nushell
+    pkg-config
+    python3
+    pythonShim
     ripgrep
     vim
     wget
