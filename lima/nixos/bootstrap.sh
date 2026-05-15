@@ -17,6 +17,7 @@ bootstrap_user="${SCRUBS_BOOTSTRAP_USER:-$guest_user}"
 bootstrap_home="/home/$bootstrap_user"
 base_image="${SCRUBS_BASE_IMAGE:-}"
 guest_arch="${SCRUBS_ARCH:-aarch64}"
+vm_type="${SCRUBS_VM_TYPE:-vz}"
 key_dir="$scrubs_dir/keys"
 key_path="$key_dir/scrubs-dev"
 start_timeout="${SCRUBS_START_TIMEOUT:-90s}"
@@ -24,6 +25,8 @@ ssh_port="${SCRUBS_SSH_PORT:-}"
 host_port_3000="${SCRUBS_HOST_PORT_3000:-}"
 host_port_5173="${SCRUBS_HOST_PORT_5173:-}"
 host_port_8080="${SCRUBS_HOST_PORT_8080:-}"
+host_resolver="${SCRUBS_HOST_RESOLVER:-true}"
+dns_servers="${SCRUBS_DNS:-}"
 
 if [ -f "$settings_file" ]; then
   # shellcheck disable=SC1090
@@ -42,10 +45,13 @@ guest_uid="${SCRUBS_GUEST_UID:-$guest_uid}"
 bootstrap_user="${SCRUBS_BOOTSTRAP_USER:-$bootstrap_user}"
 bootstrap_home="/home/$bootstrap_user"
 guest_arch="${SCRUBS_ARCH:-$guest_arch}"
+vm_type="${SCRUBS_VM_TYPE:-$vm_type}"
 ssh_port="${SCRUBS_SSH_PORT:-$ssh_port}"
 host_port_3000="${SCRUBS_HOST_PORT_3000:-$host_port_3000}"
 host_port_5173="${SCRUBS_HOST_PORT_5173:-$host_port_5173}"
 host_port_8080="${SCRUBS_HOST_PORT_8080:-$host_port_8080}"
+host_resolver="${SCRUBS_HOST_RESOLVER:-$host_resolver}"
+dns_servers="${SCRUBS_DNS:-$dns_servers}"
 
 if [ -z "$ssh_port" ] || [ -z "$host_port_3000" ] || [ -z "$host_port_5173" ] || [ -z "$host_port_8080" ]; then
   if [ "$instance_name" = "scrubs-dev" ]; then
@@ -68,6 +74,20 @@ case "$guest_arch" in
     echo "Use aarch64 or x86_64." >&2
     exit 1
     ;;
+esac
+
+case "$vm_type" in
+  qemu|vz) ;;
+  *)
+    echo "Unsupported SCRUBS_VM_TYPE: $vm_type" >&2
+    echo "Use qemu or vz." >&2
+    exit 1
+    ;;
+esac
+
+case "$vm_type" in
+  qemu) mount_type="9p" ;;
+  vz) mount_type="virtiofs" ;;
 esac
 
 rm -rf "$payload_dir"
@@ -152,20 +172,56 @@ escaped_image_location=$(printf '%s\n' "$image_location" | sed 's/[&|]/\\&/g')
 escaped_guest_user=$(printf '%s\n' "$guest_user" | sed 's/[&|]/\\&/g')
 escaped_guest_uid=$(printf '%s\n' "$guest_uid" | sed 's/[&|]/\\&/g')
 escaped_guest_arch=$(printf '%s\n' "$guest_arch" | sed 's/[&|]/\\&/g')
+escaped_vm_type=$(printf '%s\n' "$vm_type" | sed 's/[&|]/\\&/g')
+escaped_mount_type=$(printf '%s\n' "$mount_type" | sed 's/[&|]/\\&/g')
 escaped_ssh_port=$(printf '%s\n' "$ssh_port" | sed 's/[&|]/\\&/g')
 escaped_host_port_3000=$(printf '%s\n' "$host_port_3000" | sed 's/[&|]/\\&/g')
 escaped_host_port_5173=$(printf '%s\n' "$host_port_5173" | sed 's/[&|]/\\&/g')
 escaped_host_port_8080=$(printf '%s\n' "$host_port_8080" | sed 's/[&|]/\\&/g')
+escaped_host_resolver=$(printf '%s\n' "$host_resolver" | sed 's/[&|]/\\&/g')
+dns_block=""
+if [ -n "$dns_servers" ]; then
+  dns_block="dns:"
+  old_ifs=$IFS
+  IFS=,
+  for dns_server in $dns_servers; do
+    dns_server=$(printf '%s' "$dns_server" | sed 's/^ *//;s/ *$//')
+    [ -n "$dns_server" ] || continue
+    dns_block="$dns_block
+  - $dns_server"
+  done
+  IFS=$old_ifs
+fi
+rendered_template="$cache_dir/lima.rendered.yaml"
 sed \
   -e "s|REPLACE_WITH_BASE_IMAGE|$escaped_image_location|g" \
   -e "s|REPLACE_WITH_GUEST_USER|$escaped_guest_user|g" \
   -e "s|REPLACE_WITH_GUEST_UID|$escaped_guest_uid|g" \
   -e "s|REPLACE_WITH_ARCH|$escaped_guest_arch|g" \
+  -e "s|REPLACE_WITH_VM_TYPE|$escaped_vm_type|g" \
+  -e "s|REPLACE_WITH_MOUNT_TYPE|$escaped_mount_type|g" \
   -e "s|REPLACE_WITH_SSH_PORT|$escaped_ssh_port|g" \
+  -e "s|REPLACE_WITH_HOST_RESOLVER|$escaped_host_resolver|g" \
   -e "s|REPLACE_WITH_HOST_PORT_3000|$escaped_host_port_3000|g" \
   -e "s|REPLACE_WITH_HOST_PORT_5173|$escaped_host_port_5173|g" \
   -e "s|REPLACE_WITH_HOST_PORT_8080|$escaped_host_port_8080|g" \
-  "$scrubs_dir/lima.yaml" > "$template_file"
+  "$scrubs_dir/lima.yaml" > "$rendered_template"
+
+python3 - "$rendered_template" "$template_file" "$dns_block" <<'PY'
+import pathlib
+import sys
+
+source = pathlib.Path(sys.argv[1])
+dest = pathlib.Path(sys.argv[2])
+dns_block = sys.argv[3]
+placeholder = "REPLACE_WITH_DNS_BLOCK"
+
+text = source.read_text()
+replacement = dns_block
+if placeholder not in text:
+    raise SystemExit(f"missing placeholder: {placeholder}")
+dest.write_text(text.replace(placeholder, replacement))
+PY
 
 echo "Starting Lima instance $instance_name"
 if ! limactl start --containerd=none --timeout="$start_timeout" --name="$instance_name" "$template_file"; then

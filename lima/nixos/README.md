@@ -33,6 +33,10 @@ Instead it:
 3. runs `nixos-rebuild switch` inside the guest
 4. leaves you with a disposable VM that still feels like your environment
 
+On Apple Silicon macOS, the scrubs runtime path now defaults to Lima's `vz`
+backend rather than `qemu`. In local testing, `vz` reduced hot-idle host CPU
+from hundreds of percent under `qemu` to effectively idle.
+
 ## Requirements
 
 - `lima` installed on macOS
@@ -60,6 +64,10 @@ To boot the seed installer:
 SCRUBS_SEED_ISO="https://releases.nixos.org/nixos/25.11/nixos-25.11.9418.c7f47036d3df/nixos-minimal-25.11.9418.c7f47036d3df-aarch64-linux.iso" \
 ./lima/nixos/seed.sh
 ```
+
+The installer flow intentionally still uses `qemu` plus a repo mount so you can
+run the seed helper scripts from the live ISO. The reusable scrubs guest you
+boot afterward defaults to `vz`.
 
 That mounts [`lima/nixos/seed`](/Users/jem/dotfiles/lima/nixos/seed) into the
 installer VM at `/mnt/host-scrubs-seed`.
@@ -108,13 +116,15 @@ Then edit `settings.env` to point at your generic NixOS image.
 ```
 
 By default this creates a `scrubs-dev` Lima instance and uses your current macOS
-username as the guest username. It also defaults to `aarch64`, so if your base
-image is `x86_64` you need to say so explicitly.
+username as the guest username. It defaults to `SCRUBS_VM_TYPE=vz` and
+`SCRUBS_ARCH=aarch64`, so if your base image is `x86_64` you need to say so
+explicitly.
 
 You can override those with environment variables:
 
 ```sh
 SCRUBS_BASE_IMAGE=/absolute/path/to/nixos.qcow2 \
+SCRUBS_VM_TYPE=qemu \
 SCRUBS_ARCH=x86_64 \
 SCRUBS_GUEST_USER=jem \
 SCRUBS_BOOTSTRAP_USER=jem \

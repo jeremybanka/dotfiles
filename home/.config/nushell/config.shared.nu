@@ -11,5 +11,3 @@ $env.config.table.mode = "rounded"
 
 alias g = git
 alias lz = lazygit
-
-source ~/.cache/carapace/init.nu

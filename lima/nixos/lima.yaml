@@ -3,7 +3,7 @@
 # `bootstrap.sh` writes a concrete `lima.local.yaml` by filling in the base
 # image path and the guest username before calling `limactl start`.
 
-vmType: "qemu"
+vmType: "REPLACE_WITH_VM_TYPE"
 arch: "REPLACE_WITH_ARCH"
 cpus: 6
 memory: "12GiB"
@@ -13,7 +13,7 @@ images:
   - location: "REPLACE_WITH_BASE_IMAGE"
     arch: "REPLACE_WITH_ARCH"
 
-mountType: "9p"
+mountType: "REPLACE_WITH_MOUNT_TYPE"
 mounts: []
 
 user:
@@ -25,6 +25,11 @@ ssh:
   localPort: REPLACE_WITH_SSH_PORT
   loadDotSSHPubKeys: false
   forwardAgent: false
+
+hostResolver:
+  enabled: REPLACE_WITH_HOST_RESOLVER
+
+REPLACE_WITH_DNS_BLOCK
 
 containerd:
   system: false
@@ -90,14 +95,27 @@ provision:
       command -v systemctl >/dev/null 2>&1 || exit 0
       [ -x /usr/local/bin/lima-guestagent ] || exit 0
 
-      cat >/run/systemd/system/lima-guestagent.service <<'INNER_EOF'
+      LIMA_CIDATA_MNT=/mnt/lima-cidata
+      export LIMA_CIDATA_MNT
+      while read -r line; do [ -n "$line" ] && export "$line"; done <"${LIMA_CIDATA_MNT}/lima.env"
+      while read -r line; do [ -n "$line" ] && export "$line"; done <"${LIMA_CIDATA_MNT}/param.env"
+
+      extra_args=""
+      if [ "${LIMA_CIDATA_VSOCK_PORT:-0}" != "0" ]; then
+        extra_args="$extra_args --vsock-port ${LIMA_CIDATA_VSOCK_PORT}"
+      fi
+      if [ -n "${LIMA_CIDATA_VIRTIO_PORT:-}" ]; then
+        extra_args="$extra_args --virtio-port ${LIMA_CIDATA_VIRTIO_PORT}"
+      fi
+
+      cat >/run/systemd/system/lima-guestagent.service <<INNER_EOF
       [Unit]
       Description=Lima Guest Agent
       After=network-online.target
       Wants=network-online.target
 
       [Service]
-      ExecStart=/usr/local/bin/lima-guestagent daemon --debug=false
+      ExecStart=/usr/local/bin/lima-guestagent daemon --debug=${LIMA_CIDATA_DEBUG:-false}${extra_args}
       Restart=always
       RestartSec=1
 

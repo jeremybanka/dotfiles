@@ -1,9 +1,5 @@
-{ modulesPath, pkgs, ... }:
+{ pkgs, ... }:
 {
-  imports = [
-    (modulesPath + "/profiles/qemu-guest.nix")
-  ];
-
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   services.openssh.enable = true;
@@ -14,14 +10,6 @@
     AllowAgentForwarding = false;
     X11Forwarding = false;
     UsePAM = false;
-  };
-
-  services.qemuGuest.enable = true;
-  services.envfs = {
-    enable = true;
-    extraFallbackPathCommands = ''
-      ln -s ${pkgs.bashInteractive}/bin/bash $out/bash
-    '';
   };
 
   security.sudo.wheelNeedsPassword = false;
@@ -54,6 +42,11 @@
   systemd.network.enable = true;
 
   boot.growPartition = true;
+
+  system.activationScripts.limaCompatBash = ''
+    mkdir -p /bin
+    ln -sf ${pkgs.bashInteractive}/bin/bash /bin/bash
+  '';
 
   system.stateVersion = "25.05";
 }

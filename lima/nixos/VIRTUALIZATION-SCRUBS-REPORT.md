@@ -32,6 +32,7 @@ The following pieces are now working:
 - Lima can boot a reusable `aarch64` NixOS guest on Apple Silicon
 - guest SSH bootstrap works
 - Lima guest agent works
+- the `vz` backend works well as the runtime substrate on Apple Silicon
 - per-repo instances work
 - the guest can carry shared scrubs tooling and dotfiles
 - real repos can be cloned and used inside isolated guests
@@ -43,10 +44,12 @@ In practical terms, we successfully got to:
 - a separate `scrubs-wayforge`
 - `jeremybanka/wayforge` cloned inside the guest
 - `git`, `nu`, `mise`, and `bun` available in the guest
+- a fresh `scrubs-dev` booted on `vz` with working SSH, working guest agent,
+  and working Nushell
 
 ## Major Obstacles
 
-Two major blockers emerged.
+Two major blockers emerged, but one of them now has a good answer.
 
 ### 1. Runtime/tooling mismatch on NixOS
 
@@ -67,17 +70,25 @@ Current observed impact:
 - this is too slow and too heavy for a disposable per-repo workflow
 - exact-version JS runtime management via `mise` is not yet a good fit for this guest model
 
-### 2. VM overhead on Apple Silicon
+### 2. QEMU VM overhead on Apple Silicon
 
-The guest is imposing much more background cost than expected.
+The original `qemu` runtime path imposed much more background cost than expected.
 
-Observed impact:
+Observed impact under `qemu`:
 
 - the VM keeps the M1 MacBook running around 3 GHz at idle
 - that is true even when not actively compiling the JS runtime
 - this raises serious questions about day-to-day practicality
 
-This is especially concerning because the guest is already `aarch64` and should have been closer to a happy path.
+This looked especially concerning because the guest was already `aarch64`.
+
+However, direct comparison against Lima's native macOS `vz` backend changed the picture completely:
+
+- `qemu` idle host CPU was in the hundreds of percent
+- equivalent `vz` instances idled near effectively zero host CPU
+
+So the problem was not "virtualization on Apple Silicon is too expensive" in general.
+The problem was specifically the `qemu` backend for this workflow.
 
 ## Current Assessment
 
@@ -88,31 +99,42 @@ The architecture is conceptually sound:
 - guest-local project clones
 - shared personal CLI environment
 
-But the current implementation is not adoption-ready for JavaScript-heavy work.
+After the `vz` pivot, the virtualization layer itself now looks viable.
 
-The biggest reasons are:
+What is still not adoption-ready is the heavyweight JavaScript runtime story.
 
-- too much guest overhead at idle
+Current strengths:
+
+- `vz` gives an efficient VM boundary on this machine
+- SSH/bootstrap is working
+- guest agent is working
+- Nushell can run inside the guest and load scrubs config
+- per-repo isolated guests are realistic again
+
+Current weaknesses:
+
 - too much friction around obtaining exact runtime versions cleanly
 - `mise` plus NixOS does not yet give an ergonomic "just works" runtime story for repos like `wayforge`
+- JavaScript-heavy repos still need a better runtime strategy, likely more Nix-native than pure `mise`
 
 ## Current Best Interpretation
 
 We proved that virtualization scrubs is possible.
 
-We have not yet proved that it is pleasant enough for routine use on this hardware and toolchain mix.
+We also proved that backend choice matters enormously.
 
 Right now the most honest summary is:
 
 - isolation model: promising
 - bootstrap path: largely solved
-- guest ergonomics: mixed
+- guest ergonomics: improving
 - JavaScript runtime story: poor
-- idle performance story: concerning
+- idle performance story on `qemu`: poor
+- idle performance story on `vz`: good
 
 ## Suggested Next Questions
 
-- Can guest idle overhead be materially reduced with different Lima/QEMU settings or a different VM strategy?
+- Should `vz` become the explicit default and `qemu` only a fallback path?
 - Should repo-specific runtimes be provided by Nix overlays instead of `mise` when using NixOS guests?
 - Is this model better suited first to non-JS repos or repos with simpler runtime expectations?
 - At what point does a container-first approach become more practical than full per-repo VMs?

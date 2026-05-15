@@ -54,4 +54,9 @@ in
     EDITOR = "vim";
     VISUAL = "vim";
   };
+
+  system.activationScripts.limaCompatBash = ''
+    mkdir -p /bin
+    ln -sf ${pkgs.bashInteractive}/bin/bash /bin/bash
+  '';
 }
