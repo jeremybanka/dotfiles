@@ -22,7 +22,7 @@ user:
   shell: "/bin/sh"
 
 ssh:
-  localPort: 60022
+  localPort: REPLACE_WITH_SSH_PORT
   loadDotSSHPubKeys: false
   forwardAgent: false
 
@@ -131,11 +131,11 @@ provision:
 
 portForwards:
   - guestPort: 3000
-    hostPort: 3000
+    hostPort: REPLACE_WITH_HOST_PORT_3000
     proto: tcp
   - guestPort: 5173
-    hostPort: 5173
+    hostPort: REPLACE_WITH_HOST_PORT_5173
     proto: tcp
   - guestPort: 8080
-    hostPort: 8080
+    hostPort: REPLACE_WITH_HOST_PORT_8080
     proto: tcp

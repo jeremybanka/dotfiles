@@ -20,6 +20,10 @@ guest_arch="${SCRUBS_ARCH:-aarch64}"
 key_dir="$scrubs_dir/keys"
 key_path="$key_dir/scrubs-dev"
 start_timeout="${SCRUBS_START_TIMEOUT:-90s}"
+ssh_port="${SCRUBS_SSH_PORT:-}"
+host_port_3000="${SCRUBS_HOST_PORT_3000:-}"
+host_port_5173="${SCRUBS_HOST_PORT_5173:-}"
+host_port_8080="${SCRUBS_HOST_PORT_8080:-}"
 
 if [ -f "$settings_file" ]; then
   # shellcheck disable=SC1090
@@ -38,6 +42,24 @@ guest_uid="${SCRUBS_GUEST_UID:-$guest_uid}"
 bootstrap_user="${SCRUBS_BOOTSTRAP_USER:-$bootstrap_user}"
 bootstrap_home="/home/$bootstrap_user"
 guest_arch="${SCRUBS_ARCH:-$guest_arch}"
+ssh_port="${SCRUBS_SSH_PORT:-$ssh_port}"
+host_port_3000="${SCRUBS_HOST_PORT_3000:-$host_port_3000}"
+host_port_5173="${SCRUBS_HOST_PORT_5173:-$host_port_5173}"
+host_port_8080="${SCRUBS_HOST_PORT_8080:-$host_port_8080}"
+
+if [ -z "$ssh_port" ] || [ -z "$host_port_3000" ] || [ -z "$host_port_5173" ] || [ -z "$host_port_8080" ]; then
+  if [ "$instance_name" = "scrubs-dev" ]; then
+    port_offset=0
+  else
+    instance_hash=$(printf '%s\n' "$instance_name" | cksum | awk '{print $1}')
+    port_offset=$((instance_hash % 1000 + 1))
+  fi
+fi
+
+ssh_port="${ssh_port:-$((60022 + port_offset))}"
+host_port_3000="${host_port_3000:-$((3000 + port_offset))}"
+host_port_5173="${host_port_5173:-$((5173 + port_offset))}"
+host_port_8080="${host_port_8080:-$((8080 + port_offset))}"
 
 case "$guest_arch" in
   aarch64|x86_64) ;;
@@ -130,11 +152,19 @@ escaped_image_location=$(printf '%s\n' "$image_location" | sed 's/[&|]/\\&/g')
 escaped_guest_user=$(printf '%s\n' "$guest_user" | sed 's/[&|]/\\&/g')
 escaped_guest_uid=$(printf '%s\n' "$guest_uid" | sed 's/[&|]/\\&/g')
 escaped_guest_arch=$(printf '%s\n' "$guest_arch" | sed 's/[&|]/\\&/g')
+escaped_ssh_port=$(printf '%s\n' "$ssh_port" | sed 's/[&|]/\\&/g')
+escaped_host_port_3000=$(printf '%s\n' "$host_port_3000" | sed 's/[&|]/\\&/g')
+escaped_host_port_5173=$(printf '%s\n' "$host_port_5173" | sed 's/[&|]/\\&/g')
+escaped_host_port_8080=$(printf '%s\n' "$host_port_8080" | sed 's/[&|]/\\&/g')
 sed \
   -e "s|REPLACE_WITH_BASE_IMAGE|$escaped_image_location|g" \
   -e "s|REPLACE_WITH_GUEST_USER|$escaped_guest_user|g" \
   -e "s|REPLACE_WITH_GUEST_UID|$escaped_guest_uid|g" \
   -e "s|REPLACE_WITH_ARCH|$escaped_guest_arch|g" \
+  -e "s|REPLACE_WITH_SSH_PORT|$escaped_ssh_port|g" \
+  -e "s|REPLACE_WITH_HOST_PORT_3000|$escaped_host_port_3000|g" \
+  -e "s|REPLACE_WITH_HOST_PORT_5173|$escaped_host_port_5173|g" \
+  -e "s|REPLACE_WITH_HOST_PORT_8080|$escaped_host_port_8080|g" \
   "$scrubs_dir/lima.yaml" > "$template_file"
 
 echo "Starting Lima instance $instance_name"
@@ -162,7 +192,8 @@ fi
 
 echo "Copying scrubs payload into the guest"
 limactl shell "$instance_name" rm -rf "$bootstrap_home/scrubs-bootstrap"
-limactl copy --backend=scp -r "$payload_dir" "$instance_name:$bootstrap_home/"
+limactl shell "$instance_name" mkdir -p "$bootstrap_home/scrubs-bootstrap"
+limactl copy --backend=scp -r "$payload_dir/." "$instance_name:$bootstrap_home/scrubs-bootstrap/"
 
 echo "Applying scrubs base configuration inside the guest"
 limactl shell "$instance_name" sh "$bootstrap_home/scrubs-bootstrap/guest-apply.sh"
