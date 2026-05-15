@@ -38,6 +38,7 @@ in
     fd
     gcc
     git
+    gh
     gnumake
     gnupg
     helix
