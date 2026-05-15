@@ -1,5 +1,2 @@
 [settings]
 experimental = true
-
-[tool_alias]
-pnpm = "npm:pnpm"
