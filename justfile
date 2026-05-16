@@ -12,7 +12,7 @@ download-latest-iso channel="nixos-25.11":
 export-seed-image instance_name output_path:
   nu ./scrubs/export-seed-image.nu {{instance_name}} {{output_path}}
 
-refresh-base-image source_image output_path instance_name="scrubs-refresh":
+refresh-base-image source_image="./scrubs/qcow2/scrubs.qcow2" output_path="" instance_name="scrubs-refresh":
   nu ./scrubs/refresh-base-image.nu {{source_image}} {{output_path}} {{instance_name}}
 
 seed instance_name="scrubs-seed":
