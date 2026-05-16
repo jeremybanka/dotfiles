@@ -1,8 +1,5 @@
 { pkgs, unstablePkgs, ... }:
 let
-  pythonShim = pkgs.writeShellScriptBin "python" ''
-    exec ${pkgs.python3}/bin/python3 "$@"
-  '';
   codex = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "codex";
     version = "0.130.0";
@@ -88,10 +85,8 @@ in
     delta
     diff-so-fancy
     fd
-    gcc
     git
     gh
-    gnumake
     gnupg
     helix
     jq
@@ -99,19 +94,14 @@ in
     unstablePkgs.mise
     ni
     nushell
-    pkg-config
-    postgresql
-    python3
-    pythonShim
     ripgrep
     tmux
-    vim
     wget
   ];
 
   environment.variables = {
-    EDITOR = "vim";
-    VISUAL = "vim";
+    EDITOR = "hx";
+    VISUAL = "hx";
   };
 
   system.activationScripts.limaCompatBash = ''

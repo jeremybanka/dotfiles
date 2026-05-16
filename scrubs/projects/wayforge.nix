@@ -6,6 +6,17 @@ let
     if normalUserNames == [] then null else lib.head normalUserNames;
 in
 {
+  environment.systemPackages = with pkgs; [
+    gcc
+    gnumake
+    pkg-config
+    postgresql
+    python3
+    (writeShellScriptBin "python" ''
+      exec ${python3}/bin/python3 "$@"
+    '')
+  ];
+
   services.postgresql = {
     enable = true;
     package = pkgs.postgresql;
