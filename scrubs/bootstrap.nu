@@ -54,6 +54,7 @@ def main [
   let guest_apply = ($payload_dir | path join "guest-apply.sh")
   let settings_file = ($scrubs_dir | path join "settings.env")
   let template_file = ($scrubs_dir | path join "lima.local.yaml")
+  let project_shim_file = ($scrubs_dir | path join "projects" $"($instance_name).nix")
   let instance_dir = ($env.HOME | path join ".lima" $instance_name)
   let current_user = (^id -un | str trim)
   let current_uid = (^id -u | str trim)
@@ -162,6 +163,11 @@ def main [
   cp ($scrubs_dir | path join "flake.lock") ($payload_dir | path join "scrubs" "flake.lock")
   cp ($scrubs_dir | path join "configuration.nix") ($payload_dir | path join "scrubs" "configuration.nix")
   cp ($scrubs_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
+
+  if ($project_shim_file | path exists) {
+    print $"Applying project shim from ($project_shim_file)"
+    cp $project_shim_file ($payload_dir | path join "scrubs" "modules" "project-shim.nix")
+  }
 
   let repo_pubkey = (open --raw $"($key_path).pub" | str trim)
   $"

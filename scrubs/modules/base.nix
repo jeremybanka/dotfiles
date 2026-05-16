@@ -3,6 +3,33 @@ let
   pythonShim = pkgs.writeShellScriptBin "python" ''
     exec ${pkgs.python3}/bin/python3 "$@"
   '';
+  codex = pkgs.stdenvNoCC.mkDerivation rec {
+    pname = "codex";
+    version = "0.130.0";
+
+    src = pkgs.fetchurl {
+      url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-aarch64-unknown-linux-musl.tar.gz";
+      sha256 = "1d7e00f2c22c3016b5bcb71c61010947b022a90e2901bc6baafe82256492c767";
+    };
+
+    sourceRoot = ".";
+    dontConfigure = true;
+    dontBuild = true;
+
+    installPhase = ''
+      runHook preInstall
+      install -Dm755 codex-aarch64-unknown-linux-musl $out/bin/codex
+      runHook postInstall
+    '';
+
+    meta = with pkgs.lib; {
+      description = "OpenAI's coding agent that runs in your terminal";
+      homepage = "https://github.com/openai/codex";
+      license = licenses.asl20;
+      platforms = [ "aarch64-linux" ];
+      mainProgram = "codex";
+    };
+  };
 in
 {
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -56,6 +83,7 @@ in
   environment.systemPackages = with pkgs; [
     bun
     carapace
+    codex
     curl
     delta
     diff-so-fancy
@@ -72,6 +100,7 @@ in
     ni
     nushell
     pkg-config
+    postgresql
     python3
     pythonShim
     ripgrep

@@ -1,5 +1,5 @@
 export def repo-root [] {
-  $env.FILE_PWD | path dirname | path dirname
+  $env.FILE_PWD | path dirname
 }
 
 export def scrubs-dir [] {

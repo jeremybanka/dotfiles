@@ -37,7 +37,7 @@ keeping the VM isolation model intact.
 - your `git` config
 - your `nushell` config
 - your `mise` config
-- `git`, `nushell`, `mise`, `bun`, and common CLI utilities
+- `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
 - hardened SSH defaults inside the guest
 
 It does not assume the cloned project owns a flake.
@@ -399,3 +399,13 @@ factory-bootstrap procedure.
 The next step after this base flow is a small per-project extension mechanism,
 so a repo can ask for extra packages or helper setup without owning the entire
 machine definition.
+
+That now exists in a minimal instance-keyed form:
+
+- if [`scrubs/projects`](/Users/jem/dotfiles/scrubs/projects) contains a file named
+  `<instance-name>.nix`, `just bootstrap ... <instance-name>` copies it into the
+  guest payload as `modules/project-shim.nix`
+- the shim is imported on top of the shared base config for that VM only
+
+This keeps project-specific accommodations in version control without baking
+them into the reusable base image.
