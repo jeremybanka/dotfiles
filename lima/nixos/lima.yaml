@@ -100,6 +100,19 @@ provision:
       vsock_port=0
       virtio_port=
 
+      # Kernel 7 on this image currently seems to miss Lima's normal cidata
+      # boot handoff, so restore the minimum state the hostagent expects.
+      mkdir -p -m 700 "${cidata_mnt}"
+      if [ ! -f "${cidata_mnt}/meta-data" ] && [ -e /dev/disk/by-label/cidata ]; then
+        mount -o ro,mode=0700,dmode=0700,overriderockperm,exec /dev/disk/by-label/cidata "${cidata_mnt}" || true
+      fi
+      if [ ! -f "${cidata_mnt}/param.env" ] && [ -f "${cidata_mnt}/meta-data" ]; then
+        : > "${cidata_mnt}/param.env"
+      fi
+      if [ -f "${cidata_mnt}/meta-data" ] && [ ! -f /run/lima-ssh-ready ]; then
+        sed -n 's/^instance-id: //p' "${cidata_mnt}/meta-data" | head -n 1 > /run/lima-ssh-ready
+      fi
+
       read_cidata_value() {
         file="$1"
         [ -f "$file" ] || return 0

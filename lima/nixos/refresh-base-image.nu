@@ -26,11 +26,10 @@ def main [
   print $"Using Lima instance ($instance_name) with vmType=($vm_type) arch=($guest_arch)"
 
   with-env {
-    SCRUBS_BASE_IMAGE: $source_image
     SCRUBS_VM_TYPE: $vm_type
     SCRUBS_ARCH: $guest_arch
   } {
-    nu ($scrubs_dir | path join "bootstrap.nu") $instance_name
+    nu ($scrubs_dir | path join "bootstrap.nu") $source_image $instance_name
   }
 
   nu ($scrubs_dir | path join "export-seed-image.nu") $instance_name $output_path

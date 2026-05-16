@@ -9,6 +9,10 @@ These are the SSH/bootstrap-era compatibility changes to review once `scrubs` is
 
 ## Keep For Now
 
+- Keep `services.cloud-init.enable = true` in [modules/base.nix](/Users/jem/dotfiles/lima/nixos/modules/base.nix).
+- Exported scrubs base images are cloned into fresh Lima guests, so they still
+  need to consume a new NoCloud `cidata` payload on first boot.
+
 - Keep `services.envfs.enable` plus the `/bin/bash` fallback in [seed/base.nix](/Users/jem/dotfiles/lima/nixos/seed/base.nix).
 - Lima still hardcodes `/bin/bash` in parts of its SSH/readiness flow.
 

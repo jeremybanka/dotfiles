@@ -2,7 +2,48 @@
 
 use ./lib.nu *
 
+def ssh-base-args [guest_user: string, ssh_port: string] {
+  [
+    "-o" "ControlMaster=no"
+    "-o" "ControlPath=none"
+    "-o" "ControlPersist=no"
+    "-o" "StrictHostKeyChecking=no"
+    "-o" "UserKnownHostsFile=/dev/null"
+    "-o" "NoHostAuthenticationForLocalhost=yes"
+    "-o" "PreferredAuthentications=publickey"
+    "-o" "Compression=no"
+    "-o" "BatchMode=yes"
+    "-o" "IdentitiesOnly=yes"
+    "-o" "GSSAPIAuthentication=no"
+    "-i" ($env.HOME | path join ".lima" "_config" "user")
+    "-p" $ssh_port
+    $"($guest_user)@127.0.0.1"
+  ]
+}
+
+def scp-base-args [ssh_port: string] {
+  [
+    "-o" "StrictHostKeyChecking=no"
+    "-o" "UserKnownHostsFile=/dev/null"
+    "-o" "NoHostAuthenticationForLocalhost=yes"
+    "-o" "PreferredAuthentications=publickey"
+    "-o" "Compression=no"
+    "-o" "BatchMode=yes"
+    "-o" "IdentitiesOnly=yes"
+    "-o" "GSSAPIAuthentication=no"
+    "-i" ($env.HOME | path join ".lima" "_config" "user")
+    "-P" $ssh_port
+    "-r"
+  ]
+}
+
+def remote-shell-command [command: string] {
+  let escaped = ($command | str replace --all "'" "'\\''")
+  $"sh -lc '($escaped)'"
+}
+
 def main [
+  base_image_arg: string
   instance_name: string = "scrubs-dev"
 ] {
   let repo_root = (repo-root)
@@ -18,12 +59,16 @@ def main [
   let guest_user = (get-setting $settings "SCRUBS_GUEST_USER" $current_user)
   let guest_uid = (get-setting $settings "SCRUBS_GUEST_UID" $current_uid)
   let bootstrap_user = (get-setting $settings "SCRUBS_BOOTSTRAP_USER" $guest_user)
-  let base_image = (get-setting $settings "SCRUBS_BASE_IMAGE" "")
+  let base_image = if $base_image_arg != "" {
+    $base_image_arg
+  } else {
+    get-setting $settings "SCRUBS_BASE_IMAGE" ""
+  }
   let guest_arch = (get-setting $settings "SCRUBS_ARCH" "aarch64")
   let vm_type = (get-setting $settings "SCRUBS_VM_TYPE" "vz")
   let key_dir = ($scrubs_dir | path join "keys")
   let key_path = ($key_dir | path join "scrubs-dev")
-  let start_timeout = (get-setting $settings "SCRUBS_START_TIMEOUT" "90s")
+  let start_timeout = (get-setting $settings "SCRUBS_START_TIMEOUT" "25s")
   mut ssh_port = (get-setting $settings "SCRUBS_SSH_PORT" "")
   mut host_port_3000 = (get-setting $settings "SCRUBS_HOST_PORT_3000" "")
   mut host_port_5173 = (get-setting $settings "SCRUBS_HOST_PORT_5173" "")
@@ -67,6 +112,8 @@ def main [
   }
 
   let mount_type = if $vm_type == "qemu" { "9p" } else { "virtiofs" }
+  let ssh_args = (ssh-base-args $guest_user $ssh_port)
+  let scp_args = (scp-base-args $ssh_port)
 
   rm -rf $payload_dir
   mkdir $cache_dir
@@ -93,6 +140,7 @@ def main [
   cp ($repo_root | path join "home" ".config" "mise" "config.toml") ($payload_dir | path join "home" ".config" "mise" "config.toml")
 
   for file_name in [
+    "carapace-init.nu"
     "config.nu"
     "config.shared.nu"
     "config.darwin.nu"
@@ -106,9 +154,7 @@ def main [
     "ni-completions.nu"
     "vite-plus.nu"
   ] {
-    cp
-      ($repo_root | path join "home" ".config" "nushell" $file_name)
-      ($payload_dir | path join "home" ".config" "nushell" $file_name)
+    cp ($repo_root | path join "home" ".config" "nushell" $file_name) ($payload_dir | path join "home" ".config" "nushell" $file_name)
   }
 
   cp ($scrubs_dir | path join "flake.nix") ($payload_dir | path join "lima" "nixos" "flake.nix")
@@ -124,7 +170,7 @@ def main [
     \"($guest_user)\" = {
       isNormalUser = true;
       extraGroups = [ \"wheel\" ];
-      shell = pkgs.nushell;
+      shell = pkgs.bashInteractive;
       openssh.authorizedKeys.keys = [
         \"($repo_pubkey)\"
       ];
@@ -151,7 +197,22 @@ if ! sudo -n true >/dev/null 2>&1; then
   exit 1
 fi
 
-sudo nixos-rebuild switch --flake \"\$payload/lima/nixos#scrubs-base\"
+if sudo nixos-rebuild switch --flake \"\$payload/lima/nixos#scrubs-base\"; then
+  exit 0
+else
+  status=$?
+fi
+
+if [ \"$status\" -eq 4 ] && sudo systemctl is-failed --quiet cloud-final.service; then
+  if sudo journalctl -u cloud-final.service -b --no-pager -n 120 | grep -Fq \"Runparts: 1 failures\"; then
+    echo \"cloud-final failed while introducing cloud-init into an older running guest.\" >&2
+    echo \"The new system is active; treating this one-time migration failure as non-fatal.\" >&2
+    sudo systemctl reset-failed cloud-final.service || true
+    exit 0
+  fi
+fi
+
+exit \"$status\"
 " | save --force $guest_apply
   chmod +x $guest_apply
 
@@ -171,32 +232,35 @@ sudo nixos-rebuild switch --flake \"\$payload/lima/nixos#scrubs-base\"
 
   (
     open --raw ($scrubs_dir | path join "lima.yaml")
-    | str replace "REPLACE_WITH_BASE_IMAGE" $image_location
-    | str replace "REPLACE_WITH_GUEST_USER" $guest_user
-    | str replace "REPLACE_WITH_GUEST_UID" $guest_uid
-    | str replace "REPLACE_WITH_ARCH" $guest_arch
-    | str replace "REPLACE_WITH_VM_TYPE" $vm_type
-    | str replace "REPLACE_WITH_MOUNT_TYPE" $mount_type
-    | str replace "REPLACE_WITH_SSH_PORT" $ssh_port
-    | str replace "REPLACE_WITH_HOST_RESOLVER" $host_resolver
-    | str replace "REPLACE_WITH_HOST_PORT_3000" $host_port_3000
-    | str replace "REPLACE_WITH_HOST_PORT_5173" $host_port_5173
-    | str replace "REPLACE_WITH_HOST_PORT_8080" $host_port_8080
-    | str replace "REPLACE_WITH_DNS_BLOCK" $dns_block
+    | str replace --all "REPLACE_WITH_BASE_IMAGE" $image_location
+    | str replace --all "REPLACE_WITH_GUEST_USER" $guest_user
+    | str replace --all "REPLACE_WITH_GUEST_UID" $guest_uid
+    | str replace --all "REPLACE_WITH_ARCH" $guest_arch
+    | str replace --all "REPLACE_WITH_VM_TYPE" $vm_type
+    | str replace --all "REPLACE_WITH_MOUNT_TYPE" $mount_type
+    | str replace --all "REPLACE_WITH_SSH_PORT" $ssh_port
+    | str replace --all "REPLACE_WITH_HOST_RESOLVER" $host_resolver
+    | str replace --all "REPLACE_WITH_HOST_PORT_3000" $host_port_3000
+    | str replace --all "REPLACE_WITH_HOST_PORT_5173" $host_port_5173
+    | str replace --all "REPLACE_WITH_HOST_PORT_8080" $host_port_8080
+    | str replace --all "REPLACE_WITH_DNS_BLOCK" $dns_block
   ) | save --force $template_file
 
   print $"Starting Lima instance ($instance_name)"
-  let start_result = (do { ^limactl start --containerd=none --timeout $start_timeout --name $instance_name $template_file } | complete)
-  if $start_result.exit_code != 0 {
+  print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
+  try {
+    ^limactl start --yes --containerd=none --timeout $start_timeout --name $instance_name $template_file
+  } catch {
     print --stderr $"limactl start did not fully complete within ($start_timeout)."
-    print --stderr "Continuing because scrubs only requires SSH reachability for bootstrap."
+    print --stderr "Continuing because scrubs only requires direct SSH reachability for bootstrap."
+    print --stderr "If the next SSH and payload steps succeed, this Lima timeout can be treated as non-fatal for now."
   }
 
   print "Waiting for SSH access to the guest"
   mut ready = false
   for _ in 0..59 {
-    let shell_result = (do { ^limactl shell $instance_name true } | complete)
-    if $shell_result.exit_code == 0 {
+    let ssh_result = (do { ^ssh ...$ssh_args true } | complete)
+    if $ssh_result.exit_code == 0 {
       $ready = true
       break
     }
@@ -208,15 +272,18 @@ sudo nixos-rebuild switch --flake \"\$payload/lima/nixos#scrubs-base\"
   }
 
   let bootstrap_home = $"/home/($bootstrap_user)"
+  let bootstrap_dir = $"/home/($bootstrap_user)/scrubs-bootstrap"
 
   print "Copying scrubs payload into the guest"
-  ^limactl shell $instance_name rm -rf $"/home/($bootstrap_user)/scrubs-bootstrap"
-  ^limactl shell $instance_name mkdir -p $"/home/($bootstrap_user)/scrubs-bootstrap"
-  ^limactl copy --backend=scp -r $"($payload_dir)/." $'($instance_name):($bootstrap_home)/scrubs-bootstrap/'
+  ^ssh ...$ssh_args (remote-shell-command $"rm -rf \"($bootstrap_dir)\"")
+  ^ssh ...$ssh_args (remote-shell-command $"mkdir -p \"($bootstrap_dir)\"")
+  ^scp ...$scp_args $"($payload_dir)/." $"($guest_user)@127.0.0.1:($bootstrap_dir)/"
 
   print "Applying scrubs base configuration inside the guest"
-  ^limactl shell $instance_name sh $"/home/($bootstrap_user)/scrubs-bootstrap/guest-apply.sh"
+  ^ssh ...$ssh_args (remote-shell-command $"sh \"($bootstrap_dir)/guest-apply.sh\"")
 
+  print ""
   print "Scrubs guest is ready."
   print $"Use: limactl shell ($instance_name)"
+  print "Nushell is installed in the guest; start it manually after login if you want it."
 }

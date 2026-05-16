@@ -184,7 +184,7 @@ just sync-base-image-from-icloud scrubs-linux-lts.qcow2
 ## Boot a Guest
 
 ```sh
-just bootstrap
+just bootstrap /absolute/path/to/nixos.qcow2
 ```
 
 By default this creates a `scrubs-dev` Lima instance and uses your current macOS
@@ -195,18 +195,21 @@ explicitly.
 You can override those with environment variables:
 
 ```sh
-SCRUBS_BASE_IMAGE=/absolute/path/to/nixos.qcow2 \
 SCRUBS_VM_TYPE=qemu \
 SCRUBS_ARCH=x86_64 \
 SCRUBS_GUEST_USER=jem \
 SCRUBS_BOOTSTRAP_USER=jem \
-just bootstrap my-project
+just bootstrap /absolute/path/to/nixos.qcow2 my-project
 ```
 
 After bootstrap finishes:
 
 - `limactl shell my-project`
+- or `just vm-shell my-project`
 - or SSH using the pattern from [`ssh_config.example`](./ssh_config.example)
+
+The guest keeps a POSIX login shell for compatibility with Lima and bootstrap
+tools. `nu` is still installed; start it manually after login when you want it.
 
 ## Security Defaults
 
@@ -269,7 +272,7 @@ delete and recreate the instance after updating the template metadata:
 
 ```sh
 limactl delete scrubs-dev
-just bootstrap
+just bootstrap /absolute/path/to/nixos.qcow2
 ```
 
 That failure can come from Lima's generated cloud-init locking the bootstrap
@@ -277,6 +280,13 @@ user account. The template includes a cloud-init per-instance script that waits
 for the bootstrap user to exist, replaces the locked password with a random
 one, and then lets SSH public-key login succeed while password authentication
 remains disabled.
+
+If SSH comes up but `limactl start` still stalls on readiness checks like
+`/mnt/lima-cidata/param.env` or `/run/lima-ssh-ready`, the exported base image
+probably lost `cloud-init` support or carried stale cloud-init instance state.
+The `scrubs-base` guest config now keeps `cloud-init` enabled, and
+`export-seed-image.nu` clears cloud-init instance state before conversion so
+fresh clones reprocess Lima's NoCloud `cidata` on first boot.
 
 ## Next Layer
 

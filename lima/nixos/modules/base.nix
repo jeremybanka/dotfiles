@@ -8,6 +8,7 @@ in
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   networking.hostName = "scrubs";
+  networking.useNetworkd = true;
   time.timeZone = "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
 
@@ -20,6 +21,28 @@ in
     X11Forwarding = false;
   };
 
+  # Scrubs base images are cloned into fresh Lima instances, so they need to
+  # keep cloud-init enabled and ready to consume the new NoCloud cidata on
+  # every first boot after cloning.
+  services.cloud-init = {
+    enable = true;
+    network.enable = true;
+    settings = {
+      system_info = {
+        distro = "nixos";
+        network.renderers = [ "networkd" ];
+        default_user.name = "nixos";
+      };
+
+      users = [ "default" ];
+      ssh_pwauth = false;
+      disable_root = true;
+    };
+  };
+
+  systemd.network.enable = true;
+
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = false;
 

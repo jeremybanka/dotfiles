@@ -16,7 +16,7 @@ if (which carapace | is-not-empty) {
     "" | save --force $carapace_init
 }
 
-source ~/.cache/carapace/init.nu
+source ~/.config/nushell/carapace-init.nu
 
 let mise_path = $nu.default-config-dir | path join "mise.nu"
 if not ($mise_path | path exists) {
