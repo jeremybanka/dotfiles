@@ -54,6 +54,7 @@ def main [
   let guest_apply = ($payload_dir | path join "guest-apply.sh")
   let settings_file = ($scrubs_dir | path join "settings.env")
   let template_file = ($scrubs_dir | path join "lima.local.yaml")
+  let instance_dir = ($env.HOME | path join ".lima" $instance_name)
   let current_user = (^id -un | str trim)
   let current_uid = (^id -u | str trim)
   let guest_user = (get-setting $settings "SCRUBS_GUEST_USER" $current_user)
@@ -68,7 +69,7 @@ def main [
   let vm_type = (get-setting $settings "SCRUBS_VM_TYPE" "vz")
   let key_dir = ($scrubs_dir | path join "keys")
   let key_path = ($key_dir | path join "scrubs-dev")
-  let start_timeout = (get-setting $settings "SCRUBS_START_TIMEOUT" "25s")
+  let start_timeout = (get-setting $settings "SCRUBS_START_TIMEOUT" "60s")
   mut ssh_port = (get-setting $settings "SCRUBS_SSH_PORT" "")
   mut host_port_3000 = (get-setting $settings "SCRUBS_HOST_PORT_3000" "")
   mut host_port_5173 = (get-setting $settings "SCRUBS_HOST_PORT_5173" "")
@@ -246,10 +247,15 @@ exit \"$status\"
     | str replace --all "REPLACE_WITH_DNS_BLOCK" $dns_block
   ) | save --force $template_file
 
+  let instance_exists = ($instance_dir | path exists)
   print $"Starting Lima instance ($instance_name)"
   print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
   try {
-    ^limactl start --yes --containerd=none --timeout $start_timeout --name $instance_name $template_file
+    if $instance_exists {
+      ^limactl start --timeout $start_timeout $instance_name
+    } else {
+      ^limactl start --yes --containerd=none --timeout $start_timeout --name $instance_name $template_file
+    }
   } catch {
     print --stderr $"limactl start did not fully complete within ($start_timeout)."
     print --stderr "Continuing because scrubs only requires direct SSH reachability for bootstrap."
