@@ -25,7 +25,7 @@ def main [
   }
 
   if $seed_iso == "" {
-    error make { msg: "Set SCRUBS_SEED_ISO in the environment or lima/nixos/settings.env." }
+    error make { msg: "Set SCRUBS_SEED_ISO in the environment or scrubs/settings.env." }
   }
 
   let iso_location = if ($existing_iso | path exists) {

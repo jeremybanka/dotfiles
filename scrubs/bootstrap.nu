@@ -121,7 +121,7 @@ def main [
   mkdir $key_dir
   mkdir ($payload_dir | path join "home" ".config" "nushell")
   mkdir ($payload_dir | path join "home" ".config" "mise")
-  mkdir ($payload_dir | path join "lima" "nixos" "modules")
+  mkdir ($payload_dir | path join "scrubs" "modules")
 
   if not ($key_path | path exists) {
     ^ssh-keygen -t ed25519 -N "" -f $key_path
@@ -158,10 +158,10 @@ def main [
     cp ($repo_root | path join "home" ".config" "nushell" $file_name) ($payload_dir | path join "home" ".config" "nushell" $file_name)
   }
 
-  cp ($scrubs_dir | path join "flake.nix") ($payload_dir | path join "lima" "nixos" "flake.nix")
-  cp ($scrubs_dir | path join "flake.lock") ($payload_dir | path join "lima" "nixos" "flake.lock")
-  cp ($scrubs_dir | path join "configuration.nix") ($payload_dir | path join "lima" "nixos" "configuration.nix")
-  cp ($scrubs_dir | path join "modules" "base.nix") ($payload_dir | path join "lima" "nixos" "modules" "base.nix")
+  cp ($scrubs_dir | path join "flake.nix") ($payload_dir | path join "scrubs" "flake.nix")
+  cp ($scrubs_dir | path join "flake.lock") ($payload_dir | path join "scrubs" "flake.lock")
+  cp ($scrubs_dir | path join "configuration.nix") ($payload_dir | path join "scrubs" "configuration.nix")
+  cp ($scrubs_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
 
   let repo_pubkey = (open --raw $"($key_path).pub" | str trim)
   $"
@@ -178,7 +178,7 @@ def main [
     };
   };
 }
-" | save --force ($payload_dir | path join "lima" "nixos" "modules" "guest-user.nix")
+" | save --force ($payload_dir | path join "scrubs" "modules" "guest-user.nix")
 
   $"
 #!/bin/sh
@@ -190,7 +190,7 @@ mkdir -p \"\$HOME/.config/nushell\" \"\$HOME/.config/mise\"
 cp \"\$payload/home/.gitconfig\" \"\$HOME/.gitconfig\"
 cp \"\$payload/home/.config/mise/config.toml\" \"\$HOME/.config/mise/config.toml\"
 cp \"\$payload/home/.config/nushell/\"* \"\$HOME/.config/nushell/\"
-cp /etc/nixos/hardware-configuration.nix \"\$payload/lima/nixos/modules/runtime-hardware.nix\"
+cp /etc/nixos/hardware-configuration.nix \"\$payload/scrubs/modules/runtime-hardware.nix\"
 
 if ! sudo -n true >/dev/null 2>&1; then
   echo \"Guest user '($bootstrap_user)' needs passwordless sudo for bootstrap.\" >&2
@@ -198,7 +198,7 @@ if ! sudo -n true >/dev/null 2>&1; then
   exit 1
 fi
 
-if sudo nixos-rebuild switch --flake \"\$payload/lima/nixos#scrubs-base\"; then
+if sudo nixos-rebuild switch --flake \"\$payload/scrubs#scrubs-base\"; then
   exit 0
 else
   status=$?

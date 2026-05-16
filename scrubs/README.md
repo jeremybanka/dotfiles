@@ -1,7 +1,7 @@
-# nixOS on Lima
+# Scrubs
 
-This directory now models `scrubs` as a reusable personal base environment,
-not as a repo-built disk image.
+This directory models `scrubs` as a reusable personal base environment on top
+of Lima and NixOS, not as a repo-built disk image.
 
 The intended layering is:
 
@@ -9,6 +9,26 @@ The intended layering is:
 - a generic NixOS image is the disposable substrate
 - `scrubs-base` is your personal CLI home inside that substrate
 - project-specific tweaks can be layered on top later
+
+## Why This Shape
+
+We explored two broad approaches:
+
+1. host-built NixOS images via `darwin.linux-builder`
+2. a generic bootable NixOS seed image plus first-boot convergence inside Lima
+
+The host-built path was abandoned because it depended on host-global privileged
+Nix setup and behaved like pet infrastructure.
+
+The current model uses:
+
+- one reusable seeded base image
+- disposable per-project Lima guests cloned from that base
+- a shared `scrubs` guest config applied inside the guest
+
+On Apple Silicon, Lima's `vz` backend is the practical default. In local
+testing it removed the heavy idle CPU overhead we saw under `qemu` while
+keeping the VM isolation model intact.
 
 ## What Gets Applied
 
@@ -36,6 +56,22 @@ Instead it:
 On Apple Silicon macOS, the scrubs runtime path now defaults to Lima's `vz`
 backend rather than `qemu`. In local testing, `vz` reduced hot-idle host CPU
 from hundreds of percent under `qemu` to effectively idle.
+
+## Current Status
+
+What is working well today:
+
+- reusable `aarch64` NixOS guests on Lima
+- SSH bootstrap into fresh cloned guests
+- Lima guest agent support
+- shared `git`, `nushell`, `mise`, and common CLI setup inside the guest
+- efficient runtime behavior on `vz`
+
+What is still rough:
+
+- JavaScript runtime management is not yet especially elegant on NixOS guests
+- some repos may still want a more Nix-native runtime path than pure `mise`
+- a few SSH/bootstrap compatibility workarounds are still intentionally present
 
 ## Requirements
 
@@ -83,7 +119,7 @@ The installer flow intentionally still uses `qemu` plus a repo mount so you can
 run the seed helper scripts from the live ISO. The reusable scrubs guest you
 boot afterward defaults to `vz`.
 
-That mounts [`lima/nixos/seed`](/Users/jem/dotfiles/lima/nixos/seed) into the
+That mounts [`scrubs/seed`](/Users/jem/dotfiles/scrubs/seed) into the
 installer VM at `/mnt/host-scrubs-seed`.
 
 If `~/.lima/scrubs-seed/iso` already exists, `just seed` reuses that local
@@ -151,14 +187,14 @@ Copy [`settings.env.example`](./settings.env.example) to `settings.env` and set
 your base image path or URL.
 
 ```sh
-cp ./lima/nixos/settings.env.example ./lima/nixos/settings.env
+cp ./scrubs/settings.env.example ./scrubs/settings.env
 ```
 
 Then edit `settings.env` to point at your generic NixOS image.
 
 The default local convention for active base images is:
 
-- [`lima/nixos/qcow2`](/Users/jem/dotfiles/lima/nixos/qcow2) for living local images
+- [`scrubs/qcow2`](/Users/jem/dotfiles/scrubs/qcow2) for living local images
 - `~/Library/Mobile Documents/com~apple~CloudDocs/scrubs/base-images/` for the iCloud mirror
 
 The helper scripts are:
@@ -170,7 +206,7 @@ just sync-base-image-from-icloud
 
 Both overwrite by name on the destination side. The intended pattern is:
 
-1. export or refresh locally into `lima/nixos/qcow2/`
+1. export or refresh locally into `scrubs/qcow2/`
 2. validate the image locally
 3. mirror it to iCloud by name
 
@@ -180,6 +216,53 @@ If you want to specify a different image name:
 just sync-base-image-to-icloud scrubs-linux-lts.qcow2
 just sync-base-image-from-icloud scrubs-linux-lts.qcow2
 ```
+
+## Asset Retention
+
+The repo should carry provenance for important binary assets without becoming
+the binary store itself.
+
+Retention principles:
+
+- keep provenance in Git
+- keep large binaries out of Git
+- prefer reproducible upstream inputs where possible
+- back up manually produced artifacts at least twice
+
+For the seed ISO:
+
+- treat NixOS release infrastructure as the canonical source
+- keep only a local convenience cache in `~/Library/Caches/scrubs`
+- keep resolved release URL and SHA-256 sidecars, not the ISO itself, in mind
+  as the provenance story
+
+`just download-latest-iso` writes the ISO plus `*.source-url` and `*.sha256`
+sidecars into the local cache so the seed input is understandable without
+committing a large installer artifact into the repo.
+
+For the base qcow2:
+
+- do not commit it to Git
+- do not treat Git LFS as the primary storage plan
+- keep one active local copy in [`scrubs/qcow2`](/Users/jem/dotfiles/scrubs/qcow2)
+- keep at least one mirrored backup outside the repo
+
+The default storage model is:
+
+- working copy in [`scrubs/qcow2`](/Users/jem/dotfiles/scrubs/qcow2)
+- named mirror in `~/Library/Mobile Documents/com~apple~CloudDocs/scrubs/base-images/`
+- optional second backup in any durable store you already trust
+
+Good file naming keeps the artifact story append-only and rollback-friendly:
+
+```text
+nixos-base-aarch64-2026-05-15.qcow2
+nixos-base-aarch64-2026-05-15-kernel7.qcow2
+```
+
+If the seed ISO is lost, redownload it and recompute the checksum. If the
+working base qcow2 is lost, restore it from backup or rebuild it from the seed
+path in this repo.
 
 ## Boot a Guest
 
@@ -243,17 +326,33 @@ To pick up those fixes:
 So: no, the guests do not have to be frozen in time, but updates are explicit
 and artifact-driven rather than background-managed.
 
-## Asset Retention
+## Bootstrap Caveats
 
-The repo should carry provenance for important binary assets without becoming
-the binary store itself.
+The current bootstrap path still intentionally carries a few compatibility
+choices that are worth preserving until a fresh seed image proves they are no
+longer needed.
 
-- seed ISO: rely on NixOS as the canonical host, keep a local cache, and record
-  source URL plus checksum metadata
-- base qcow2: keep the living copy in `lima/nixos/qcow2/`, keep it out of Git,
-  and mirror it to iCloud by name because it contains manual setup value
+Keep for now:
 
-The fuller policy lives in [ASSET-RETENTION.md](/Users/jem/dotfiles/lima/nixos/ASSET-RETENTION.md).
+- `services.cloud-init.enable = true` in [modules/base.nix](/Users/jem/dotfiles/scrubs/modules/base.nix)
+- `services.envfs.enable` plus the `/bin/bash` fallback in [seed/base.nix](/Users/jem/dotfiles/scrubs/seed/base.nix)
+- `user.shell = "/bin/sh"` in [lima.yaml](/Users/jem/dotfiles/scrubs/lima.yaml)
+- the `mode: boot` unlock provision in [lima.yaml](/Users/jem/dotfiles/scrubs/lima.yaml)
+
+Do not reintroduce:
+
+- old `services.cloud-init.config` module-list overrides in [seed/base.nix](/Users/jem/dotfiles/scrubs/seed/base.nix)
+
+Those overrides accidentally disabled Lima's `bootcmd`, which blocked the
+pre-SSH unlock path entirely.
+
+Once a fresh seed image gives one clean `just bootstrap` run, the cleanup order
+should be:
+
+1. confirm SSH, payload copy, and `nixos-rebuild` are all stable
+2. decide whether to keep Lima-created users or move to `user: false`
+3. remove the unlock-script workaround if the seed owns the bootstrap user
+4. reassess `UsePAM = false` in [seed/base.nix](/Users/jem/dotfiles/scrubs/seed/base.nix)
 
 ## Troubleshooting
 
@@ -287,6 +386,13 @@ probably lost `cloud-init` support or carried stale cloud-init instance state.
 The `scrubs-base` guest config now keeps `cloud-init` enabled, and
 `export-seed-image.nu` clears cloud-init instance state before conversion so
 fresh clones reprocess Lima's NoCloud `cidata` on first boot.
+
+## Notes
+
+[SEED-INSTALL-CHECKLIST.md](/Users/jem/dotfiles/scrubs/SEED-INSTALL-CHECKLIST.md)
+is the exact manual runbook for the live installer path. Treat this README as
+the canonical operator guide and the checklist as the precise recovery or
+factory-bootstrap procedure.
 
 ## Next Layer
 

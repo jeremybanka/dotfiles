@@ -3,7 +3,7 @@ export def repo-root [] {
 }
 
 export def scrubs-dir [] {
-  repo-root | path join "lima" "nixos"
+  repo-root | path join "scrubs"
 }
 
 export def load-settings [] {
