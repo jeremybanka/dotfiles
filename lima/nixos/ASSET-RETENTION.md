@@ -32,7 +32,7 @@ Recommended workflow:
 Helper:
 
 ```sh
-./lima/nixos/download-latest-iso.sh
+just download-latest-iso
 ```
 
 By default this downloads:
@@ -86,6 +86,13 @@ The repo-local `qcow2/` directory is for living base images you actively point
 `SCRUBS_BASE_IMAGE` at. The directory is intentionally present in Git, but its
 contents are ignored. iCloud is the named mirror for safe retention, not the
 primary write target for long-running exports.
+
+The preferred sync entrypoints are:
+
+```sh
+just sync-base-image-to-icloud
+just sync-base-image-from-icloud
+```
 
 ## 3. What Git Should Carry
 

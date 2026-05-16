@@ -45,4 +45,4 @@ nixos-install --no-root-passwd
 echo
 echo "Seed image installed."
 echo "Power the guest off, then run:"
-echo "  ./lima/nixos/export-seed-image.sh scrubs-seed /absolute/path/to/nixos-base-aarch64.qcow2"
+echo "  just export-seed-image scrubs-seed /absolute/path/to/nixos-base-aarch64.qcow2"

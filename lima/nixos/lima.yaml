@@ -1,6 +1,6 @@
 # Template for a reusable scrubs guest booted from a generic NixOS base image.
 #
-# `bootstrap.sh` writes a concrete `lima.local.yaml` by filling in the base
+# `bootstrap.nu` writes a concrete `lima.local.yaml` by filling in the base
 # image path and the guest username before calling `limactl start`.
 
 vmType: "REPLACE_WITH_VM_TYPE"

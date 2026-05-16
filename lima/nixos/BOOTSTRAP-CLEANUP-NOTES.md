@@ -32,7 +32,7 @@ These are the SSH/bootstrap-era compatibility changes to review once `scrubs` is
 
 ## Preferred Cleanup Order
 
-1. Get one clean `bootstrap.sh` run from a fresh seed image.
+1. Get one clean `just bootstrap` run from a fresh seed image.
 2. Confirm SSH is stable and payload copy plus `nixos-rebuild` both succeed.
 3. Decide whether to keep Lima-created users or move to `user: false`.
 4. Remove the unlock-script workaround if the seed owns the bootstrap user.

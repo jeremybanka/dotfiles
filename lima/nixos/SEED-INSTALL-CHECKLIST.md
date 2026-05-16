@@ -1,6 +1,6 @@
 # Seed Install Checklist
 
-Use this inside the NixOS ARM installer VM after `seed.sh` has booted the
+Use this inside the NixOS ARM installer VM after `just seed` has booted the
 installer.
 
 ## 1. Become root and verify the seed share
@@ -88,7 +88,8 @@ shutdown now
 After the VM shuts down, run this on the Mac:
 
 ```sh
-/Users/jem/dotfiles/lima/nixos/export-seed-image.sh scrubs-seed-2 /absolute/path/to/nixos-base-aarch64.qcow2
+cd /Users/jem/dotfiles
+just export-seed-image scrubs-seed-2 /absolute/path/to/nixos-base-aarch64.qcow2
 ```
 
 ## Notes

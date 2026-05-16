@@ -24,7 +24,7 @@ It does not assume the cloned project owns a flake.
 
 ## Bootstrap Model
 
-`bootstrap.sh` no longer depends on `darwin.linux-builder`.
+`bootstrap.nu` no longer depends on `darwin.linux-builder`.
 
 Instead it:
 
@@ -65,7 +65,7 @@ If you want a convenience fetch for the latest stable ARM minimal installer
 instead of manually hunting the URL each time, use:
 
 ```sh
-./lima/nixos/download-latest-iso.sh
+just download-latest-iso
 ```
 
 That downloads from the `nixos-25.11` channel by default and stores the ISO in
@@ -76,7 +76,7 @@ To boot the seed installer:
 
 ```sh
 SCRUBS_SEED_ISO="https://releases.nixos.org/nixos/25.11/nixos-25.11.9418.c7f47036d3df/nixos-minimal-25.11.9418.c7f47036d3df-aarch64-linux.iso" \
-./lima/nixos/seed.sh
+just seed
 ```
 
 The installer flow intentionally still uses `qemu` plus a repo mount so you can
@@ -86,10 +86,10 @@ boot afterward defaults to `vz`.
 That mounts [`lima/nixos/seed`](/Users/jem/dotfiles/lima/nixos/seed) into the
 installer VM at `/mnt/host-scrubs-seed`.
 
-If `~/.lima/scrubs-seed/iso` already exists, `seed.sh` reuses that local
+If `~/.lima/scrubs-seed/iso` already exists, `just seed` reuses that local
 installer artifact instead of downloading the ISO again.
 
-If no ISO is specified, `seed.sh` next looks for a central cache file at:
+If no ISO is specified, `just seed` next looks for a central cache file at:
 
 ```sh
 ~/Library/Caches/scrubs/nixos-minimal-aarch64.iso
@@ -109,7 +109,7 @@ After installation finishes, shut the guest down and export the reusable base
 image:
 
 ```sh
-./lima/nixos/export-seed-image.sh scrubs-seed /absolute/path/to/nixos-base-aarch64.qcow2
+just export-seed-image scrubs-seed /absolute/path/to/nixos-base-aarch64.qcow2
 ```
 
 ## Refresh an Existing Base Image
@@ -127,7 +127,7 @@ Instead:
 The helper script for that flow is:
 
 ```sh
-./lima/nixos/refresh-base-image.sh \
+just refresh-base-image \
   /absolute/path/to/current-base.qcow2 \
   /absolute/path/to/refreshed-base.qcow2
 ```
@@ -140,7 +140,7 @@ inspection, set:
 
 ```sh
 SCRUBS_REFRESH_DELETE_INSTANCE=false \
-./lima/nixos/refresh-base-image.sh \
+just refresh-base-image \
   /absolute/path/to/current-base.qcow2 \
   /absolute/path/to/refreshed-base.qcow2
 ```
@@ -164,8 +164,8 @@ The default local convention for active base images is:
 The helper scripts are:
 
 ```sh
-./lima/nixos/sync-base-image-to-icloud.sh scrubs-linux-lts.qcow2
-./lima/nixos/sync-base-image-from-icloud.sh scrubs-linux-lts.qcow2
+just sync-base-image-to-icloud
+just sync-base-image-from-icloud
 ```
 
 Both overwrite by name on the destination side. The intended pattern is:
@@ -174,10 +174,17 @@ Both overwrite by name on the destination side. The intended pattern is:
 2. validate the image locally
 3. mirror it to iCloud by name
 
+If you want to specify a different image name:
+
+```sh
+just sync-base-image-to-icloud scrubs-linux-lts.qcow2
+just sync-base-image-from-icloud scrubs-linux-lts.qcow2
+```
+
 ## Boot a Guest
 
 ```sh
-./lima/nixos/bootstrap.sh
+just bootstrap
 ```
 
 By default this creates a `scrubs-dev` Lima instance and uses your current macOS
@@ -193,7 +200,7 @@ SCRUBS_VM_TYPE=qemu \
 SCRUBS_ARCH=x86_64 \
 SCRUBS_GUEST_USER=jem \
 SCRUBS_BOOTSTRAP_USER=jem \
-./lima/nixos/bootstrap.sh my-project
+just bootstrap my-project
 ```
 
 After bootstrap finishes:
@@ -226,7 +233,7 @@ because upstream published them.
 To pick up those fixes:
 
 1. bump the `scrubs` flake inputs or guest configuration in this repo
-2. build a refreshed base image with `refresh-base-image.sh`
+2. build a refreshed base image with `just refresh-base-image`
 3. recreate project guests from the refreshed image, or run `nixos-rebuild`
    inside any long-lived guest you want to patch in place
 
@@ -262,7 +269,7 @@ delete and recreate the instance after updating the template metadata:
 
 ```sh
 limactl delete scrubs-dev
-./lima/nixos/bootstrap.sh
+just bootstrap
 ```
 
 That failure can come from Lima's generated cloud-init locking the bootstrap
