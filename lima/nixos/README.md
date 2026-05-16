@@ -52,11 +52,25 @@ Source: [Lima FAQ](https://lima-vm.io/docs/faq/).
 If you do not already have an `aarch64` NixOS base image, create one once from
 the official NixOS ARM installer ISO.
 
+This installer path is best treated as a factory-bootstrap or disaster-recovery
+flow, not as the normal way to pick up routine security updates.
+
 The current scaffold is pinned to the official NixOS 25.11 minimal ARM ISO
 released on April 18, 2026:
 
 - [Release page](https://releases.nixos.org/nixos/25.11/nixos-25.11.9418.c7f47036d3df)
 - [Direct ISO URL](https://releases.nixos.org/nixos/25.11/nixos-25.11.9418.c7f47036d3df/nixos-minimal-25.11.9418.c7f47036d3df-aarch64-linux.iso)
+
+If you want a convenience fetch for the latest stable ARM minimal installer
+instead of manually hunting the URL each time, use:
+
+```sh
+./lima/nixos/download-latest-iso.sh
+```
+
+That downloads from the `nixos-25.11` channel by default and stores the ISO in
+`~/Library/Caches/scrubs` together with a resolved release URL file and a local
+SHA-256 sidecar.
 
 To boot the seed installer:
 
@@ -98,6 +112,39 @@ image:
 ./lima/nixos/export-seed-image.sh scrubs-seed /absolute/path/to/nixos-base-aarch64.qcow2
 ```
 
+## Refresh an Existing Base Image
+
+Once you already have a working base image, routine Linux and NixOS updates do
+not need a fresh trip through the live installer.
+
+Instead:
+
+1. update the pinned `scrubs` Nix inputs or guest modules in this repo
+2. boot the existing base image as a normal disposable `scrubs` guest
+3. apply the current flake inside that guest
+4. export the refreshed disk as a new qcow2
+
+The helper script for that flow is:
+
+```sh
+./lima/nixos/refresh-base-image.sh \
+  /absolute/path/to/current-base.qcow2 \
+  /absolute/path/to/refreshed-base.qcow2
+```
+
+By default this uses `SCRUBS_REFRESH_VM_TYPE=vz`, because this is just a normal
+native-arch Linux guest boot and does not depend on the live ISO path.
+
+If you want to keep the temporary maintenance VM around after export for
+inspection, set:
+
+```sh
+SCRUBS_REFRESH_DELETE_INSTANCE=false \
+./lima/nixos/refresh-base-image.sh \
+  /absolute/path/to/current-base.qcow2 \
+  /absolute/path/to/refreshed-base.qcow2
+```
+
 ## Configure the Base Image
 
 Copy [`settings.env.example`](./settings.env.example) to `settings.env` and set
@@ -108,6 +155,24 @@ cp ./lima/nixos/settings.env.example ./lima/nixos/settings.env
 ```
 
 Then edit `settings.env` to point at your generic NixOS image.
+
+The default local convention for active base images is:
+
+- [`lima/nixos/qcow2`](/Users/jem/dotfiles/lima/nixos/qcow2) for living local images
+- `~/Library/Mobile Documents/com~apple~CloudDocs/scrubs/base-images/` for the iCloud mirror
+
+The helper scripts are:
+
+```sh
+./lima/nixos/sync-base-image-to-icloud.sh scrubs-linux-lts.qcow2
+./lima/nixos/sync-base-image-from-icloud.sh scrubs-linux-lts.qcow2
+```
+
+Both overwrite by name on the destination side. The intended pattern is:
+
+1. export or refresh locally into `lima/nixos/qcow2/`
+2. validate the image locally
+3. mirror it to iCloud by name
 
 ## Boot a Guest
 
@@ -143,6 +208,42 @@ After bootstrap finishes:
 - no browser or password-manager state in the guest
 - no dependency on host-global Nix builder state
 - no assumption that the repo itself ships Nix
+
+## Patch Model
+
+`scrubs` guests are intentionally not self-updating pets.
+
+The practical model is:
+
+- the base image is a versioned artifact you refresh on purpose
+- per-project guests are snapshots of that artifact plus repo-specific work
+- running guests stay where they are until you explicitly rebuild or recreate
+  them
+
+That means critical Linux or NixOS fixes are not applied automatically just
+because upstream published them.
+
+To pick up those fixes:
+
+1. bump the `scrubs` flake inputs or guest configuration in this repo
+2. build a refreshed base image with `refresh-base-image.sh`
+3. recreate project guests from the refreshed image, or run `nixos-rebuild`
+   inside any long-lived guest you want to patch in place
+
+So: no, the guests do not have to be frozen in time, but updates are explicit
+and artifact-driven rather than background-managed.
+
+## Asset Retention
+
+The repo should carry provenance for important binary assets without becoming
+the binary store itself.
+
+- seed ISO: rely on NixOS as the canonical host, keep a local cache, and record
+  source URL plus checksum metadata
+- base qcow2: keep the living copy in `lima/nixos/qcow2/`, keep it out of Git,
+  and mirror it to iCloud by name because it contains manual setup value
+
+The fuller policy lives in [ASSET-RETENTION.md](/Users/jem/dotfiles/lima/nixos/ASSET-RETENTION.md).
 
 ## Troubleshooting
 
