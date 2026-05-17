@@ -1,4 +1,5 @@
 [tools]
 dprint = "0.54.0"
+just = "1.51.0"
 shfmt = "3.13.1"
 taplo = "0.10.0"
