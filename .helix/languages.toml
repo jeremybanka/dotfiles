@@ -1,30 +1,34 @@
-[language-server.vscode-eslint-language-server]
-command = "bun"
-args = ["/Users/jem/dotfiles/.helix/language-servers/eslint-adapter.ts"]
+[[language]]
+name = "swift"
+auto-format = true
+formatter = { command = "xcrun", args = ["swift-format", "format", "-"] }
 
-[language-server.vscode-eslint-language-server.config]
-validate = "on"
-packageManager = "bun"
-useFlatConfig = true
-experimental = { useFlatConfig = false }
-rulesCustomizations = []
-run = "onType"
-problems = { shortenToSingleLine = false }
-nodePath = ""
-options = {}
-codeActionOnSave = { mode = "all" }
-format = true
+[[language]]
+name = "toml"
+auto-format = true
+formatter = { command = "taplo", args = ["fmt", "-"] }
 
-[language-server.vscode-eslint-language-server.config.codeAction.disableRuleComment]
-enable = true
-location = "separateLine"
+[[language]]
+name = "bash"
+auto-format = true
+formatter = { command = "shfmt", args = ["-i", "2", "-bn", "-ci", "-sr"] }
 
-[language-server.vscode-eslint-language-server.config.codeAction.showDocumentation]
-enable = true
+[[language]]
+name = "nix"
+auto-format = true
+formatter = { command = "nixfmt" }
 
-[language-server.vscode-eslint-language-server.config.workingDirectory]
-directory = "/Users/jem/dotfiles"
+[[language]]
+name = "json"
+auto-format = true
+formatter = { command = "dprint", args = ["fmt", "--stdin", "json"] }
 
-[language-server.typescript-language-server]
-command = "./node_modules/.bin/typescript-language-server"
-args = ["--stdio"]
+[[language]]
+name = "yaml"
+auto-format = true
+formatter = { command = "dprint", args = ["fmt", "--stdin", "yaml"] }
+
+[[language]]
+name = "markdown"
+auto-format = true
+formatter = { command = "dprint", args = ["fmt", "--stdin", "md"] }

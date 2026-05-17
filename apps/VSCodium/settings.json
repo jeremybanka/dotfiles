@@ -63,13 +63,14 @@
 
 	// LANGUAGES //////////////////////////////////////////////////////////////////
 	"json.schemaDownload.trustedDomains": {
-		"https://schemastore.azurewebsites.net/": true,
-		"https://raw.githubusercontent.com/": true,
-		"https://www.schemastore.org/": true,
-		"https://json.schemastore.org/": true,
-		"https://json-schema.org/": true,
 		"https://biomejs.dev": true,
-		"https://turbo.build": true
+		"https://json-schema.org/": true,
+		"https://json.schemastore.org/": true,
+		"https://raw.githubusercontent.com/": true,
+		"https://docs.renovatebot.com/": true,
+		"https://schemastore.azurewebsites.net/": true,
+		"https://turbo.build": true,
+		"https://www.schemastore.org/": true
 	},
 	"nushellLanguageServer.nushellExecutablePath": "/opt/homebrew/bin/nu",
 	"typescript.tsserver.maxTsServerMemory": 8192,
@@ -89,5 +90,3 @@
 	"githubPullRequests.pullBranch": "never",
 	"redhat.telemetry.enabled": false
 }
-
-
