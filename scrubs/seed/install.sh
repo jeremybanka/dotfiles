@@ -30,7 +30,7 @@ nixos-generate-config --root "$root_mount"
 
 cp "$seed_mount/base.nix" "$root_mount/etc/nixos/scrubs-seed-base.nix"
 
-cat > "$root_mount/etc/nixos/configuration.nix" <<'EOF'
+cat > "$root_mount/etc/nixos/configuration.nix" << 'EOF'
 { ... }:
 {
   imports = [

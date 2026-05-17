@@ -1,92 +1,92 @@
 {
-	// EDITOR /////////////////////////////////////////////////////////////////////
-	"editor.wordSeparators": "./\\()\"'-:,.;<>~!@#%^&*|+=[]{}`~?", // $ is not a separator
-	"editor.fontFamily": "Theia 0.3.500",
-	"editor.fontLigatures": true,
-	"editor.fontSize": 13,
-	"editor.formatOnSave": false,
-	"editor.minimap.enabled": false,
-	"editor.tabSize": 2,
+  // EDITOR /////////////////////////////////////////////////////////////////////
+  "editor.wordSeparators": "./\\()\"'-:,.;<>~!@#%^&*|+=[]{}`~?", // $ is not a separator
+  "editor.fontFamily": "Theia 0.3.500",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 13,
+  "editor.formatOnSave": false,
+  "editor.minimap.enabled": false,
+  "editor.tabSize": 2,
 
-	// TERMINAL ///////////////////////////////////////////////////////////////////
-	"terminal.integrated.fontFamily": "JetBrains Mono",
-	"terminal.integrated.fontSize": 13,
-	"terminal.integrated.fontLigatures.enabled": true,
-	"terminal.integrated.profiles.osx": {
-		"Nushell": {
-			"path": "/opt/homebrew/bin/nu"
-		}
-	},
-	"terminal.integrated.defaultProfile.osx": "Nushell",
-	"terminal.integrated.env.osx": {
-		"XDG_CONFIG_HOME": "/Users/jem/.config"
-	},
-	"terminal.integrated.scrollback": 2000,
+  // TERMINAL ///////////////////////////////////////////////////////////////////
+  "terminal.integrated.fontFamily": "JetBrains Mono",
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.fontLigatures.enabled": true,
+  "terminal.integrated.profiles.osx": {
+    "Nushell": {
+      "path": "/opt/homebrew/bin/nu"
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "Nushell",
+  "terminal.integrated.env.osx": {
+    "XDG_CONFIG_HOME": "/Users/jem/.config"
+  },
+  "terminal.integrated.scrollback": 2000,
 
-	// LAYOUT /////////////////////////////////////////////////////////////////////
-	"window.autoDetectColorScheme": true,
-	"workbench.preferredDarkColorTheme": "Dark 2026",
-	"workbench.preferredLightColorTheme": "Light 2026",
-	"workbench.colorCustomizations": {
-		"[Aeos]": {
-			"editorBracketHighlight.foreground1": "#555",
-			"editorBracketHighlight.foreground2": "#790",
-			"editorBracketHighlight.foreground3": "#53f",
-			"editorBracketHighlight.foreground4": "#298",
-			"editorBracketHighlight.foreground5": "#a06",
-			"editor.wordHighlightBackground": "#ff0e",
-			"editor.selectionBackground": "#ff0e"
-		}
-	},
-	"workbench.iconTheme": "material-icon-theme",
-	"workbench.productIconTheme": "fluent-icons",
-	"workbench.activityBar.location": "top",
-	"workbench.layoutControl.enabled": false,
+  // LAYOUT /////////////////////////////////////////////////////////////////////
+  "window.autoDetectColorScheme": true,
+  "workbench.preferredDarkColorTheme": "Dark 2026",
+  "workbench.preferredLightColorTheme": "Light 2026",
+  "workbench.colorCustomizations": {
+    "[Aeos]": {
+      "editorBracketHighlight.foreground1": "#555",
+      "editorBracketHighlight.foreground2": "#790",
+      "editorBracketHighlight.foreground3": "#53f",
+      "editorBracketHighlight.foreground4": "#298",
+      "editorBracketHighlight.foreground5": "#a06",
+      "editor.wordHighlightBackground": "#ff0e",
+      "editor.selectionBackground": "#ff0e"
+    }
+  },
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.productIconTheme": "fluent-icons",
+  "workbench.activityBar.location": "top",
+  "workbench.layoutControl.enabled": false,
 
-	// EXPLORER ///////////////////////////////////////////////////////////////////
-	"explorer.fileNesting.enabled": true,
-	"explorer.fileNesting.patterns": {
-		"*.ts": "${capture}.js",
-		"*.js": "${capture}.js.map, ${capture}.min.js",
-		"*.d.ts": "${capture}.d.ts.map",
-		"tsconfig.json": "tsconfig.*.json",
-		"*.sqlite": "${capture}.${extname}-*",
-		"*.db": "${capture}.${extname}-*",
-		"*.sqlite3": "${capture}.${extname}-*",
-		"*.db3": "${capture}.${extname}-*",
-		"*.sdb": "${capture}.${extname}-*",
-		"*.s3db": "${capture}.${extname}-*",
-		"package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",
-		"pyproject.toml": "uv.lock, poetry.lock",
-		"mise.toml": "mise.lock"
-	},
+  // EXPLORER ///////////////////////////////////////////////////////////////////
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.js",
+    "*.js": "${capture}.js.map, ${capture}.min.js",
+    "*.d.ts": "${capture}.d.ts.map",
+    "tsconfig.json": "tsconfig.*.json",
+    "*.sqlite": "${capture}.${extname}-*",
+    "*.db": "${capture}.${extname}-*",
+    "*.sqlite3": "${capture}.${extname}-*",
+    "*.db3": "${capture}.${extname}-*",
+    "*.sdb": "${capture}.${extname}-*",
+    "*.s3db": "${capture}.${extname}-*",
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",
+    "pyproject.toml": "uv.lock, poetry.lock",
+    "mise.toml": "mise.lock"
+  },
 
-	// LANGUAGES //////////////////////////////////////////////////////////////////
-	"json.schemaDownload.trustedDomains": {
-		"https://biomejs.dev": true,
-		"https://json-schema.org/": true,
-		"https://json.schemastore.org/": true,
-		"https://raw.githubusercontent.com/": true,
-		"https://docs.renovatebot.com/": true,
-		"https://schemastore.azurewebsites.net/": true,
-		"https://turbo.build": true,
-		"https://www.schemastore.org/": true
-	},
-	"nushellLanguageServer.nushellExecutablePath": "/opt/homebrew/bin/nu",
-	"typescript.tsserver.maxTsServerMemory": 8192,
-	"zig.zls.path": "zls",
+  // LANGUAGES //////////////////////////////////////////////////////////////////
+  "json.schemaDownload.trustedDomains": {
+    "https://biomejs.dev": true,
+    "https://json-schema.org/": true,
+    "https://json.schemastore.org/": true,
+    "https://raw.githubusercontent.com/": true,
+    "https://docs.renovatebot.com/": true,
+    "https://schemastore.azurewebsites.net/": true,
+    "https://turbo.build": true,
+    "https://www.schemastore.org/": true
+  },
+  "nushellLanguageServer.nushellExecutablePath": "/opt/homebrew/bin/nu",
+  "typescript.tsserver.maxTsServerMemory": 8192,
+  "zig.zls.path": "zls",
 
-	// MISC ///////////////////////////////////////////////////////////////////////
-	"chat.commandCenter.enabled": false,
-	"chat.titleBar.signIn.enabled": false,
+  // MISC ///////////////////////////////////////////////////////////////////////
+  "chat.commandCenter.enabled": false,
+  "chat.titleBar.signIn.enabled": false,
 
-	// EXTENSIONs //////////////////////////////////////////////////////////////////
-	"biome.suggestInstallingGlobally": false,
-	"cmake.pinnedCommands": [
-		"workbench.action.tasks.configureTaskRunner",
-		"workbench.action.tasks.runTask"
-	],
-	"git.path": "/opt/homebrew/bin/git",
-	"githubPullRequests.pullBranch": "never",
-	"redhat.telemetry.enabled": false
+  // EXTENSIONs //////////////////////////////////////////////////////////////////
+  "biome.suggestInstallingGlobally": false,
+  "cmake.pinnedCommands": [
+    "workbench.action.tasks.configureTaskRunner",
+    "workbench.action.tasks.runTask"
+  ],
+  "git.path": "/opt/homebrew/bin/git",
+  "githubPullRequests.pullBranch": "never",
+  "redhat.telemetry.enabled": false
 }
