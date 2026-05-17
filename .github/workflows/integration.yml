@@ -58,7 +58,7 @@ jobs:
           VIRTUAL_HOME: ${{ github.workspace }}/home
 
       - name: Configure Apps
-        run: ${{ github.workspace }}/scripts/configure-apps.ts
+        run: nu ${{ github.workspace }}/scripts/configure-apps.nu
         shell: zsh {0}
 
       - name: Install NPM Globals

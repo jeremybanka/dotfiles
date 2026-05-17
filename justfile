@@ -3,6 +3,15 @@ set shell := ["zsh", "-cu"]
 default:
   @just --list
 
+brewfile-dump:
+  brew bundle dump --file=~/Brewfile --force
+
+brewfile-use:
+  brew bundle install --file=~/Brewfile
+
+helix-watch-config:
+  nu ./scripts/watch-helix-config.nu
+
 bootstrap instance_name source_image="./scrubs/qcow2/scrubs.qcow2":
   nu ./scrubs/bootstrap.nu --source-image {{source_image}} {{instance_name}}
 
@@ -19,10 +28,13 @@ seed instance_name="scrubs-seed":
   nu ./scrubs/seed.nu {{instance_name}}
 
 vm-shell instance_name:
-  ./scripts/lima-shell.sh {{instance_name}}
+  limactl shell {{instance_name}}
 
 sync-base-image-to-icloud image="scrubs.qcow2":
   nu ./scrubs/sync-base-image-to-icloud.nu {{image}}
 
 sync-base-image-from-icloud image="scrubs.qcow2":
   nu ./scrubs/sync-base-image-from-icloud.nu {{image}}
+
+up:
+  nu ./scripts/update.nu

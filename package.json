@@ -5,11 +5,9 @@
 		"helix:build-theme-agent": "bun home/.local/libexec/com.jeremybanka.helix-theme/build-plist.ts",
 		"helix:set-theme": "bun home/.local/libexec/com.jeremybanka.helix-theme/theme-switcher.ts",
 		"helix:theme-agent": "bun home/.local/libexec/com.jeremybanka.helix-theme/theme-switcher.ts --watch",
-		"helix:watch-config": "bun scripts/watch-helix-config.ts",
 		"lint:eslint": "eslint -- .",
 		"lint:types": "tsc --noEmit",
-		"lint": "bun run lint:eslint && bun run lint:types",
-		"up": "nu ./scripts/update.nu"
+		"lint": "bun run lint:eslint && bun run lint:types"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "3.3.5",
