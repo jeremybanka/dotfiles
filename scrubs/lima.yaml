@@ -1,0 +1,195 @@
+# Template for a reusable scrubs guest booted from a generic NixOS base image.
+#
+# `bootstrap.nu` writes a concrete `lima.local.yaml` by filling in the base
+# image path and the guest username before calling `limactl start`.
+
+vmType: "REPLACE_WITH_VM_TYPE"
+arch: "REPLACE_WITH_ARCH"
+cpus: 6
+memory: "12GiB"
+disk: "100GiB"
+
+images:
+  - location: "REPLACE_WITH_BASE_IMAGE"
+    arch: "REPLACE_WITH_ARCH"
+
+mountType: "REPLACE_WITH_MOUNT_TYPE"
+mounts: []
+
+user:
+  name: "REPLACE_WITH_GUEST_USER"
+  home: "/home/REPLACE_WITH_GUEST_USER"
+  shell: "/bin/sh"
+
+ssh:
+  localPort: REPLACE_WITH_SSH_PORT
+  loadDotSSHPubKeys: false
+  forwardAgent: false
+
+hostResolver:
+  enabled: REPLACE_WITH_HOST_RESOLVER
+
+REPLACE_WITH_DNS_BLOCK
+
+containerd:
+  system: false
+  user: false
+
+provision:
+  - mode: boot
+    script: |
+      set -eu
+      mkdir -p /usr/local/bin
+      cat >/usr/local/bin/sudo <<'EOF'
+      #!/bin/sh
+      if [ "$(id -u)" -eq 0 ]; then
+        exec "$@"
+      fi
+      if [ -x /run/wrappers/bin/sudo ]; then
+        exec /run/wrappers/bin/sudo "$@"
+      fi
+      exec /run/current-system/sw/bin/sudo "$@"
+      EOF
+      chmod 755 /usr/local/bin/sudo
+      mkdir -p /var/lib/cloud/scripts/per-boot
+      cat >/var/lib/cloud/scripts/per-boot/00-lima-pre.sh <<'EOF'
+      #!/bin/sh
+      set -eu
+      command -v systemctl >/dev/null 2>&1 || exit 0
+
+      stub=/var/lib/cloud/scripts/per-boot/00-lima.boot.sh
+      if [ -f "$stub" ] && ! grep -q 'SCRUBS_LIMA_PATH_PATCH' "$stub"; then
+        tmp_stub="$(mktemp)"
+        {
+          IFS= read -r first_line || true
+          printf '%s\n' "$first_line"
+          printf '%s\n' '# SCRUBS_LIMA_PATH_PATCH'
+          printf '%s\n' 'export PATH=/usr/local/bin:/run/wrappers/bin:/run/current-system/sw/bin:$PATH'
+          cat
+        } <"$stub" >"$tmp_stub"
+        cat "$tmp_stub" >"$stub"
+        rm -f "$tmp_stub"
+      fi
+
+      mkdir -p /run/systemd/system/user@.service.d
+      cat >/run/systemd/system/user@.service.d/lima.conf <<'INNER_EOF'
+      [Service]
+      Delegate=yes
+      INNER_EOF
+      systemctl daemon-reload
+
+      for f in /etc/subuid /etc/subgid; do
+        touch "$f"
+        grep -qw "REPLACE_WITH_GUEST_USER" "$f" || \
+          echo "REPLACE_WITH_GUEST_USER:524288:1073741824" >>"$f"
+      done
+
+      systemctl start systemd-logind.service || true
+      loginctl enable-linger "REPLACE_WITH_GUEST_USER" || true
+      systemctl start "user@REPLACE_WITH_GUEST_UID.service" || true
+      EOF
+      chmod 755 /var/lib/cloud/scripts/per-boot/00-lima-pre.sh
+      cat >/var/lib/cloud/scripts/per-boot/99-lima-post.sh <<'EOF'
+      #!/bin/sh
+      set -eu
+      command -v systemctl >/dev/null 2>&1 || exit 0
+      [ -x /usr/local/bin/lima-guestagent ] || exit 0
+
+      cidata_mnt=/mnt/lima-cidata
+      debug=false
+      vsock_port=0
+      virtio_port=
+
+      # Kernel 7 on this image currently seems to miss Lima's normal cidata
+      # boot handoff, so restore the minimum state the hostagent expects.
+      mkdir -p -m 700 "${cidata_mnt}"
+      if [ ! -f "${cidata_mnt}/meta-data" ] && [ -e /dev/disk/by-label/cidata ]; then
+        mount -o ro,mode=0700,dmode=0700,overriderockperm,exec /dev/disk/by-label/cidata "${cidata_mnt}" || true
+      fi
+      if [ ! -f "${cidata_mnt}/param.env" ] && [ -f "${cidata_mnt}/meta-data" ]; then
+        : > "${cidata_mnt}/param.env"
+      fi
+      if [ -f "${cidata_mnt}/meta-data" ] && [ ! -f /run/lima-ssh-ready ]; then
+        sed -n 's/^instance-id: //p' "${cidata_mnt}/meta-data" | head -n 1 > /run/lima-ssh-ready
+      fi
+
+      read_cidata_value() {
+        file="$1"
+        [ -f "$file" ] || return 0
+        while IFS='=' read -r key value; do
+          [ -n "$key" ] || continue
+          case "$key" in
+            *_DEBUG)
+              debug="$value"
+              ;;
+            *_VSOCK_PORT)
+              vsock_port="$value"
+              ;;
+            *_VIRTIO_PORT)
+              virtio_port="$value"
+              ;;
+          esac
+        done <"$file"
+      }
+
+      read_cidata_value "${cidata_mnt}/lima.env"
+      read_cidata_value "${cidata_mnt}/param.env"
+
+      extra_args=""
+      if [ "${vsock_port:-0}" != "0" ]; then
+        extra_args="$extra_args --vsock-port ${vsock_port}"
+      fi
+      if [ -n "${virtio_port:-}" ]; then
+        extra_args="$extra_args --virtio-port ${virtio_port}"
+      fi
+
+      cat >/run/systemd/system/lima-guestagent.service <<INNER_EOF
+      [Unit]
+      Description=Lima Guest Agent
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      ExecStart=/usr/local/bin/lima-guestagent daemon --debug=${debug}${extra_args}
+      Restart=always
+      RestartSec=1
+
+      [Install]
+      WantedBy=multi-user.target
+      INNER_EOF
+
+      systemctl daemon-reload
+      systemctl restart lima-guestagent.service
+      EOF
+      chmod 755 /var/lib/cloud/scripts/per-boot/99-lima-post.sh
+      mkdir -p /var/lib/cloud/scripts/per-instance
+      cat >/var/lib/cloud/scripts/per-instance/00-lima-unlock-user.sh <<'EOF'
+      #!/bin/sh
+      set -eu
+      i=0
+      while [ "$i" -lt 120 ]; do
+        if id "REPLACE_WITH_GUEST_USER" >/dev/null 2>&1; then
+          break
+        fi
+        i=$((i + 1))
+        sleep 1
+      done
+      if ! id "REPLACE_WITH_GUEST_USER" >/dev/null 2>&1; then
+        exit 1
+      fi
+      usermod -aG wheel "REPLACE_WITH_GUEST_USER"
+      pw="$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n')"
+      echo "REPLACE_WITH_GUEST_USER:$pw" | chpasswd
+      EOF
+      chmod 755 /var/lib/cloud/scripts/per-instance/00-lima-unlock-user.sh
+
+portForwards:
+  - guestPort: 3000
+    hostPort: REPLACE_WITH_HOST_PORT_3000
+    proto: tcp
+  - guestPort: 5173
+    hostPort: REPLACE_WITH_HOST_PORT_5173
+    proto: tcp
+  - guestPort: 8080
+    hostPort: REPLACE_WITH_HOST_PORT_8080
+    proto: tcp

@@ -1,0 +1,28 @@
+# Seed-image installer template for scrubs.
+#
+# This boots the official NixOS minimal aarch64 ISO and mounts the seed helper
+# directory from this repo into the live installer environment.
+
+vmType: "qemu"
+arch: "aarch64"
+cpus: 4
+memory: "8GiB"
+disk: "40GiB"
+
+images:
+  - location: "REPLACE_WITH_SEED_ISO"
+    arch: "aarch64"
+
+mountType: "9p"
+containerd:
+  system: false
+  user: false
+
+mounts:
+  - location: "REPLACE_WITH_SEED_DIR"
+    mountPoint: "/mnt/host-scrubs-seed"
+    writable: false
+
+ssh:
+  loadDotSSHPubKeys: false
+  forwardAgent: false
