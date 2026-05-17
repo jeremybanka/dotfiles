@@ -5,16 +5,16 @@ default:
 
 fmt:
     dprint fmt
-    taplo fmt $(rg --files --hidden -g '*.toml' -g '!.git' | rg -v '^(home/\\.config/nvim/|\\.zed/)')
+    taplo fmt $(rg --files --hidden -g '*.toml' -g '!.git' | rg -v '^(home/\.config/nvim/|\.zed/)')
     shfmt -w -i 2 -bn -ci -sr $(rg --files -g '*.sh' -g 'setup.sh')
     just --fmt
     swift_files=(${(f)"$(rg --files --hidden -g '*.swift' -g '!.git')"}); (( ${#swift_files[@]} )) && xcrun swift-format format --in-place $swift_files
 
 fmt-check:
     dprint check
-    taplo fmt --check $(rg --files --hidden -g '*.toml' -g '!.git' | rg -v '^(home/\\.config/nvim/|\\.zed/)')
+    taplo fmt --check $(rg --files --hidden -g '*.toml' -g '!.git' | rg -v '^(home/\.config/nvim/|\.zed/)')
     shfmt -d -i 2 -bn -ci -sr $(rg --files -g '*.sh' -g 'setup.sh')
-    just --check
+    just --fmt --check
     swift_files=(${(f)"$(rg --files --hidden -g '*.swift' -g '!.git')"}); (( ${#swift_files[@]} )) && xcrun swift-format lint --strict $swift_files
 
 brewfile-dump:
