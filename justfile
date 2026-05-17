@@ -45,8 +45,8 @@ helix-theme-install-agent:
 helix-watch-config:
     nu ./scripts/watch-helix-config.nu
 
-bootstrap instance_name source_image="./scrubs/qcow2/scrubs.qcow2":
-    nu ./scrubs/bootstrap.nu --source-image {{ source_image }} {{ instance_name }}
+bootstrap instance_name source_image="./scrubs/qcow2/scrubs.qcow2" shim_name="":
+    nu ./scrubs/bootstrap.nu --source-image {{ source_image }} {{ if shim_name != "" { "--shim-name " + shim_name + " " } else { "" } }}{{ instance_name }}
 
 download-latest-iso channel="nixos-25.11":
     nu ./scrubs/download-latest-iso.nu {{ channel }}

@@ -45,6 +45,7 @@ def remote-shell-command [command: string] {
 def main [
   instance_name: string
   --source-image(-s): string = ""
+  --shim-name: string = ""
 ] {
   let repo_root = (repo-root)
   let scrubs_dir = (scrubs-dir)
@@ -54,7 +55,8 @@ def main [
   let payload_dir = ($cache_dir | path join "scrubs-bootstrap")
   let guest_apply = ($payload_dir | path join "guest-apply.sh")
   let template_file = ($scrubs_dir | path join "lima.local.yaml")
-  let project_shim_file = ($scrubs_dir | path join "projects" $"($instance_name).nix")
+  let resolved_shim_name = if $shim_name == "" { $instance_name } else { $shim_name }
+  let project_shim_file = ($scrubs_dir | path join "projects" $"($resolved_shim_name).nix")
   let instance_dir = ($env.HOME | path join ".lima" $instance_name)
   let current_user = (^id -un | str trim)
   let current_uid = (^id -u | str trim)
