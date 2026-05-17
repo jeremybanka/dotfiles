@@ -60,7 +60,7 @@ def main [
     SCRUBS_VM_TYPE: $vm_type
     SCRUBS_ARCH: $guest_arch
   } {
-    nu ($scrubs_dir | path join "bootstrap.nu") $resolved_source_image $instance_name
+    nu ($scrubs_dir | path join "bootstrap.nu") --source-image $resolved_source_image $instance_name
   }
 
   try {
