@@ -213,8 +213,8 @@ Both overwrite by name on the destination side. The intended pattern is:
 If you want to specify a different image name:
 
 ```sh
-just sync-base-image-to-icloud scrubs-linux-lts.qcow2
-just sync-base-image-from-icloud scrubs-linux-lts.qcow2
+just sync-base-image-to-icloud scrubs.qcow2
+just sync-base-image-from-icloud scrubs.qcow2
 ```
 
 ## Asset Retention

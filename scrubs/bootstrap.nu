@@ -43,16 +43,16 @@ def remote-shell-command [command: string] {
 }
 
 def main [
-  base_image_arg: string
-  instance_name: string = "scrubs-dev"
+  instance_name: string
+  --source-image(-s): string = ""
 ] {
   let repo_root = (repo-root)
   let scrubs_dir = (scrubs-dir)
   let settings = (load-settings)
+  let default_working_image = ($repo_root | path join "scrubs" "qcow2" "scrubs.qcow2")
   let cache_dir = (($env.TMPDIR? | default "/tmp") | path join "scrubs-lima")
   let payload_dir = ($cache_dir | path join "scrubs-bootstrap")
   let guest_apply = ($payload_dir | path join "guest-apply.sh")
-  let settings_file = ($scrubs_dir | path join "settings.env")
   let template_file = ($scrubs_dir | path join "lima.local.yaml")
   let project_shim_file = ($scrubs_dir | path join "projects" $"($instance_name).nix")
   let instance_dir = ($env.HOME | path join ".lima" $instance_name)
@@ -61,11 +61,13 @@ def main [
   let guest_user = (get-setting $settings "SCRUBS_GUEST_USER" $current_user)
   let guest_uid = (get-setting $settings "SCRUBS_GUEST_UID" $current_uid)
   let bootstrap_user = (get-setting $settings "SCRUBS_BOOTSTRAP_USER" $guest_user)
-  let base_image = if $base_image_arg != "" {
-    $base_image_arg
-  } else {
-    get-setting $settings "SCRUBS_BASE_IMAGE" ""
-  }
+  let base_image = (
+    if $source_image == "" {
+      $default_working_image
+    } else {
+      $source_image
+    }
+  )
   let guest_arch = (get-setting $settings "SCRUBS_ARCH" "aarch64")
   let vm_type = (get-setting $settings "SCRUBS_VM_TYPE" "vz")
   let key_dir = ($scrubs_dir | path join "keys")
@@ -80,7 +82,7 @@ def main [
 
   if $base_image == "" {
     error make {
-      msg: $"Set SCRUBS_BASE_IMAGE in the environment or ($settings_file). Use an OpenStack-compatible NixOS image with cloud-init support."
+      msg: $"Set --source-image or ensure the default working image exists at ($default_working_image). Use an OpenStack-compatible NixOS image with cloud-init support."
     }
   }
 

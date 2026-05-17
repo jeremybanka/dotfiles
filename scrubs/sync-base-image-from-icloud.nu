@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
 
 def main [
-  image_name: string = "scrubs-linux-lts.qcow2"
+  image_name: string = "scrubs.qcow2"
 ] {
   let repo_root = ($env.FILE_PWD | path dirname | path dirname)
   let local_dir = ($env.SCRUBS_LOCAL_BASE_IMAGE_DIR? | default ($repo_root | path join "scrubs" "qcow2"))
