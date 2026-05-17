@@ -1,4 +1,7 @@
 {
+  "vscode-just.justPath": "/Users/jem/.local/share/mise/shims/just",
+  "vscode-just.lspPath": "/Users/jem/.local/share/mise/shims/just-lsp",
+  "dprint.path": "/Users/jem/.local/share/mise/shims/dprint",
   "[json]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "dprint.dprint"
@@ -11,8 +14,6 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "nefrob.vscode-just-syntax"
   },
-  "vscode-just.justPath": "/Users/jem/.local/share/mise/shims/just",
-  "vscode-just.lspPath": "/Users/jem/.local/share/mise/shims/just-lsp",
   "[markdown]": {
     "editor.formatOnSave": true
   },
