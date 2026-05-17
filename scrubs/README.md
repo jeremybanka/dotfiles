@@ -402,11 +402,16 @@ The next step after this base flow is a small per-project extension mechanism,
 so a repo can ask for extra packages or helper setup without owning the entire
 machine definition.
 
-That now exists in a minimal instance-keyed form:
+That now exists in a minimal instance-keyed form, with an optional shim-name
+override:
 
 - if [`scrubs/projects`](/Users/jem/dotfiles/scrubs/projects) contains a file named
   `<instance-name>.nix`, `just bootstrap ... <instance-name>` copies it into the
   guest payload as `modules/project-shim.nix`
+- if you want a public, non-project-specific shim filename, pass
+  `shim_name=<shim-name>` to `just bootstrap` or `--shim-name <shim-name>` to
+  [`bootstrap.nu`](/Users/jem/dotfiles/scrubs/bootstrap.nu); that copies
+  `scrubs/projects/<shim-name>.nix` instead
 - the shim is imported on top of the shared base config for that VM only
 
 This keeps project-specific accommodations in version control without baking
