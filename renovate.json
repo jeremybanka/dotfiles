@@ -6,7 +6,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^\\.github\\/actions\\/setup\\/action\\.yml$/"],
+      "managerFilePatterns": ["/^\\.github\\/workflows\\/integration\\.yml$/"],
       "matchStrings": [
         "uses: jdx\\/mise-action@\\S+(?:\\s+#.*)?\\s+      with:\\s+        version: (?<currentValue>\\S+)"
       ],
