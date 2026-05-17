@@ -1,9 +1,7 @@
 {
 	"recommendations": [
 		"christian-kohler.npm-intellisense",
-		"dbaeumer.vscode-eslint",
 		"miguelsolorio.fluent-icons",
-		"oven.bun-vscode",
 		"pkief.material-icon-theme",
 		"streetsidesoftware.code-spell-checker",
 		"sumneko.lua",

@@ -87,5 +87,7 @@
 	],
 	"git.path": "/opt/homebrew/bin/git",
 	"githubPullRequests.pullBranch": "never",
-	"redhat.telemetry.enabled": false	
+	"redhat.telemetry.enabled": false
 }
+
+
