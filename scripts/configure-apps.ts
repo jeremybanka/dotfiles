@@ -7,64 +7,45 @@ import { join, resolve } from "node:path"
 
 const appConfigDir = join(import.meta.dirname, `..`, `apps`)
 
+const sharedEditorSettingsSourcePath = resolve(
+	appConfigDir,
+	`VSCodium`,
+	`settings.json`
+)
+
+await configureVSCode()
 await configureVSCodium()
 await configureCursor()
 await configureIllustrator()
 await configureInDesign()
 
+async function configureVSCode() {
+	await configureEditorSettings(`VS Code`, `Code`)
+}
+
 async function configureVSCodium() {
-	const sourcePath = resolve(appConfigDir, `VSCodium`, `settings.json`)
-	const targetDir = join(
-		homedir(),
-		`Library`,
-		`Application Support`,
-		`VSCodium`,
-		`User`
-	)
-	const targetPath = join(targetDir, `settings.json`)
-	console.log(`Configuring VSCodium`, { appConfigDir, sourcePath, targetPath })
-	if (!existsSync(targetDir)) {
-		console.log(`Creating target directory: ${targetDir}`)
-		mkdirSync(targetDir, { recursive: true })
-	}
-	try {
-		if (!existsSync(sourcePath)) {
-			throw new Error(`Source file does not exist: ${sourcePath}`)
-		}
-
-		if (existsSync(targetPath)) {
-			const isSymlink = lstatSync(targetPath).isSymbolicLink()
-			if (isSymlink) {
-				console.log(`Symlink already exists: ${targetPath}`)
-			} else {
-				console.log(`Removing existing file: ${targetPath}`)
-				await unlink(targetPath)
-			}
-		}
-
-		await symlink(sourcePath, targetPath)
-		console.log(`Symlink created: ${sourcePath} -> ${targetPath}`)
-	} catch (thrown) {
-		if (thrown instanceof Error) {
-			console.error(thrown.message)
-		} else {
-			console.error(thrown)
-		}
-	}
+	await configureEditorSettings(`VSCodium`, `VSCodium`)
 }
 
 async function configureCursor() {
-	const sourcePath = resolve(appConfigDir, `VSCodium`, `settings.json`)
+	await configureEditorSettings(`Cursor`, `Cursor`)
+}
+
+async function configureEditorSettings(
+	appName: string,
+	applicationSupportDirName: string
+) {
+	const sourcePath = sharedEditorSettingsSourcePath
 	const targetDir = join(
 		homedir(),
 		`Library`,
 		`Application Support`,
-		`Cursor`,
+		applicationSupportDirName,
 		`User`
 	)
 	const targetPath = join(targetDir, `settings.json`)
 
-	console.log(`Configuring Cursor`, { sourcePath, targetPath })
+	console.log(`Configuring ${appName}`, { sourcePath, targetPath })
 
 	if (!existsSync(targetDir)) {
 		console.log(`Creating target directory: ${targetDir}`)
