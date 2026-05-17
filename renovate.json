@@ -2,5 +2,17 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github\\/actions\\/setup\\/action\\.yml$/"],
+      "matchStrings": [
+        "uses: jdx\\/mise-action@\\S+(?:\\s+#.*)?\\s+      with:\\s+        version: (?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "jdx/mise",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver-coerced"
+    }
   ]
 }
