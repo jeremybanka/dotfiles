@@ -9,6 +9,25 @@ brewfile-dump:
 brewfile-use:
   brew bundle install --file=~/Brewfile
 
+helix-theme-build output="./build/helix-theme-agent":
+  mkdir -p "$(dirname {{output}})"
+  swiftc ./home/.local/libexec/com.jeremybanka.helix-theme/helix-theme-agent.swift -o {{output}}
+
+helix-theme-sync:
+  mkdir -p ./build
+  swiftc ./home/.local/libexec/com.jeremybanka.helix-theme/helix-theme-agent.swift -o ./build/helix-theme-agent
+  ./build/helix-theme-agent sync
+
+helix-theme-watch:
+  mkdir -p ./build
+  swiftc ./home/.local/libexec/com.jeremybanka.helix-theme/helix-theme-agent.swift -o ./build/helix-theme-agent
+  ./build/helix-theme-agent watch
+
+helix-theme-install-agent:
+  mkdir -p ./build
+  swiftc ./home/.local/libexec/com.jeremybanka.helix-theme/helix-theme-agent.swift -o ./build/helix-theme-agent
+  ./build/helix-theme-agent install-launch-agent
+
 helix-watch-config:
   nu ./scripts/watch-helix-config.nu
 

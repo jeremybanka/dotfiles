@@ -2,9 +2,6 @@
 	"name": "dotfiles",
 	"type": "module",
 	"scripts": {
-		"helix:build-theme-agent": "bun home/.local/libexec/com.jeremybanka.helix-theme/build-plist.ts",
-		"helix:set-theme": "bun home/.local/libexec/com.jeremybanka.helix-theme/theme-switcher.ts",
-		"helix:theme-agent": "bun home/.local/libexec/com.jeremybanka.helix-theme/theme-switcher.ts --watch",
 		"lint:eslint": "eslint -- .",
 		"lint:types": "tsc --noEmit",
 		"lint": "bun run lint:eslint && bun run lint:types"
