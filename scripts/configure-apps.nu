@@ -64,6 +64,23 @@ def configure-editor-settings [app_name: string, application_support_dir_name: s
 def configure-illustrator [] {
   let source_workspaces_dir = ($app_config_dir | path join "Illustrator" "Workspaces")
   let illustrator_prefs_dir = ([$env.HOME "Library" "Preferences"] | path join)
+
+  if not ($illustrator_prefs_dir | path exists) {
+    print "Skipping Illustrator: no Adobe preferences directory found."
+    return
+  }
+
+  let matching_dirs = (
+    ls $illustrator_prefs_dir
+    | where type == "dir"
+    | where {|row| (($row.name | path basename) | parse --regex '^Adobe Illustrator (?P<version>\d+) Settings$' | is-not-empty) }
+  )
+
+  if ($matching_dirs | is-empty) {
+    print "Skipping Illustrator: no Adobe Illustrator settings directories found."
+    return
+  }
+
   let highest_version_dir = (
     find-highest-version-dir
       $illustrator_prefs_dir
@@ -78,6 +95,23 @@ def configure-illustrator [] {
 def configure-indesign [] {
   let source_workspaces_dir = ($app_config_dir | path join "InDesign" "Workspaces")
   let indesign_prefs_dir = ([$env.HOME "Library" "Preferences" "Adobe InDesign"] | path join)
+
+  if not ($indesign_prefs_dir | path exists) {
+    print "Skipping InDesign: no Adobe InDesign preferences directory found."
+    return
+  }
+
+  let matching_dirs = (
+    ls $indesign_prefs_dir
+    | where type == "dir"
+    | where {|row| (($row.name | path basename) | parse --regex '^Version (?P<version>\d+)\.0$' | is-not-empty) }
+  )
+
+  if ($matching_dirs | is-empty) {
+    print "Skipping InDesign: no Adobe InDesign settings directories found."
+    return
+  }
+
   let highest_version_dir = (
     find-highest-version-dir
       $indesign_prefs_dir
