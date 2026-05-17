@@ -71,6 +71,7 @@
 		"https://biomejs.dev": true,
 		"https://turbo.build": true
 	},
+	"nushellLanguageServer.nushellExecutablePath": "/opt/homebrew/bin/nu",
 	"typescript.tsserver.maxTsServerMemory": 8192,
 	"zig.zls.path": "zls",
 
