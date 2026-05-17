@@ -1,7 +1,9 @@
 "ui.background" = {}
 "ui.background.separator" = "mist"
 "ui.bufferline" = { fg = "muted", bg = "panel" }
-"ui.bufferline.active" = { fg = "ink", bg = "paper", modifiers = ["bold"], underline = { color = "teal", style = "line" } }
+"ui.bufferline.active" = { fg = "ink", bg = "paper", modifiers = [
+  "bold",
+], underline = { color = "teal", style = "line" } }
 "ui.cursor" = { fg = "paper", bg = "ink" }
 "ui.cursor.insert" = { fg = "paper", bg = "teal" }
 "ui.cursor.match" = { fg = "ink", bg = "gold" }

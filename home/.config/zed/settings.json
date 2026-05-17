@@ -7,37 +7,37 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-	"theme": {
-		"mode": "system",
-		"light": "Lux White",
-		"dark": "Lux Black"
-	},
-	"debugger": {
-		"dock": "left"
-	},
-	"vim_mode": true,
-	"icon_theme": "Material Icon Theme",
-	"features": {
-		"edit_prediction_provider": "zed"
-	},
-	"buffer_font_family": "Theia 0.2.500",
-	"buffer_font_size": 13.5,
-	"buffer_line_height": {
-		"custom": 1.5
-	},
-	"tabs": {
-		"file_icons": true,
-		"show_diagnostics": "all",
-		"git_status": true
-	},
-	"terminal": {
-		"font_features": {
-			"calt": true
-		},
-		"line_height": {
-			"custom": 1.25
-		},
-		"minimum_contrast": 0
-	},
-	"ui_font_family": "Noname Sans"
+  "theme": {
+    "mode": "system",
+    "light": "Lux White",
+    "dark": "Lux Black"
+  },
+  "debugger": {
+    "dock": "left"
+  },
+  "vim_mode": true,
+  "icon_theme": "Material Icon Theme",
+  "features": {
+    "edit_prediction_provider": "zed"
+  },
+  "buffer_font_family": "Theia 0.2.500",
+  "buffer_font_size": 13.5,
+  "buffer_line_height": {
+    "custom": 1.5
+  },
+  "tabs": {
+    "file_icons": true,
+    "show_diagnostics": "all",
+    "git_status": true
+  },
+  "terminal": {
+    "font_features": {
+      "calt": true
+    },
+    "line_height": {
+      "custom": 1.25
+    },
+    "minimum_contrast": 0
+  },
+  "ui_font_family": "Noname Sans"
 }

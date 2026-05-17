@@ -25,7 +25,4 @@ ehthumbs.db
 Thumbs.db
 ######################
 .env
-build
-dist
-node_modules
 keys/

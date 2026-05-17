@@ -1,7 +1,9 @@
 "ui.background" = {}
 "ui.background.separator" = "edge"
 "ui.bufferline" = { fg = "muted", bg = "panel" }
-"ui.bufferline.active" = { fg = "text", bg = "surface", modifiers = ["bold"], underline = { color = "teal", style = "line" } }
+"ui.bufferline.active" = { fg = "text", bg = "surface", modifiers = [
+  "bold",
+], underline = { color = "teal", style = "line" } }
 "ui.cursor" = { fg = "base", bg = "text" }
 "ui.cursor.insert" = { fg = "base", bg = "teal" }
 "ui.cursor.match" = { fg = "base", bg = "gold" }
@@ -88,4 +90,3 @@ surface = "#242a30"
 teal = "#88d7d1"
 text = "#d8d2ca"
 violet = "#b9a8ee"
-

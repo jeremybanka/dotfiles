@@ -16,51 +16,38 @@ defaults:
 
 jobs:
   Lint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6.0.2
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2.2.0
-
-      - name: Install Dependencies
-        run: bun i
-
-      - name: ESLint
-        run: bun lint:eslint
-
-      - name: Type Check
-        run: bun lint:types
-
-  Test:
     runs-on: macos-26
     timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          version: 2026.5.9
+          github_token: ${{ github.token }}
+      - run: just fmt-check
 
-      - name: Install Homebrew
-        run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  Test:
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure Homebrew
         shell: zsh {0}
-
-      - name: Install Bun
         run: |
-          brew tap oven-sh/bun
-          brew install bun
+          if ! command -v brew >/dev/null 2>&1; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+      - run: brew bundle --file="${{ github.workspace }}/home/Brewfile.ci"
         shell: zsh {0}
-
-      - name: Run Setup
-        run: ${{ github.workspace }}/setup.sh
+      - run: mise install
+        shell: zsh {0}
+        env:
+          MISE_GITHUB_TOKEN: ${{ github.token }}
+      - run: ${{ github.workspace }}/setup.sh
         shell: zsh {0}
         env:
           VIRTUAL_HOME: ${{ github.workspace }}/home
-
-      - name: Configure Apps
-        run: ${{ github.workspace }}/scripts/configure-apps.ts
+      - run: nu ${{ github.workspace }}/scripts/configure-apps.nu
         shell: zsh {0}
-
-      - name: Install NPM Globals
-        run: ${{ github.workspace }}/scripts/npm-i.ts
+      - run: just helix-theme-build
         shell: zsh {0}
