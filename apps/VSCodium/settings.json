@@ -19,6 +19,7 @@
   },
   "terminal.integrated.defaultProfile.osx": "Nushell",
   "terminal.integrated.env.osx": {
+    "PATH": "/opt/homebrew/bin:${env:PATH}",
     "XDG_CONFIG_HOME": "/Users/jem/.config"
   },
   "terminal.integrated.scrollback": 2000,
