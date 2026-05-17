@@ -384,8 +384,10 @@ If SSH comes up but `limactl start` still stalls on readiness checks like
 `/mnt/lima-cidata/param.env` or `/run/lima-ssh-ready`, the exported base image
 probably lost `cloud-init` support or carried stale cloud-init instance state.
 The `scrubs-base` guest config now keeps `cloud-init` enabled, and
-`export-seed-image.nu` clears cloud-init instance state before conversion so
-fresh clones reprocess Lima's NoCloud `cidata` on first boot.
+`export-seed-image.nu` now runs Nix garbage collection, clears cloud-init
+instance state, and trims free space before conversion so fresh clones
+reprocess Lima's NoCloud `cidata` on first boot without carrying unnecessary
+store bloat into the exported image.
 
 ## Notes
 
