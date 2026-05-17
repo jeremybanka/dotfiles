@@ -3,6 +3,20 @@ set shell := ["zsh", "-cu"]
 default:
   @just --list
 
+fmt:
+  dprint fmt .
+  taplo fmt
+  shfmt -w -i 2 -bn -ci -sr $(rg --files -g '*.sh' -g 'setup.sh')
+  just --fmt
+  xcrun swift-format format --in-place $(rg --files -g '*.swift')
+
+fmt-check:
+  dprint check .
+  taplo fmt --check
+  shfmt -d -i 2 -bn -ci -sr $(rg --files -g '*.sh' -g 'setup.sh')
+  just --check
+  xcrun swift-format lint --strict $(rg --files -g '*.swift')
+
 brewfile-dump:
   brew bundle dump --file=~/Brewfile --force
 
