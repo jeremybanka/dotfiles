@@ -5,10 +5,10 @@ use ./lib.nu *
 def main [
   instance_name: string = "scrubs-seed"
 ] {
-  let scrubs_dir = (scrubs-dir)
+  let vms_dir = (vms-dir)
   let settings = (load-settings)
-  let seed_dir = ($scrubs_dir | path join "seed")
-  let template_file = ($scrubs_dir | path join "seed.local.yaml")
+  let seed_dir = ($vms_dir | path join "seed")
+  let template_file = ($vms_dir | path join "seed.local.yaml")
   let existing_iso = ($env.HOME | path join ".lima" $instance_name "iso")
   let arch = (get-setting $settings "SCRUBS_SEED_ARCH" "aarch64")
   let flavor = (get-setting $settings "SCRUBS_SEED_FLAVOR" "minimal")
@@ -42,7 +42,7 @@ def main [
   }
 
   (
-    open --raw ($scrubs_dir | path join "seed.yaml")
+    open --raw ($vms_dir | path join "seed.yaml")
     | str replace "REPLACE_WITH_SEED_ISO" $iso_location
     | str replace "REPLACE_WITH_SEED_DIR" $seed_dir
   ) | save --force $template_file

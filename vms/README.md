@@ -121,7 +121,7 @@ The installer flow intentionally still uses `qemu` plus a repo mount so you can
 run the seed helper scripts from the live ISO. The reusable scrubs guest you
 boot afterward defaults to `vz`.
 
-That mounts [`scrubs/seed`](/Users/jem/dotfiles/scrubs/seed) into the
+That mounts [`vms/seed`](/Users/jem/dotfiles/vms/seed) into the
 installer VM at `/mnt/host-scrubs-seed`.
 
 If `~/.lima/scrubs-seed/iso` already exists, `just seed` reuses that local
@@ -189,14 +189,14 @@ Copy [`settings.env.example`](./settings.env.example) to `settings.env` and set
 your base image path or URL.
 
 ```sh
-cp ./scrubs/settings.env.example ./scrubs/settings.env
+cp ./vms/settings.env.example ./vms/settings.env
 ```
 
 Then edit `settings.env` to point at your generic NixOS image.
 
 The default local convention for active base images is:
 
-- [`scrubs/qcow2`](/Users/jem/dotfiles/scrubs/qcow2) for living local images
+- [`vms/images`](/Users/jem/dotfiles/vms/images) for living local images
 - `~/Library/Mobile Documents/com~apple~CloudDocs/scrubs/base-images/` for the iCloud mirror
 
 The helper scripts are:
@@ -208,7 +208,7 @@ just sync-base-image-from-icloud
 
 Both overwrite by name on the destination side. The intended pattern is:
 
-1. export or refresh locally into `scrubs/qcow2/`
+1. export or refresh locally into `vms/images/`
 2. validate the image locally
 3. mirror it to iCloud by name
 
@@ -246,12 +246,12 @@ For the base qcow2:
 
 - do not commit it to Git
 - do not treat Git LFS as the primary storage plan
-- keep one active local copy in [`scrubs/qcow2`](/Users/jem/dotfiles/scrubs/qcow2)
+- keep one active local copy in [`vms/images`](/Users/jem/dotfiles/vms/images)
 - keep at least one mirrored backup outside the repo
 
 The default storage model is:
 
-- working copy in [`scrubs/qcow2`](/Users/jem/dotfiles/scrubs/qcow2)
+- working copy in [`vms/images`](/Users/jem/dotfiles/vms/images)
 - named mirror in `~/Library/Mobile Documents/com~apple~CloudDocs/scrubs/base-images/`
 - optional second backup in any durable store you already trust
 
@@ -336,14 +336,14 @@ longer needed.
 
 Keep for now:
 
-- `services.cloud-init.enable = true` in [modules/base.nix](/Users/jem/dotfiles/scrubs/modules/base.nix)
-- `services.envfs.enable` plus the `/bin/bash` fallback in [seed/base.nix](/Users/jem/dotfiles/scrubs/seed/base.nix)
-- `user.shell = "/bin/sh"` in [lima.yaml](/Users/jem/dotfiles/scrubs/lima.yaml)
-- the `mode: boot` unlock provision in [lima.yaml](/Users/jem/dotfiles/scrubs/lima.yaml)
+- `services.cloud-init.enable = true` in [modules/base.nix](/Users/jem/dotfiles/vms/modules/base.nix)
+- `services.envfs.enable` plus the `/bin/bash` fallback in [seed/base.nix](/Users/jem/dotfiles/vms/seed/base.nix)
+- `user.shell = "/bin/sh"` in [lima.yaml](/Users/jem/dotfiles/vms/lima.yaml)
+- the `mode: boot` unlock provision in [lima.yaml](/Users/jem/dotfiles/vms/lima.yaml)
 
 Do not reintroduce:
 
-- old `services.cloud-init.config` module-list overrides in [seed/base.nix](/Users/jem/dotfiles/scrubs/seed/base.nix)
+- old `services.cloud-init.config` module-list overrides in [seed/base.nix](/Users/jem/dotfiles/vms/seed/base.nix)
 
 Those overrides accidentally disabled Lima's `bootcmd`, which blocked the
 pre-SSH unlock path entirely.
@@ -354,7 +354,7 @@ should be:
 1. confirm SSH, payload copy, and `nixos-rebuild` are all stable
 2. decide whether to keep Lima-created users or move to `user: false`
 3. remove the unlock-script workaround if the seed owns the bootstrap user
-4. reassess `UsePAM = false` in [seed/base.nix](/Users/jem/dotfiles/scrubs/seed/base.nix)
+4. reassess `UsePAM = false` in [seed/base.nix](/Users/jem/dotfiles/vms/seed/base.nix)
 
 ## Troubleshooting
 
@@ -393,7 +393,7 @@ store bloat into the exported image.
 
 ## Notes
 
-[SEED-INSTALL-CHECKLIST.md](/Users/jem/dotfiles/scrubs/SEED-INSTALL-CHECKLIST.md)
+[SEED-INSTALL-CHECKLIST.md](/Users/jem/dotfiles/vms/SEED-INSTALL-CHECKLIST.md)
 is the exact manual runbook for the live installer path. Treat this README as
 the canonical operator guide and the checklist as the precise recovery or
 factory-bootstrap procedure.
@@ -407,13 +407,13 @@ machine definition.
 That now exists in a minimal instance-keyed form, with an optional shim-name
 override:
 
-- if [`scrubs/projects`](/Users/jem/dotfiles/scrubs/projects) contains a file named
+- if [`vms/projects`](/Users/jem/dotfiles/vms/projects) contains a file named
   `<instance-name>.nix`, `just bootstrap ... <instance-name>` copies it into the
   guest payload as `modules/project-shim.nix`
 - if you want a public, non-project-specific shim filename, pass
   `shim_name=<shim-name>` to `just bootstrap` or `--shim-name <shim-name>` to
-  [`bootstrap.nu`](/Users/jem/dotfiles/scrubs/bootstrap.nu); that copies
-  `scrubs/projects/<shim-name>.nix` instead
+  [`bootstrap.nu`](/Users/jem/dotfiles/vms/bootstrap.nu); that copies
+  `vms/projects/<shim-name>.nix` instead
 - the shim is imported on top of the shared base config for that VM only
 
 This keeps project-specific accommodations in version control without baking

@@ -7,12 +7,12 @@ def main [
   --output-path(-o): string = ""
   --instance-name(-i): string = "scrubs-refresh"
 ] {
-  let scrubs_dir = (scrubs-dir)
+  let vms_dir = (vms-dir)
   let repo_root = (repo-root)
   let vm_type = ($env.SCRUBS_REFRESH_VM_TYPE? | default ($env.SCRUBS_VM_TYPE? | default "vz"))
   let guest_arch = ($env.SCRUBS_REFRESH_ARCH? | default ($env.SCRUBS_ARCH? | default "aarch64"))
   let delete_instance = (($env.SCRUBS_REFRESH_DELETE_INSTANCE? | default "true") | into string | str downcase)
-  let default_working_image = ($repo_root | path join "scrubs" "qcow2" "scrubs.qcow2")
+  let default_working_image = ($repo_root | path join "vms" "images" "scrubs.qcow2")
   let resolved_source_image = (
     if $source_image == "" {
       $default_working_image
@@ -60,11 +60,11 @@ def main [
     SCRUBS_VM_TYPE: $vm_type
     SCRUBS_ARCH: $guest_arch
   } {
-    nu ($scrubs_dir | path join "bootstrap.nu") --source-image $resolved_source_image $instance_name
+    nu ($vms_dir | path join "bootstrap.nu") --source-image $resolved_source_image $instance_name
   }
 
   try {
-    nu ($scrubs_dir | path join "export-seed-image.nu") $instance_name $export_path
+    nu ($vms_dir | path join "export-seed-image.nu") $instance_name $export_path
 
     if $replace_in_place {
       print $"Replacing working base image at ($resolved_output_path)"

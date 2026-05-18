@@ -48,15 +48,15 @@ def main [
   --shim-name: string = ""
 ] {
   let repo_root = (repo-root)
-  let scrubs_dir = (scrubs-dir)
+  let vms_dir = (vms-dir)
   let settings = (load-settings)
-  let default_working_image = ($repo_root | path join "scrubs" "qcow2" "scrubs.qcow2")
+  let default_working_image = ($repo_root | path join "vms" "images" "scrubs.qcow2")
   let cache_dir = (($env.TMPDIR? | default "/tmp") | path join "scrubs-lima")
   let payload_dir = ($cache_dir | path join "scrubs-bootstrap")
   let guest_apply = ($payload_dir | path join "guest-apply.sh")
-  let template_file = ($scrubs_dir | path join "lima.local.yaml")
+  let template_file = ($vms_dir | path join "lima.local.yaml")
   let resolved_shim_name = if $shim_name == "" { $instance_name } else { $shim_name }
-  let project_shim_file = ($scrubs_dir | path join "projects" $"($resolved_shim_name).nix")
+  let project_shim_file = ($vms_dir | path join "projects" $"($resolved_shim_name).nix")
   let instance_dir = ($env.HOME | path join ".lima" $instance_name)
   let current_user = (^id -un | str trim)
   let current_uid = (^id -u | str trim)
@@ -72,7 +72,7 @@ def main [
   )
   let guest_arch = (get-setting $settings "SCRUBS_ARCH" "aarch64")
   let vm_type = (get-setting $settings "SCRUBS_VM_TYPE" "vz")
-  let key_dir = ($scrubs_dir | path join "keys")
+  let key_dir = ($vms_dir | path join "keys")
   let key_path = ($key_dir | path join "scrubs-dev")
   let start_timeout = (get-setting $settings "SCRUBS_START_TIMEOUT" "60s")
   mut ssh_port = (get-setting $settings "SCRUBS_SSH_PORT" "")
@@ -144,8 +144,8 @@ def main [
 
   cp ($repo_root | path join "home" ".gitconfig") ($payload_dir | path join "home" ".gitconfig")
   cp ($repo_root | path join "home" ".config" "mise" "config.toml") ($payload_dir | path join "home" ".config" "mise" "config.toml")
-  cp ($scrubs_dir | path join "templates" "bash_profile") ($payload_dir | path join "home" ".bash_profile")
-  cp ($scrubs_dir | path join "templates" "bashrc") ($payload_dir | path join "home" ".bashrc")
+  cp ($vms_dir | path join "templates" "bash_profile") ($payload_dir | path join "home" ".bash_profile")
+  cp ($vms_dir | path join "templates" "bashrc") ($payload_dir | path join "home" ".bashrc")
 
   for file_name in [
     "carapace-init.nu"
@@ -165,10 +165,10 @@ def main [
     cp ($repo_root | path join "home" ".config" "nushell" $file_name) ($payload_dir | path join "home" ".config" "nushell" $file_name)
   }
 
-  cp ($scrubs_dir | path join "flake.nix") ($payload_dir | path join "scrubs" "flake.nix")
-  cp ($scrubs_dir | path join "flake.lock") ($payload_dir | path join "scrubs" "flake.lock")
-  cp ($scrubs_dir | path join "configuration.nix") ($payload_dir | path join "scrubs" "configuration.nix")
-  cp ($scrubs_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
+  cp ($vms_dir | path join "flake.nix") ($payload_dir | path join "scrubs" "flake.nix")
+  cp ($vms_dir | path join "flake.lock") ($payload_dir | path join "scrubs" "flake.lock")
+  cp ($vms_dir | path join "configuration.nix") ($payload_dir | path join "scrubs" "configuration.nix")
+  cp ($vms_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
 
   if ($project_shim_file | path exists) {
     print $"Applying project shim from ($project_shim_file)"
@@ -193,7 +193,7 @@ def main [
 " | save --force ($payload_dir | path join "scrubs" "modules" "guest-user.nix")
 
   (
-    open --raw ($scrubs_dir | path join "templates" "guest-apply.sh")
+    open --raw ($vms_dir | path join "templates" "guest-apply.sh")
     | str replace --all "__SCRUBS_BOOTSTRAP_USER__" $bootstrap_user
   ) | save --force $guest_apply
   chmod +x $guest_apply
@@ -213,7 +213,7 @@ def main [
   }
 
   (
-    open --raw ($scrubs_dir | path join "lima.yaml")
+    open --raw ($vms_dir | path join "lima.yaml")
     | str replace --all "REPLACE_WITH_BASE_IMAGE" $image_location
     | str replace --all "REPLACE_WITH_GUEST_USER" $guest_user
     | str replace --all "REPLACE_WITH_GUEST_UID" $guest_uid
