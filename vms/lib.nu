@@ -2,12 +2,12 @@ export def repo-root [] {
   $env.FILE_PWD | path dirname
 }
 
-export def scrubs-dir [] {
-  repo-root | path join "scrubs"
+export def vms-dir [] {
+  repo-root | path join "vms"
 }
 
 export def load-settings [] {
-  let settings_file = (scrubs-dir | path join "settings.env")
+  let settings_file = (vms-dir | path join "settings.env")
 
   if not ($settings_file | path exists) {
     return {}

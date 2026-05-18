@@ -4,4 +4,4 @@ Host scrubs-dev
   User REPLACE_WITH_GUEST_USER
   ForwardAgent no
   IdentitiesOnly yes
-  IdentityFile /path/to/dotfiles/scrubs/keys/scrubs-dev
+  IdentityFile /path/to/dotfiles/vms/keys/scrubs-dev

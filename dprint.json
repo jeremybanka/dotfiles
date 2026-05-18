@@ -13,7 +13,7 @@
     "home/.config/gh/",
     "home/.config/lazygit/",
     "home/.config/nvim/",
-    "scrubs/lima.yaml"
+    "vms/lima.yaml"
   ],
   "json": {
     "indentWidth": 2
