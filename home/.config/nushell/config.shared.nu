@@ -9,5 +9,10 @@ $env.PROMPT_COMMAND_RIGHT = ""
 $env.config.show_banner = false
 $env.config.table.mode = "rounded"
 
+alias b = brew
 alias g = git
-alias lz = lazygit
+alias gg = lazygit
+alias j = just
+alias l = limactl
+alias m = mise
+alias n = nix
