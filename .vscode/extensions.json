@@ -1,13 +1,23 @@
 {
   "recommendations": [
     "christian-kohler.npm-intellisense",
+    "davidanson.vscode-markdownlint",
     "dprint.dprint",
+    "foxundermoon.shell-format",
+    "github.vscode-github-actions",
+    "jnoortheen.nix-ide",
     "miguelsolorio.fluent-icons",
+    "nefrob.vscode-just-syntax",
     "pkief.material-icon-theme",
+    "redhat.vscode-yaml",
     "streetsidesoftware.code-spell-checker",
     "sumneko.lua",
-    "timonwong.shellcheck",
     "supermaven.supermaven",
-    "thenuprojectcontributors.vscode-nushell-lang"
+    "swiftlang.swift-vscode",
+    "tamasfe.even-better-toml",
+    "thenuprojectcontributors.vscode-nushell-lang",
+    "timonwong.shellcheck",
+    "tyriar.sort-lines",
+    "vscodevim.vim"
   ]
 }
