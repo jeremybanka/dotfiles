@@ -79,6 +79,7 @@ in
   users.mutableUsers = false;
 
   environment.systemPackages = with pkgs; [
+    bubblewrap
     bun
     carapace
     codex
