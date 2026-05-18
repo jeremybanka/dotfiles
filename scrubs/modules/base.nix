@@ -105,7 +105,12 @@ in
     EDITOR = "hx";
     VISUAL = "hx";
     BASH_ENV = "/etc/bash_env";
+    MISE_CACHE_DIR = "/tmp/mise-cache";
   };
+
+  systemd.tmpfiles.rules = [
+    "d /tmp/mise-cache 1777 root root -"
+  ];
 
   environment.etc."bash_env".text = ''
     # Non-interactive bash never reaches a prompt, so use mise shims there.
