@@ -14,6 +14,7 @@ in
     bison
     flex
     gcc
+    ghostscript
     gnumake
     perl
     pkg-config

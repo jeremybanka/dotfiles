@@ -37,6 +37,8 @@ keeping the VM isolation model intact.
 - your `git` config
 - your `nushell` config
 - your `mise` config
+- implicit `mise` shims for non-interactive bash, plus full activation for interactive bash
+- a writable `mise` cache under `/tmp` so sandboxed commands stay quiet
 - `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
 - hardened SSH defaults inside the guest
 

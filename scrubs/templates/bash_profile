@@ -1,0 +1,14 @@
+#!/bin/bash
+if [ -f "$HOME/.profile" ]; then
+  . "$HOME/.profile"
+fi
+
+eval "$(/run/current-system/sw/bin/mise activate bash --shims)"
+
+case $- in
+  *i*)
+    if [ -f "$HOME/.bashrc" ]; then
+      . "$HOME/.bashrc"
+    fi
+    ;;
+esac

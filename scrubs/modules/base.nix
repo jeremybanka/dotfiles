@@ -1,5 +1,6 @@
-{ pkgs, unstablePkgs, ... }:
+{ lib, pkgs, unstablePkgs, ... }:
 let
+  miseExe = lib.getExe unstablePkgs.mise;
   codex = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "codex";
     version = "0.130.0";
@@ -78,6 +79,7 @@ in
   users.mutableUsers = false;
 
   environment.systemPackages = with pkgs; [
+    bubblewrap
     bun
     carapace
     codex
@@ -102,7 +104,21 @@ in
   environment.variables = {
     EDITOR = "hx";
     VISUAL = "hx";
+    BASH_ENV = "/etc/bash_env";
+    MISE_CACHE_DIR = "/tmp/mise-cache";
   };
+
+  systemd.tmpfiles.rules = [
+    "d /tmp/mise-cache 1777 root root -"
+  ];
+
+  environment.etc."bash_env".text = ''
+    # Non-interactive bash never reaches a prompt, so use mise shims there.
+    if [ -z "''${SCRUBS_MISE_BASH_ACTIVATED-}" ]; then
+      export SCRUBS_MISE_BASH_ACTIVATED=1
+      eval "$(${miseExe} activate bash --shims)"
+    fi
+  '';
 
   system.activationScripts.limaCompatBash = ''
     mkdir -p /bin
