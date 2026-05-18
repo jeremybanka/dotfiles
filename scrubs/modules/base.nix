@@ -1,5 +1,6 @@
-{ pkgs, unstablePkgs, ... }:
+{ lib, pkgs, unstablePkgs, ... }:
 let
+  miseExe = lib.getExe unstablePkgs.mise;
   codex = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "codex";
     version = "0.130.0";
@@ -102,7 +103,23 @@ in
   environment.variables = {
     EDITOR = "hx";
     VISUAL = "hx";
+    BASH_ENV = "/etc/bash_env";
   };
+
+  environment.etc."bash_env".text = ''
+    # Non-interactive bash never reaches a prompt, so use mise shims there.
+    if [ -z "''${SCRUBS_MISE_BASH_ACTIVATED-}" ]; then
+      export SCRUBS_MISE_BASH_ACTIVATED=1
+      eval "$(${miseExe} activate bash --shims)"
+    fi
+  '';
+
+  programs.bash.interactiveShellInit = ''
+    if [ -r /etc/bash_env ]; then
+      . /etc/bash_env
+    fi
+    eval "$(${miseExe} activate bash)"
+  '';
 
   system.activationScripts.limaCompatBash = ''
     mkdir -p /bin
