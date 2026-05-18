@@ -115,13 +115,6 @@ in
     fi
   '';
 
-  programs.bash.interactiveShellInit = ''
-    if [ -r /etc/bash_env ]; then
-      . /etc/bash_env
-    fi
-    eval "$(${miseExe} activate bash)"
-  '';
-
   system.activationScripts.limaCompatBash = ''
     mkdir -p /bin
     ln -sf ${pkgs.bashInteractive}/bin/bash /bin/bash

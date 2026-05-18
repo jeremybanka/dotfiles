@@ -145,6 +145,32 @@ def main [
   cp ($repo_root | path join "home" ".gitconfig") ($payload_dir | path join "home" ".gitconfig")
   cp ($repo_root | path join "home" ".config" "mise" "config.toml") ($payload_dir | path join "home" ".config" "mise" "config.toml")
 
+  '
+# SCRUBS_BASH_PROFILE
+if [ -f "$HOME/.profile" ]; then
+  . "$HOME/.profile"
+fi
+
+eval "$(/run/current-system/sw/bin/mise activate bash --shims)"
+
+case $- in
+  *i*)
+    if [ -f "$HOME/.bashrc" ]; then
+      . "$HOME/.bashrc"
+    fi
+    ;;
+esac
+' | save --force ($payload_dir | path join "home" ".bash_profile")
+
+  '
+# SCRUBS_BASHRC
+if [ -f "$HOME/.bashrc.pre-scrubs" ]; then
+  . "$HOME/.bashrc.pre-scrubs"
+fi
+
+eval "$(/run/current-system/sw/bin/mise activate bash)"
+' | save --force ($payload_dir | path join "home" ".bashrc")
+
   for file_name in [
     "carapace-init.nu"
     "config.nu"
@@ -200,6 +226,13 @@ mkdir -p \"\$HOME/.config/nushell\" \"\$HOME/.config/mise\"
 cp \"\$payload/home/.gitconfig\" \"\$HOME/.gitconfig\"
 cp \"\$payload/home/.config/mise/config.toml\" \"\$HOME/.config/mise/config.toml\"
 cp \"\$payload/home/.config/nushell/\"* \"\$HOME/.config/nushell/\"
+
+if [ -f \"\$HOME/.bashrc\" ] && ! grep -Fq 'SCRUBS_BASHRC' \"\$HOME/.bashrc\"; then
+  cp \"\$HOME/.bashrc\" \"\$HOME/.bashrc.pre-scrubs\"
+fi
+cp \"\$payload/home/.bashrc\" \"\$HOME/.bashrc\"
+cp \"\$payload/home/.bash_profile\" \"\$HOME/.bash_profile\"
+
 cp /etc/nixos/hardware-configuration.nix \"\$payload/scrubs/modules/runtime-hardware.nix\"
 
 if ! sudo -n true >/dev/null 2>&1; then
