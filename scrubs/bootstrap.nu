@@ -144,32 +144,8 @@ def main [
 
   cp ($repo_root | path join "home" ".gitconfig") ($payload_dir | path join "home" ".gitconfig")
   cp ($repo_root | path join "home" ".config" "mise" "config.toml") ($payload_dir | path join "home" ".config" "mise" "config.toml")
-
-  '
-# SCRUBS_BASH_PROFILE
-if [ -f "$HOME/.profile" ]; then
-  . "$HOME/.profile"
-fi
-
-eval "$(/run/current-system/sw/bin/mise activate bash --shims)"
-
-case $- in
-  *i*)
-    if [ -f "$HOME/.bashrc" ]; then
-      . "$HOME/.bashrc"
-    fi
-    ;;
-esac
-' | save --force ($payload_dir | path join "home" ".bash_profile")
-
-  '
-# SCRUBS_BASHRC
-if [ -f "$HOME/.bashrc.pre-scrubs" ]; then
-  . "$HOME/.bashrc.pre-scrubs"
-fi
-
-eval "$(/run/current-system/sw/bin/mise activate bash)"
-' | save --force ($payload_dir | path join "home" ".bashrc")
+  cp ($scrubs_dir | path join "templates" "bash_profile") ($payload_dir | path join "home" ".bash_profile")
+  cp ($scrubs_dir | path join "templates" "bashrc") ($payload_dir | path join "home" ".bashrc")
 
   for file_name in [
     "carapace-init.nu"
@@ -216,48 +192,10 @@ eval "$(/run/current-system/sw/bin/mise activate bash)"
 }
 " | save --force ($payload_dir | path join "scrubs" "modules" "guest-user.nix")
 
-  $"
-#!/bin/sh
-set -eu
-
-payload=\"\$HOME/scrubs-bootstrap\"
-
-mkdir -p \"\$HOME/.config/nushell\" \"\$HOME/.config/mise\"
-cp \"\$payload/home/.gitconfig\" \"\$HOME/.gitconfig\"
-cp \"\$payload/home/.config/mise/config.toml\" \"\$HOME/.config/mise/config.toml\"
-cp \"\$payload/home/.config/nushell/\"* \"\$HOME/.config/nushell/\"
-
-if [ -f \"\$HOME/.bashrc\" ] && ! grep -Fq 'SCRUBS_BASHRC' \"\$HOME/.bashrc\"; then
-  cp \"\$HOME/.bashrc\" \"\$HOME/.bashrc.pre-scrubs\"
-fi
-cp \"\$payload/home/.bashrc\" \"\$HOME/.bashrc\"
-cp \"\$payload/home/.bash_profile\" \"\$HOME/.bash_profile\"
-
-cp /etc/nixos/hardware-configuration.nix \"\$payload/scrubs/modules/runtime-hardware.nix\"
-
-if ! sudo -n true >/dev/null 2>&1; then
-  echo \"Guest user '($bootstrap_user)' needs passwordless sudo for bootstrap.\" >&2
-  echo \"Grant sudo in the base image or rerun manually inside the guest.\" >&2
-  exit 1
-fi
-
-if sudo nixos-rebuild switch --flake \"\$payload/scrubs#scrubs-base\"; then
-  exit 0
-else
-  status=$?
-fi
-
-if [ \"$status\" -eq 4 ] && sudo systemctl is-failed --quiet cloud-final.service; then
-  if sudo journalctl -u cloud-final.service -b --no-pager -n 120 | grep -Fq \"Runparts: 1 failures\"; then
-    echo \"cloud-final failed while introducing cloud-init into an older running guest.\" >&2
-    echo \"The new system is active; treating this one-time migration failure as non-fatal.\" >&2
-    sudo systemctl reset-failed cloud-final.service || true
-    exit 0
-  fi
-fi
-
-exit \"$status\"
-" | save --force $guest_apply
+  (
+    open --raw ($scrubs_dir | path join "templates" "guest-apply.sh")
+    | str replace --all "__SCRUBS_BOOTSTRAP_USER__" $bootstrap_user
+  ) | save --force $guest_apply
   chmod +x $guest_apply
 
   let dns_block = if $dns_servers == "" {
