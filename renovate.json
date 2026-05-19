@@ -3,6 +3,9 @@
   "extends": [
     "config:recommended"
   ],
+  "minimumReleaseAge": "1 day",
+  "branchConcurrentLimit": 10,
+  "prHourlyLimit": 10,
   "customManagers": [
     {
       "customType": "regex",
@@ -13,6 +16,16 @@
       "depNameTemplate": "jdx/mise",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver-coerced"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "matchDepNames": ["jdx/mise"],
+      "dependencyDashboardApproval": true
     }
   ]
 }
