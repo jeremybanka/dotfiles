@@ -1,4 +1,5 @@
 Include ~/.lima/cmyk/ssh.config
+Include ~/.lima/ulysses/ssh.config
 Include ~/.lima/wayforge/ssh.config
 Include ~/.lima/systemd-ts/ssh.config
 Include ~/.lima/recoverage/ssh.config
