@@ -26,3 +26,5 @@ Thumbs.db
 ######################
 .env
 keys/
+
+home/.config/ssh/projects
