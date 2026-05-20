@@ -418,3 +418,30 @@ override:
 
 This keeps project-specific accommodations in version control without baking
 them into the reusable base image.
+
+One ready-made shim is [`security-testing.nix`](/Users/jem/dotfiles/vms/projects/security-testing.nix).
+It bootstraps:
+
+- `linpeas`
+- `trufflehog`
+- Atomic Red Team under `/opt/security/atomic-red-team`
+
+Bootstrap a fresh lab VM with it like this:
+
+```sh
+just bootstrap sec-lab security-testing /absolute/path/to/nixos.qcow2
+```
+
+Or explicitly by shim name if you want a different instance name:
+
+```sh
+just bootstrap sec-lab shim_name=security-testing source_image=/absolute/path/to/nixos.qcow2
+```
+
+Inside the guest:
+
+- run `linpeas`
+- run `trufflehog`
+- run `atomic-red-team` to print the repo path or `atomic-red-team ls atomics`
+- inspect tests with `atomic-red-team-path`
+- refresh the downloaded tool payloads with `atomic-red-team-update`
