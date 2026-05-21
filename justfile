@@ -72,5 +72,11 @@ sync-base-image-from-icloud image="scrubs.qcow2":
 up:
     nu ./scripts/update.nu
 
+upgrade-workflows:
+    nu ./scripts/upgrade-workflows.nu
+
+upgrade-workflows-dry-run:
+    nu ./scripts/upgrade-workflows.nu --dry-run
+
 lima-ports instance_name="":
     nu ./scripts/lima-ports.nu {{ if instance_name == "" { "" } else { instance_name } }}
