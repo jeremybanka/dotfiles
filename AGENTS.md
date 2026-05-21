@@ -1,1 +1,2 @@
 - In scrubs project shims, do not inspect `config.users.users` in order to infer the primary user while also defining `users.users`; that causes infinite recursion during Nix module evaluation and breaks bootstrap.
+- When running commands in scrubs VMs, prefer `limactl shell <instance>` as the default access path.
