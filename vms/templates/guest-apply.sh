@@ -8,6 +8,15 @@ cp "$payload/home/.gitconfig" "$HOME/.gitconfig"
 cp "$payload/home/.config/mise/config.toml" "$HOME/.config/mise/config.toml"
 cp "$payload/home/.config/nushell/"* "$HOME/.config/nushell/"
 
+mkdir -p "$HOME/.gnupg"
+chmod 700 "$HOME/.gnupg"
+if [ -f "$HOME/.gnupg/common.conf" ]; then
+  grep -v '^use-keyboxd$' "$HOME/.gnupg/common.conf" > "$HOME/.gnupg/common.conf.tmp" || true
+  mv "$HOME/.gnupg/common.conf.tmp" "$HOME/.gnupg/common.conf"
+fi
+gpgconf --kill keyboxd || true
+rm -f "$HOME/.gnupg/public-keys.d/pubring.db.lock" "$HOME/.gnupg/public-keys.d"/.#lk* || true
+
 if [ -f "$HOME/.bashrc" ] && ! grep -Fq 'SCRUBS_BASHRC' "$HOME/.bashrc"; then
   cp "$HOME/.bashrc" "$HOME/.bashrc.pre-scrubs"
 fi
