@@ -15,4 +15,5 @@ alias gg = lazygit
 alias j = just
 alias l = limactl
 alias m = mise
+alias mi = mise install
 alias n = nix
