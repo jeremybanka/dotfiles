@@ -3,6 +3,7 @@
 const repo_root = (path self ..)
 const app_config_dir = ($repo_root | path join "apps")
 const shared_editor_settings_source_path = ($app_config_dir | path join "VSCodium" "settings.json")
+const shared_editor_keybindings_source_path = ($app_config_dir | path join "VSCodium" "keybindings.json")
 
 def main [] {
   configure-vs-code
@@ -25,37 +26,52 @@ def configure-cursor [] {
 }
 
 def configure-editor-settings [app_name: string, application_support_dir_name: string] {
-  let source_path = $shared_editor_settings_source_path
   let target_dir = ([$env.HOME "Library" "Application Support" $application_support_dir_name "User"] | path join)
-  let target_path = ($target_dir | path join "settings.json")
+  let configs = [
+    {
+      source_path: $shared_editor_settings_source_path
+      target_path: ($target_dir | path join "settings.json")
+    }
+    {
+      source_path: $shared_editor_keybindings_source_path
+      target_path: ($target_dir | path join "keybindings.json")
+    }
+  ]
 
-  print $"Configuring ($app_name) { sourcePath: \"($source_path)\", targetPath: \"($target_path)\" }"
+  print $"Configuring ($app_name) { targetDir: \"($target_dir)\" }"
 
   try {
-    if not ($source_path | path exists) {
-      error make { msg: $"Source file does not exist: ($source_path)" }
-    }
-
     if not ($target_dir | path exists) {
       print $"Creating target directory: ($target_dir)"
       mkdir $target_dir
     }
 
-    if ($target_path | path exists --no-symlink) {
-      if (($target_path | path type) == "symlink") {
-        print $"Symlink already exists: ($target_path)"
-        return
+    for config in $configs {
+      let source_path = $config.source_path
+      let target_path = $config.target_path
+
+      if not ($source_path | path exists) {
+        error make { msg: $"Source file does not exist: ($source_path)" }
       }
 
-      print $"Removing existing file: ($target_path)"
-      rm --recursive --force $target_path
-    } else if (($target_path | path type) == "symlink") {
-      print $"Symlink already exists: ($target_path)"
-      return
-    }
+      print $"Configuring file { sourcePath: \"($source_path)\", targetPath: \"($target_path)\" }"
 
-    ^ln -s $source_path $target_path
-    print $"Symlink created: ($source_path) -> ($target_path)"
+      if ($target_path | path exists --no-symlink) {
+        if (($target_path | path type) == "symlink") {
+          print $"Symlink already exists: ($target_path)"
+          continue
+        }
+
+        print $"Removing existing file: ($target_path)"
+        rm --recursive --force $target_path
+      } else if (($target_path | path type) == "symlink") {
+        print $"Symlink already exists: ($target_path)"
+        continue
+      }
+
+      ^ln -s $source_path $target_path
+      print $"Symlink created: ($source_path) -> ($target_path)"
+    }
   } catch {|err|
     print --stderr $err.msg
   }
