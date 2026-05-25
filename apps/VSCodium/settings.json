@@ -76,6 +76,9 @@
   "nushellLanguageServer.nushellExecutablePath": "/opt/homebrew/bin/nu",
   "typescript.tsserver.maxTsServerMemory": 8192,
   "zig.zls.path": "zls",
+  "[just]": {
+    "editor.codeLens": false
+  },
 
   // MISC ///////////////////////////////////////////////////////////////////////
   "chat.commandCenter.enabled": false,
