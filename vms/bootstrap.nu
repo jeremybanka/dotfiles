@@ -42,6 +42,27 @@ def remote-shell-command [command: string] {
   $"sh -lc '($escaped)'"
 }
 
+def resolve-project-shim [projects_dir: string, shim_name: string] {
+  let shim_dir = ($projects_dir | path join $shim_name)
+
+  if ($shim_dir | path exists) {
+    let guest_module = ($shim_dir | path join "guest.nix")
+    let lima_config = ($shim_dir | path join "lima.yaml")
+
+    {
+      source: $shim_dir
+      guest_module: (if ($guest_module | path exists) { $guest_module } else { "" })
+      lima_config: (if ($lima_config | path exists) { $lima_config } else { "" })
+    }
+  } else {
+    {
+      source: ""
+      guest_module: ""
+      lima_config: ""
+    }
+  }
+}
+
 def main [
   instance_name: string
   --source-image(-s): string = ""
@@ -56,7 +77,7 @@ def main [
   let guest_apply = ($payload_dir | path join "guest-apply.sh")
   let template_file = ($vms_dir | path join "lima.local.yaml")
   let resolved_shim_name = if $shim_name == "" { $instance_name } else { $shim_name }
-  let project_shim_file = ($vms_dir | path join "projects" $"($resolved_shim_name).nix")
+  let project_shim = (resolve-project-shim ($vms_dir | path join "projects") $resolved_shim_name)
   let instance_dir = ($env.HOME | path join ".lima" $instance_name)
   let current_user = (^id -un | str trim)
   let current_uid = (^id -u | str trim)
@@ -170,15 +191,53 @@ def main [
   cp ($vms_dir | path join "configuration.nix") ($payload_dir | path join "scrubs" "configuration.nix")
   cp ($vms_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
 
-  if ($project_shim_file | path exists) {
-    print $"Applying project shim from ($project_shim_file)"
-    cp $project_shim_file ($payload_dir | path join "scrubs" "modules" "project-shim.nix")
+  if $project_shim.guest_module != "" {
+    print $"Applying project shim from ($project_shim.source)"
+    cp $project_shim.guest_module ($payload_dir | path join "scrubs" "modules" "project-shim.nix")
+  }
+
+  let extra_lima_config = if $project_shim.lima_config == "" {
+    {}
+  } else {
+    open --raw $project_shim.lima_config | from yaml
+  }
+
+  let unsupported_lima_keys = (
+    $extra_lima_config
+    | columns
+    | where {|key| $key != "portForwards" }
+  )
+
+  if not ($unsupported_lima_keys | is-empty) {
+    error make {
+      msg: $"Unsupported keys in ($project_shim.lima_config): (($unsupported_lima_keys | str join ', ')). Only portForwards is supported."
+    }
+  }
+
+  let extra_port_forwards = if (($extra_lima_config | get -o portForwards | default []) | is-empty) {
+    ""
+  } else {
+    let extra_entries = (
+      $extra_lima_config
+      | get portForwards
+      | to yaml
+      | lines
+      | each {|line| if $line == "" { "" } else { $"  ($line)" } }
+      | str join "\n"
+    )
+
+    if $extra_entries == "" {
+      ""
+    } else {
+      $"\n($extra_entries)"
+    }
   }
 
   let repo_pubkey = (open --raw $"($key_path).pub" | str trim)
   $"
 { pkgs, ... }:
 {
+  _module.args.scrubsGuestUser = \"($guest_user)\";
   users.users = {
     \"($guest_user)\" = {
       isNormalUser = true;
@@ -225,6 +284,7 @@ def main [
     | str replace --all "REPLACE_WITH_HOST_PORT_3000" $host_port_3000
     | str replace --all "REPLACE_WITH_HOST_PORT_5173" $host_port_5173
     | str replace --all "REPLACE_WITH_HOST_PORT_8080" $host_port_8080
+    | str replace --all "REPLACE_WITH_EXTRA_PORT_FORWARDS" $extra_port_forwards
     | str replace --all "REPLACE_WITH_DNS_BLOCK" $dns_block
   ) | save --force $template_file
 

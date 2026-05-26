@@ -1,9 +1,6 @@
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, scrubsGuestUser ? null, ... }:
 let
-  normalUsers = lib.filterAttrs (_: user: user.isNormalUser or false) config.users.users;
-  normalUserNames = lib.attrNames normalUsers;
-  primaryUser =
-    if normalUserNames == [] then null else lib.head normalUserNames;
+  primaryUser = scrubsGuestUser;
 in
 {
   environment.systemPackages = with pkgs; [

@@ -193,3 +193,4 @@ portForwards:
   - guestPort: 8080
     hostPort: REPLACE_WITH_HOST_PORT_8080
     proto: tcp
+REPLACE_WITH_EXTRA_PORT_FORWARDS
