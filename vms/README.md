@@ -404,22 +404,24 @@ The next step after this base flow is a small per-project extension mechanism,
 so a repo can ask for extra packages or helper setup without owning the entire
 machine definition.
 
-That now exists in a minimal instance-keyed form, with an optional shim-name
-override:
+That now exists as a small per-project shim directory, with an optional
+shim-name override:
 
-- if [`vms/projects`](/Users/jem/dotfiles/vms/projects) contains a file named
-  `<instance-name>.nix`, `just bootstrap ... <instance-name>` copies it into the
-  guest payload as `modules/project-shim.nix`
-- if you want a public, non-project-specific shim filename, pass
+- if [`vms/projects`](/Users/jem/dotfiles/vms/projects) contains a directory
+  named `<instance-name>`, `just bootstrap ... <instance-name>` uses that
+  directory as the shim bundle
+- if you want a public, non-project-specific shim name, pass
   `shim_name=<shim-name>` to `just bootstrap` or `--shim-name <shim-name>` to
-  [`bootstrap.nu`](/Users/jem/dotfiles/vms/bootstrap.nu); that copies
-  `vms/projects/<shim-name>.nix` instead
-- the shim is imported on top of the shared base config for that VM only
+  [`bootstrap.nu`](/Users/jem/dotfiles/vms/bootstrap.nu); that resolves
+  `vms/projects/<shim-name>/` instead
+- `guest.nix` is copied into the guest payload as `modules/project-shim.nix`
+- optional `lima.yaml` currently supports a `portForwards` list that gets
+  appended to the generated Lima `portForwards` list for that VM only
 
 This keeps project-specific accommodations in version control without baking
 them into the reusable base image.
 
-One ready-made shim is [`security-testing.nix`](/Users/jem/dotfiles/vms/projects/security-testing.nix).
+One ready-made shim is [`security-testing`](/Users/jem/dotfiles/vms/projects/security-testing).
 It bootstraps:
 
 - `linpeas`
