@@ -58,14 +58,55 @@ provision:
       command -v systemctl >/dev/null 2>&1 || exit 0
 
       stub=/var/lib/cloud/scripts/per-boot/00-lima.boot.sh
-      if [ -f "$stub" ] && ! grep -q 'SCRUBS_LIMA_PATH_PATCH' "$stub"; then
+      if [ -f "$stub" ] && ! grep -q 'SCRUBS_LIMA_NIXOS_SANITIZE' "$stub"; then
         tmp_stub="$(mktemp)"
+        path_patch_present=false
+        if grep -q 'SCRUBS_LIMA_PATH_PATCH' "$stub"; then
+          path_patch_present=true
+        fi
         {
           IFS= read -r first_line || true
           printf '%s\n' "$first_line"
-          printf '%s\n' '# SCRUBS_LIMA_PATH_PATCH'
-          printf '%s\n' 'export PATH=/usr/local/bin:/run/wrappers/bin:/run/current-system/sw/bin:$PATH'
-          cat
+          if [ "$path_patch_present" = false ]; then
+            printf '%s\n' '# SCRUBS_LIMA_PATH_PATCH'
+            printf '%s\n' 'export PATH=/usr/local/bin:/run/wrappers/bin:/run/current-system/sw/bin:$PATH'
+          fi
+          while IFS= read -r line; do
+            if [ "$line" = 'exec "${LIMA_CIDATA_MNT}"/boot.sh' ]; then
+              cat <<'INNER_EOF'
+      # SCRUBS_LIMA_NIXOS_SANITIZE
+      patched_cidata_mnt=/run/lima-cidata-patched
+      rm -rf "${patched_cidata_mnt}"
+      mkdir -p "${patched_cidata_mnt}/boot.${UNAME}"
+      for entry in "${LIMA_CIDATA_MNT}"/*; do
+        base="$(basename "${entry}")"
+        case "${base}" in
+          "boot.${UNAME}")
+            ;;
+          *)
+            ln -sf "${entry}" "${patched_cidata_mnt}/${base}"
+            ;;
+        esac
+      done
+      for entry in "${LIMA_CIDATA_MNT}/boot.${UNAME}"/*; do
+        base="$(basename "${entry}")"
+        case "${base}" in
+          20-rootless-base.sh|25-guestagent-base.sh)
+            ;;
+          *)
+            ln -sf "${entry}" "${patched_cidata_mnt}/boot.${UNAME}/${base}"
+            ;;
+        esac
+      done
+      cp "${LIMA_CIDATA_MNT}/boot.sh" "${patched_cidata_mnt}/boot.sh"
+      chmod 755 "${patched_cidata_mnt}/boot.sh"
+      export LIMA_CIDATA_MNT="${patched_cidata_mnt}"
+      exec "${LIMA_CIDATA_MNT}"/boot.sh
+      INNER_EOF
+            else
+              printf '%s\n' "$line"
+            fi
+          done
         } <"$stub" >"$tmp_stub"
         cat "$tmp_stub" >"$stub"
         rm -f "$tmp_stub"

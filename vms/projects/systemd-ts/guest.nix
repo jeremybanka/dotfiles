@@ -5,9 +5,12 @@ let
     if primaryUser == null then null else "/home/${primaryUser}/systemd-ts/.docker";
 in
 {
+  imports = [
+    ../../modules/docker-shim.nix
+  ];
+
   environment.systemPackages = with pkgs; [
     acl
-    docker-buildx
   ];
 
   environment.sessionVariables = lib.mkIf (dockerStateRoot != null) {
@@ -32,13 +35,4 @@ in
   systemd.tmpfiles.rules = lib.optional (primaryUser != null)
     "d ${dockerStateRoot} 0777 ${primaryUser} users - -";
 
-  virtualisation.docker = {
-    enable = true;
-  };
-
-  users.users = lib.mkIf (primaryUser != null) {
-    "${primaryUser}" = {
-      extraGroups = lib.mkAfter [ "docker" ];
-    };
-  };
 }

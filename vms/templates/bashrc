@@ -1,4 +1,9 @@
 #!/bin/bash
+case $- in
+  *i*) ;;
+  *) return ;;
+esac
+
 if [ -f "$HOME/.bashrc.pre-scrubs" ]; then
   . "$HOME/.bashrc.pre-scrubs"
 fi
