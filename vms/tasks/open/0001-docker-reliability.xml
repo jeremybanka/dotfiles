@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issue id="0001" status="open">
+  <title>Get Docker working reliably in scrubs guests</title>
+  <user-story>
+    <as-a>scrubs VM user</as-a>
+    <i-want>Docker-backed guests to start, stop, and re-bootstrap without losing Docker usability</i-want>
+    <so-that>I can rely on Docker-enabled scrubs environments for iterative project work instead of rebuilding them after lifecycle events</so-that>
+  </user-story>
+  <current-status>
+    Docker can be installed and used in a freshly bootstrapped guest, but guests
+    that carry Docker-specific user setup can still regress into a broken Lima
+    SSH readiness state after the standard startup, shutdown, and re-bootstrap
+    lifecycle. The current `systemd-ts` shim has been cleaned up to use
+    `scrubsGuestUser`, but the broader Docker support model is still not durable
+    enough. We want a dedicated Docker shim that `systemd-ts` and any future
+    Docker-dependent guests can share.
+  </current-status>
+  <acceptance-criteria>
+    <criterion>Docker can be used on the guest to create and run containers successfully.</criterion>
+    <criterion>A reusable Docker-focused guest shim exists and can be used by Docker-dependent guests such as `systemd-ts`.</criterion>
+    <criterion>Guests using the Docker shim remain usable across the standard lifecycle: bootstrap, shutdown, startup, re-bootstrap, shutdown, and startup.</criterion>
+    <criterion>After that lifecycle, Lima SSH readiness succeeds and `limactl shell &lt;instance&gt;` remains functional.</criterion>
+  </acceptance-criteria>
+</issue>

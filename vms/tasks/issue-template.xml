@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issue id="0000" status="open">
+  <title>Replace with a short issue title</title>
+  <user-story>
+    <as-a>Replace with the primary user or operator role.</as-a>
+    <i-want>Replace with the capability or behavior they need.</i-want>
+    <so-that>Replace with the outcome or reason this matters.</so-that>
+  </user-story>
+  <current-status>
+    Replace with a concise summary of the current state, including known
+    failures, risks, or relevant context.
+  </current-status>
+  <acceptance-criteria>
+    <criterion>Replace with a concrete, testable success condition.</criterion>
+    <criterion>Replace with another concrete, testable success condition.</criterion>
+  </acceptance-criteria>
+</issue>
