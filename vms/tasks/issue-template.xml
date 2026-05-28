@@ -14,4 +14,8 @@
     <criterion>Replace with a concrete, testable success condition.</criterion>
     <criterion>Replace with another concrete, testable success condition.</criterion>
   </acceptance-criteria>
+  <review-items>
+    <item status="covered">Replace with a review check that has been completed.</item>
+    <item status="open">Replace with a review concern or follow-up still to resolve.</item>
+  </review-items>
 </issue>

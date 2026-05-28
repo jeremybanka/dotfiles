@@ -27,4 +27,20 @@
     <criterion>Guests using the Docker shim remain usable across the standard lifecycle: bootstrap, shutdown, startup, re-bootstrap, shutdown, and startup.</criterion>
     <criterion>After that lifecycle, Lima SSH readiness succeeds and `limactl shell &lt;instance&gt;` remains functional.</criterion>
   </acceptance-criteria>
+  <review-items>
+    <item status="covered">
+      A fresh guest without any Docker shim was exercised through the same
+      ordered lifecycle on May 28, 2026: bootstrap, shutdown, startup,
+      re-bootstrap, shutdown, and startup. The guest remained reachable
+      through `limactl shell`, and `docker` was absent as expected on the
+      non-Docker path.
+    </item>
+    <item status="open">
+      The current Lima boot-script workaround still references
+      `LIMA_CIDATA_MNT`, and every `limactl` invocation emits
+      `WARN[0000] provisioning scripts should not reference the LIMA_CIDATA variables`.
+      Review concluded that this should be replaced with a supported approach
+      before the issue is considered closed.
+    </item>
+  </review-items>
 </issue>
