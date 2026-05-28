@@ -1,6 +1,8 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, scrubsGuestUser ? null, ... }:
 let
-  dockerStateRoot = "/home/jem/systemd-ts/.docker";
+  primaryUser = scrubsGuestUser;
+  dockerStateRoot =
+    if primaryUser == null then null else "/home/${primaryUser}/systemd-ts/.docker";
 in
 {
   environment.systemPackages = with pkgs; [
@@ -8,17 +10,17 @@ in
     docker-buildx
   ];
 
-  environment.sessionVariables = {
+  environment.sessionVariables = lib.mkIf (dockerStateRoot != null) {
     SYSTEMD_TS_TEST_HOST_ROOT = dockerStateRoot;
   };
 
-  system.activationScripts.systemdTsDockerState = {
+  system.activationScripts.systemdTsDockerState = lib.mkIf (primaryUser != null) {
     text = ''
-      if [ -d /home/jem/systemd-ts ]; then
+      if [ -d /home/${primaryUser}/systemd-ts ]; then
         mkdir -p ${dockerStateRoot}
         mkdir -p ${dockerStateRoot}/tests
-        chown jem:users ${dockerStateRoot}
-        chown jem:users ${dockerStateRoot}/tests
+        chown ${primaryUser}:users ${dockerStateRoot}
+        chown ${primaryUser}:users ${dockerStateRoot}/tests
         chmod 0777 ${dockerStateRoot}
         chmod 0777 ${dockerStateRoot}/tests
         ${pkgs.acl}/bin/setfacl -R -m u:501:rwx,u:1001:rwx ${dockerStateRoot} || true
@@ -27,15 +29,16 @@ in
     '';
   };
 
-  systemd.tmpfiles.rules = [
-    "d ${dockerStateRoot} 0777 jem users - -"
-  ];
+  systemd.tmpfiles.rules = lib.optional (primaryUser != null)
+    "d ${dockerStateRoot} 0777 ${primaryUser} users - -";
 
   virtualisation.docker = {
     enable = true;
   };
 
-  users.users.jem = {
-    extraGroups = lib.mkAfter [ "docker" ];
+  users.users = lib.mkIf (primaryUser != null) {
+    "${primaryUser}" = {
+      extraGroups = lib.mkAfter [ "docker" ];
+    };
   };
 }
