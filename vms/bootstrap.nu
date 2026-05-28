@@ -299,6 +299,15 @@ def main [
   ) | save --force $template_file
 
   let instance_exists = ($instance_dir | path exists)
+  let instance_config_file = ($instance_dir | path join "lima.yaml")
+  if $instance_exists and ($instance_config_file | path exists) {
+    let rendered_lima_config = (open --raw $template_file)
+    let current_lima_config = (open --raw $instance_config_file)
+    if $rendered_lima_config != $current_lima_config {
+      print $"Refreshing Lima instance config at ($instance_config_file)"
+      $rendered_lima_config | save --force $instance_config_file
+    }
+  }
   print $"Starting Lima instance ($instance_name)"
   print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
   try {

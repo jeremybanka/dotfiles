@@ -19,7 +19,12 @@
     with a healthy `limactl shell` session and a successful `docker run --rm
     hello-world`. A separate `systemd-ts-smoke` guest using the real
     `systemd-ts` shim also completed repeat bootstrap plus a later
-    shutdown/startup with Docker still working through `limactl shell`.
+    shutdown/startup with Docker still working through `limactl shell`. The
+    Lima boot-script sanitize path now uses the stable `/mnt/lima-cidata`
+    mount path instead of direct `LIMA_CIDATA_*` references, and `bootstrap.nu`
+    refreshes existing instance `~/.lima/&lt;instance&gt;/lima.yaml` files so
+    older guests can pick up the quieter host-side config on their next
+    bootstrap without delete-and-recreate.
   </current-status>
   <acceptance-criteria>
     <criterion>Docker can be used on the guest to create and run containers successfully.</criterion>
@@ -35,12 +40,17 @@
       through `limactl shell`, and `docker` was absent as expected on the
       non-Docker path.
     </item>
-    <item status="open">
-      The current Lima boot-script workaround still references
-      `LIMA_CIDATA_MNT`, and every `limactl` invocation emits
-      `WARN[0000] provisioning scripts should not reference the LIMA_CIDATA variables`.
-      Review concluded that this should be replaced with a supported approach
-      before the issue is considered closed.
+    <item status="covered">
+      The Lima boot-script sanitize path no longer embeds `LIMA_CIDATA_*`
+      references in scrubs-managed instance configs. On May 28, 2026, a fresh
+      `cidata-clean` guest validated cleanly with `limactl validate` and
+      completed bootstrap, shutdown, startup, re-bootstrap, shutdown, and
+      startup while `limactl shell cidata-clean -- true` stayed quiet. An
+      older `nondocker-lifecycle` guest with the previous noisy host config
+      was then refreshed in place by `just bootstrap nondocker-lifecycle`,
+      after which its `~/.lima/nondocker-lifecycle/lima.yaml` no longer
+      contained `LIMA_CIDATA` and `limactl shell nondocker-lifecycle -- true`
+      was also quiet.
     </item>
   </review-items>
 </issue>

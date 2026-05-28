@@ -318,6 +318,12 @@ The practical model is:
 That means critical Linux or NixOS fixes are not applied automatically just
 because upstream published them.
 
+Host-side Lima template fixes are a little different: `just bootstrap
+<instance>` now refreshes the instance's
+`~/.lima/<instance>/lima.yaml` from the current scrubs template before it
+starts an existing guest. That lets compatibility fixes in the Lima-side
+bootstrapping flow roll forward without deleting and recreating the guest.
+
 To pick up those fixes:
 
 1. bump the `scrubs` flake inputs or guest configuration in this repo

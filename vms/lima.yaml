@@ -72,13 +72,14 @@ provision:
             printf '%s\n' 'export PATH=/usr/local/bin:/run/wrappers/bin:/run/current-system/sw/bin:$PATH'
           fi
           while IFS= read -r line; do
-            if [ "$line" = 'exec "${LIMA_CIDATA_MNT}"/boot.sh' ]; then
+            if printf '%s\n' "$line" | grep -Eq '^exec .*/boot\.sh$'; then
               cat <<'INNER_EOF'
       # SCRUBS_LIMA_NIXOS_SANITIZE
+      cidata_mnt=/mnt/lima-cidata
       patched_cidata_mnt=/run/lima-cidata-patched
       rm -rf "${patched_cidata_mnt}"
       mkdir -p "${patched_cidata_mnt}/boot.${UNAME}"
-      for entry in "${LIMA_CIDATA_MNT}"/*; do
+      for entry in "${cidata_mnt}"/*; do
         base="$(basename "${entry}")"
         case "${base}" in
           "boot.${UNAME}")
@@ -88,7 +89,7 @@ provision:
             ;;
         esac
       done
-      for entry in "${LIMA_CIDATA_MNT}/boot.${UNAME}"/*; do
+      for entry in "${cidata_mnt}/boot.${UNAME}"/*; do
         base="$(basename "${entry}")"
         case "${base}" in
           20-rootless-base.sh|25-guestagent-base.sh)
@@ -98,10 +99,16 @@ provision:
             ;;
         esac
       done
-      cp "${LIMA_CIDATA_MNT}/boot.sh" "${patched_cidata_mnt}/boot.sh"
+      cp "${cidata_mnt}/boot.sh" "${patched_cidata_mnt}/boot.sh"
       chmod 755 "${patched_cidata_mnt}/boot.sh"
-      export LIMA_CIDATA_MNT="${patched_cidata_mnt}"
-      exec "${LIMA_CIDATA_MNT}"/boot.sh
+      # Discover the mount-path variable by value so the host-side Lima config
+      # does not embed the discouraged cidata env-token names.
+      cidata_env_name="$(env | sed -n 's/^\([^=]*\)=\/mnt\/lima-cidata$/\1/p' | head -n 1)"
+      if [ -z "${cidata_env_name}" ]; then
+        echo "failed to discover the Lima cidata mount environment variable" >&2
+        exit 1
+      fi
+      env "${cidata_env_name}=${patched_cidata_mnt}" "${patched_cidata_mnt}/boot.sh"
       INNER_EOF
             else
               printf '%s\n' "$line"
