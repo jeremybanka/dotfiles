@@ -185,14 +185,14 @@ just refresh-base-image \
 
 ## Configure the Base Image
 
-Copy [`settings.env.example`](./settings.env.example) to `settings.env` and set
-your base image path or URL.
+Copy [`settings.env.example`](./settings.env.example) to `vms/settings.env` and
+set your base image path or URL.
 
 ```sh
 cp ./vms/settings.env.example ./vms/settings.env
 ```
 
-Then edit `settings.env` to point at your generic NixOS image.
+Then edit `vms/settings.env` to point at your generic NixOS image.
 
 The default local convention for active base images is:
 
