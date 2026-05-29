@@ -91,7 +91,6 @@ in
     jq
     lazygit
     unstablePkgs.mise
-    ni
     nushell
     ripgrep
     tokei
