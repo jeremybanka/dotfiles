@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issue id="0002" status="open">
+  <title>Isolate mise-backed tools behind bubblewrap in scrubs guests</title>
+  <user-story>
+    <as-a>scrubs VM user with clean guest-local credentials</as-a>
+    <i-want>mise-backed tools and package-manager workloads to run inside a constrained bubblewrap boundary by default</i-want>
+    <so-that>dirty JavaScript and Rust workflows can use project tooling without gaining ambient access to clean credentials, unrelated files, or arbitrary clean executables</so-that>
+  </user-story>
+  <premise>
+    The working model is: clean space is the Nix store plus guest-local
+    credential-bearing configuration, while dirty space is the `mise` store
+    and the developer tooling reached through it. Clean space may launch dirty
+    tools, but dirty tools should not gain ambient access to clean
+    credentials, unrelated files, or arbitrary clean executables.
+
+    The current scrubs guest exposes `mise` broadly in interactive and
+    non-interactive shells, so `node`, `bun`, `cargo`, and related tools are
+    ambiently available in clean space. We want to invert that model. The
+    likely shape is a proxy-shim layer that preserves normal command names and
+    completions while resolving the real `mise` target and executing it inside
+    a bubblewrap sandbox with a synthetic home, limited writable paths, no
+    real `gh` or `codex` credentials, and only a curated helper-tool subset
+    from clean space. `git` is a special case: some dirty workflows need it,
+    but it should run there with fake or stripped credentials rather than
+    inheriting the clean identity.
+  </premise>
+  <acceptance-criteria>
+    <criterion>Clean interactive shells no longer ambiently activate `mise`, and direct use of known dirty commands fails closed unless it goes through the scrubs launcher.</criterion>
+    <criterion>A proxy-shim or equivalent dispatcher preserves normal command names such as `node`, `pnpm`, `bun`, and `cargo` while executing the real `mise`-managed tool inside bubblewrap.</criterion>
+    <criterion>Dirty execution receives a synthetic home plus only the project working tree, `/tmp`, and other explicitly approved writable paths.</criterion>
+    <criterion>Dirty execution cannot read the real guest credential stores for `gh`, `codex`, SSH, or other clean-space identities.</criterion>
+    <criterion>Dirty execution can reach only a curated helper-tool subset from clean space rather than the full clean profile.</criterion>
+    <criterion>At least one workflow that shells out to `git` works in dirty space with fake or stripped credentials and without access to the clean identity.</criterion>
+    <criterion>The default user experience still supports ordinary command entry and completions for the wrapped tools without requiring users to learn alternate command names.</criterion>
+  </acceptance-criteria>
+  <review-items>
+    <item status="open">
+      Decide the exact boundary between the clean helper profile and the dirty
+      `mise` space so dynamic linker, certificates, shell utilities, and other
+      runtime support are available without exposing the full clean profile.
+    </item>
+    <item status="open">
+      Decide how dirty `git` should be provisioned, including fake identity,
+      disabled credential helpers, and any narrowly scoped auth that specific
+      tools may still require.
+    </item>
+    <item status="open">
+      Validate the boundary with a red-team style probe that confirms dirty
+      commands can see the project and approved scratch space but not real
+      clean-space credential directories or unrelated files.
+    </item>
+  </review-items>
+</issue>
