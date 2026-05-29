@@ -4,8 +4,9 @@ set -eu
 scrubs_dir="${HOME}/.local/libexec/scrubs"
 proxy_dir="${HOME}/.local/bin"
 helper_root="${HOME}/.local/share/scrubs/helper-root"
-commands_file="${scrubs_dir}/dirty-commands.txt"
 dirty_exec="${scrubs_dir}/dirty-exec.sh"
+mise_wrapper="${scrubs_dir}/mise-wrapper.sh"
+mise_shims_dir="${HOME}/.local/share/mise/shims"
 
 mkdir -p "${proxy_dir}" "${helper_root}/bin" "${helper_root}/usr/bin" "${helper_root}/etc/ssl/certs"
 
@@ -66,9 +67,26 @@ do
   fi
 done
 
-ln -snf "${dirty_exec}" "${proxy_dir}/scrubs-dirty-exec"
+for proxy_path in "${proxy_dir}"/*; do
+  [ -e "${proxy_path}" ] || continue
+  if [ "$(readlink "${proxy_path}" 2>/dev/null || true)" = "${dirty_exec}" ]; then
+    rm -f "${proxy_path}"
+  fi
+done
 
-while IFS= read -r command_name; do
-  [ -n "$command_name" ] || continue
-  ln -snf "${dirty_exec}" "${proxy_dir}/${command_name}"
-done < "${commands_file}"
+ln -snf "${dirty_exec}" "${proxy_dir}/scrubs-dirty-exec"
+cp "${mise_wrapper}" "${proxy_dir}/mise"
+chmod 755 "${proxy_dir}/mise"
+
+if [ -d "${mise_shims_dir}" ]; then
+  for shim_path in "${mise_shims_dir}"/*; do
+    [ -f "${shim_path}" ] || continue
+    command_name="$(basename "${shim_path}")"
+    case "${command_name}" in
+      mise)
+        continue
+        ;;
+    esac
+    ln -snf "${dirty_exec}" "${proxy_dir}/${command_name}"
+  done
+fi
