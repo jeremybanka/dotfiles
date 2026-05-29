@@ -79,7 +79,6 @@ in
 
   environment.systemPackages = with pkgs; [
     bubblewrap
-    bun
     carapace
     codex
     curl
