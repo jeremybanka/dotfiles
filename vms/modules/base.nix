@@ -96,6 +96,7 @@ in
     ni
     nushell
     ripgrep
+    tokei
     tmux
     wget
   ];

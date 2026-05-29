@@ -16,6 +16,7 @@ brew "nushell"
 brew "postgresql@18", restart_service: :changed
 brew "qemu"
 brew "stow"
+brew "tokei"
 brew "yt-dlp"
 cask "blender"
 cask "brave-browser"
