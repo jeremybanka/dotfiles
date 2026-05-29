@@ -148,6 +148,7 @@ def main [
   mkdir ($payload_dir | path join "home" ".config" "nushell")
   mkdir ($payload_dir | path join "home" ".config" "mise")
   mkdir ($payload_dir | path join "scrubs" "modules")
+  mkdir ($payload_dir | path join "scrubs" "projects")
 
   if not ($key_path | path exists) {
     ^ssh-keygen -t ed25519 -N "" -f $key_path
@@ -190,10 +191,19 @@ def main [
   cp ($vms_dir | path join "flake.lock") ($payload_dir | path join "scrubs" "flake.lock")
   cp ($vms_dir | path join "configuration.nix") ($payload_dir | path join "scrubs" "configuration.nix")
   cp ($vms_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
+  cp ($vms_dir | path join "modules" "docker-shim.nix") ($payload_dir | path join "scrubs" "modules" "docker-shim.nix")
 
   if $project_shim.guest_module != "" {
     print $"Applying project shim from ($project_shim.source)"
-    cp $project_shim.guest_module ($payload_dir | path join "scrubs" "modules" "project-shim.nix")
+    cp -r $project_shim.source ($payload_dir | path join "scrubs" "projects")
+    $"
+{ ... }:
+{
+  imports = [
+    ../projects/($resolved_shim_name)/guest.nix
+  ];
+}
+" | save --force ($payload_dir | path join "scrubs" "modules" "project-shim.nix")
   }
 
   let extra_lima_config = if $project_shim.lima_config == "" {
@@ -289,6 +299,15 @@ def main [
   ) | save --force $template_file
 
   let instance_exists = ($instance_dir | path exists)
+  let instance_config_file = ($instance_dir | path join "lima.yaml")
+  if $instance_exists and ($instance_config_file | path exists) {
+    let rendered_lima_config = (open --raw $template_file)
+    let current_lima_config = (open --raw $instance_config_file)
+    if $rendered_lima_config != $current_lima_config {
+      print $"Refreshing Lima instance config at ($instance_config_file)"
+      $rendered_lima_config | save --force $instance_config_file
+    }
+  }
   print $"Starting Lima instance ($instance_name)"
   print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
   try {
@@ -318,6 +337,11 @@ def main [
     error make { msg: "Guest did not become reachable over SSH in time." }
   }
 
+  let bootstrap_marker = "/var/lib/scrubs/bootstrap-complete"
+  let already_bootstrapped = (
+    (do { ^ssh ...$ssh_args (remote-shell-command $"test -f \"($bootstrap_marker)\"") } | complete).exit_code == 0
+  )
+
   let bootstrap_home = $"/home/($bootstrap_user)"
   let bootstrap_dir = $"/home/($bootstrap_user)/scrubs-bootstrap"
 
@@ -328,6 +352,33 @@ def main [
 
   print "Applying scrubs base configuration inside the guest"
   ^ssh ...$ssh_args (remote-shell-command $"sh \"($bootstrap_dir)/guest-apply.sh\"")
+
+  if $already_bootstrapped {
+    print "Restarting the guest to activate the staged scrubs generation"
+    ^limactl stop $instance_name
+    print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
+    try {
+      ^limactl start --timeout $start_timeout $instance_name
+    } catch {
+      print --stderr $"limactl start did not fully complete within ($start_timeout)."
+      print --stderr "Continuing because scrubs only requires direct SSH reachability after the restart."
+    }
+
+    print "Waiting for SSH access to the restarted guest"
+    $ready = false
+    for _ in 0..59 {
+      let ssh_result = (do { ^ssh ...$ssh_args true } | complete)
+      if $ssh_result.exit_code == 0 {
+        $ready = true
+        break
+      }
+      sleep 2sec
+    }
+
+    if not $ready {
+      error make { msg: "Guest did not become reachable over SSH after the restart." }
+    }
+  }
 
   print ""
   print "Scrubs guest is ready."
