@@ -4,10 +4,13 @@ set -eu
 payload="$HOME/scrubs-bootstrap"
 bootstrap_marker="/var/lib/scrubs/bootstrap-complete"
 
-mkdir -p "$HOME/.config/nushell" "$HOME/.config/mise"
+mkdir -p "$HOME/.config/nushell" "$HOME/.config/mise" "$HOME/.local/libexec/scrubs" "$HOME/.local/bin"
 cp "$payload/home/.gitconfig" "$HOME/.gitconfig"
 cp "$payload/home/.config/mise/config.toml" "$HOME/.config/mise/config.toml"
 cp "$payload/home/.config/nushell/"* "$HOME/.config/nushell/"
+cp "$payload/home/.local/libexec/scrubs/"* "$HOME/.local/libexec/scrubs/"
+chmod 755 "$HOME/.local/libexec/scrubs/"*.sh
+"$HOME/.local/libexec/scrubs/install-dirty-tools.sh"
 
 mkdir -p "$HOME/.gnupg"
 chmod 700 "$HOME/.gnupg"
@@ -21,6 +24,10 @@ rm -f "$HOME/.gnupg/public-keys.d/pubring.db.lock" "$HOME/.gnupg/public-keys.d"/
 if [ -f "$HOME/.bashrc" ] && ! grep -Fq 'SCRUBS_BASHRC' "$HOME/.bashrc"; then
   cp "$HOME/.bashrc" "$HOME/.bashrc.pre-scrubs"
 fi
+if [ -f "$HOME/.profile" ] && ! grep -Fq 'SCRUBS_PROFILE' "$HOME/.profile"; then
+  cp "$HOME/.profile" "$HOME/.profile.pre-scrubs"
+fi
+cp "$payload/home/.profile" "$HOME/.profile"
 cp "$payload/home/.bashrc" "$HOME/.bashrc"
 cp "$payload/home/.bash_profile" "$HOME/.bash_profile"
 

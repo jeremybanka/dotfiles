@@ -147,6 +147,7 @@ def main [
   mkdir $key_dir
   mkdir ($payload_dir | path join "home" ".config" "nushell")
   mkdir ($payload_dir | path join "home" ".config" "mise")
+  mkdir ($payload_dir | path join "home" ".local" "libexec" "scrubs")
   mkdir ($payload_dir | path join "scrubs" "modules")
   mkdir ($payload_dir | path join "scrubs" "projects")
 
@@ -166,8 +167,12 @@ def main [
 
   cp ($repo_root | path join "home" ".gitconfig") ($payload_dir | path join "home" ".gitconfig")
   cp ($repo_root | path join "home" ".config" "mise" "config.toml") ($payload_dir | path join "home" ".config" "mise" "config.toml")
+  cp ($vms_dir | path join "templates" "profile") ($payload_dir | path join "home" ".profile")
   cp ($vms_dir | path join "templates" "bash_profile") ($payload_dir | path join "home" ".bash_profile")
   cp ($vms_dir | path join "templates" "bashrc") ($payload_dir | path join "home" ".bashrc")
+  cp ($vms_dir | path join "templates" "dirty-commands.txt") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "dirty-commands.txt")
+  cp ($vms_dir | path join "templates" "install-dirty-tools.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools.sh")
+  cp ($vms_dir | path join "templates" "dirty-exec.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "dirty-exec.sh")
 
   for file_name in [
     "carapace-init.nu"

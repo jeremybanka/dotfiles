@@ -1,0 +1,13 @@
+node
+npm
+npx
+pnpm
+pnpx
+bun
+bunx
+cargo
+rustc
+rustdoc
+rustfmt
+cargo-clippy
+clippy-driver
