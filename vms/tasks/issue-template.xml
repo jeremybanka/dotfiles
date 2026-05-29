@@ -6,10 +6,10 @@
     <i-want>Replace with the capability or behavior they need.</i-want>
     <so-that>Replace with the outcome or reason this matters.</so-that>
   </user-story>
-  <current-status>
-    Replace with a concise summary of the current state, including known
-    failures, risks, or relevant context.
-  </current-status>
+  <premise>
+    Replace with the framing assumptions for the work, including the intended
+    model, relevant current behavior, and any known risks or constraints.
+  </premise>
   <acceptance-criteria>
     <criterion>Replace with a concrete, testable success condition.</criterion>
     <criterion>Replace with another concrete, testable success condition.</criterion>

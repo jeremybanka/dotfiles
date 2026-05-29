@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issue id="0001" status="review">
+<issue id="0001" status="closed">
   <title>Get Docker working reliably in scrubs guests</title>
   <user-story>
     <as-a>scrubs VM user</as-a>
     <i-want>Docker-backed guests to start, stop, and re-bootstrap without losing Docker usability</i-want>
     <so-that>I can rely on Docker-enabled scrubs environments for iterative project work instead of rebuilding them after lifecycle events</so-that>
   </user-story>
-  <current-status>
+  <premise>
     A reusable Docker guest shim now exists and is shared by `systemd-ts`. The
     scrubs bootstrap flow now preserves project shim import paths, avoids the
     Lima boot scripts that mutate immutable NixOS `/etc` state, keeps
@@ -25,7 +25,7 @@
     refreshes existing instance `~/.lima/&lt;instance&gt;/lima.yaml` files so
     older guests can pick up the quieter host-side config on their next
     bootstrap without delete-and-recreate.
-  </current-status>
+  </premise>
   <acceptance-criteria>
     <criterion>Docker can be used on the guest to create and run containers successfully.</criterion>
     <criterion>A reusable Docker-focused guest shim exists and can be used by Docker-dependent guests such as `systemd-ts`.</criterion>
