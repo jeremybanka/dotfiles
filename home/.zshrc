@@ -38,6 +38,11 @@
 
   # nushell
     export XDG_CONFIG_HOME="$HOME/.config"
+    if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
+      export BAT_THEME="Monokai Extended"
+    else
+      export BAT_THEME="GitHub"
+    fi
 
   # # vscodium
   #   alias c="open $1 -a \"VSCodium\""

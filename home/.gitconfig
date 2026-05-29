@@ -7,7 +7,25 @@
   name = Jeremy Banka
   email = hello@jeremybanka.com
 [core]
-  pager = diff-so-fancy | less --tabs=4 -RFX
+  pager = delta
+[interactive]
+  diffFilter = delta --color-only
+[delta]
+  features = nice line-numbers
+  navigate = true
+[delta "nice"]
+  commit-decoration-style = blue ol
+  file-style = yellow bold
+  file-decoration-style = blue ul
+  hunk-header-style = omit
+[delta "line-numbers"]
+  line-numbers = true
+  line-numbers-left-style = blue
+  line-numbers-right-style = blue
+  line-numbers-minus-style = red bold
+  line-numbers-plus-style = green bold
+[merge]
+  conflictStyle = zdiff3
 [init]
   defaultBranch = main
 [rebase]

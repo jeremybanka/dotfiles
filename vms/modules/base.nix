@@ -85,7 +85,6 @@ in
     codex
     curl
     delta
-    diff-so-fancy
     fd
     git
     gh
