@@ -6,6 +6,18 @@ die() {
   exit 1
 }
 
+write_exec_wrapper() {
+  local target_path="$1"
+  local wrapper_path="$2"
+
+  rm -f "${wrapper_path}"
+  cat > "${wrapper_path}" <<EOF
+#!/bin/sh
+exec '${target_path}' "\$@"
+EOF
+  chmod 755 "${wrapper_path}"
+}
+
 command_name="$(basename "$0")"
 if [[ "$command_name" == "scrubs-dirty-exec" ]]; then
   [[ "$#" -gt 0 ]] || die "expected a command name"
@@ -58,7 +70,21 @@ mkdir -p \
   "${fake_home_bin}" \
   "${fake_mise_state_dir}" \
   /tmp/mise-cache
-ln -snf /usr/bin/mise "${fake_home_bin}/mise"
+
+find "${fake_home_bin}" -mindepth 1 -maxdepth 1 -exec rm -f {} +
+
+write_exec_wrapper /usr/bin/mise "${fake_home_bin}/mise"
+
+if [[ -d "${mise_shims}" ]]; then
+  while IFS= read -r shim_path; do
+    shim_name="$(basename "${shim_path}")"
+    [[ "${shim_name}" == "mise" ]] && continue
+    resolved_shim_target="$("${MISE_BIN}" which "${shim_name}" 2>/dev/null || true)"
+    [[ -n "${resolved_shim_target}" ]] || continue
+    write_exec_wrapper "${resolved_shim_target}" "${fake_home_bin}/${shim_name}"
+  done < <(find "${mise_shims}" -maxdepth 1 -type l | sort)
+fi
+
 cat > "${fake_home}/.gitconfig" <<'EOF'
 [user]
   name = Scrubs Dirty
@@ -114,7 +140,7 @@ declare -a path_entries=()
 if [[ -d "${node_modules_bin}" ]]; then
   path_entries+=("${node_modules_bin}")
 fi
-path_entries+=("${mise_shims}" "/home/${current_user}/.local/bin" /bin /usr/bin)
+path_entries+=("/home/${current_user}/.local/bin" "${mise_shims}" /bin /usr/bin)
 
 dirty_path="$(IFS=:; echo "${path_entries[*]}")"
 
