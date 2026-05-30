@@ -10,12 +10,49 @@ write_exec_wrapper() {
   local target_path="$1"
   local wrapper_path="$2"
 
+  mkdir -p "$(dirname "${wrapper_path}")"
   rm -f "${wrapper_path}"
   cat > "${wrapper_path}" <<EOF
 #!/bin/sh
 exec '${target_path}' "\$@"
 EOF
   chmod 755 "${wrapper_path}"
+}
+
+build_runtime_cache() {
+  local cache_dir="$1"
+  local cache_tmp_dir="${cache_dir}.tmp.$$"
+  local cache_home="${cache_tmp_dir}/home"
+  local cache_home_bin="${cache_home}/.local/bin"
+  local cache_mise_state_dir="${cache_home}/.local/state/mise"
+  local spec
+  local shim_name
+  local resolved_shim_target
+
+  rm -rf "${cache_tmp_dir}"
+  mkdir -p \
+    "${cache_home}/.config" \
+    "${cache_home}/.local/share" \
+    "${cache_home_bin}" \
+    "${cache_mise_state_dir}"
+
+  write_exec_wrapper /usr/bin/mise "${cache_home_bin}/mise"
+
+  for spec in "${active_tool_specs[@]}"; do
+    shim_name="${spec%%=*}"
+    resolved_shim_target="${spec#*=}"
+    write_exec_wrapper "${resolved_shim_target}" "${cache_home_bin}/${shim_name}"
+  done
+
+  cat > "${cache_home}/.gitconfig" <<'EOF'
+[user]
+  name = Scrubs Dirty
+  email = dirty@example.invalid
+[credential]
+  helper =
+EOF
+
+  mv "${cache_tmp_dir}" "${cache_dir}"
 }
 
 command_name="$(basename "$0")"
@@ -38,20 +75,19 @@ resolved_target="$("${MISE_BIN}" which "${command_name}" 2>/dev/null || true)"
 
 current_user="$(id -un)"
 helper_root="${HOME}/.local/share/scrubs/helper-root"
-fake_home="${HOME}/.local/share/scrubs/dirty-home"
-fake_home_bin="${fake_home}/.local/bin"
-fake_mise_state_dir="${fake_home}/.local/state/mise"
 project_root="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || pwd -P)"
 working_dir="$(pwd -P)"
 mise_root="${HOME}/.local/share/mise"
 mise_shims="${mise_root}/shims"
 mise_config_dir="${HOME}/.config/mise"
 mise_state_dir="${HOME}/.local/state/mise"
+runtime_cache_root="${HOME}/.local/share/scrubs/dirty-runtime-cache"
 node_modules_bin="${project_root}/node_modules/.bin"
 ssl_cert_file="/etc/ssl/certs/ca-bundle.crt"
 nix_ld="/run/current-system/sw/share/nix-ld/lib/ld.so"
 nix_ld_library_path="/run/current-system/sw/share/nix-ld/lib"
 guest_loader=""
+runtime_cache_version="1"
 
 for candidate_loader in /lib/ld-linux-aarch64.so.1 /lib64/ld-linux-x86-64.so.2; do
   if [[ -e "${candidate_loader}" ]]; then
@@ -64,34 +100,33 @@ done
 [[ -d "${mise_root}" ]] || die "missing mise data directory at ${mise_root}"
 [[ -d "${mise_config_dir}" ]] || die "missing mise config directory at ${mise_config_dir}"
 
-mkdir -p \
-  "${fake_home}/.config" \
-  "${fake_home}/.local/share" \
-  "${fake_home_bin}" \
-  "${fake_mise_state_dir}" \
-  /tmp/mise-cache
-
-find "${fake_home_bin}" -mindepth 1 -maxdepth 1 -exec rm -f {} +
-
-write_exec_wrapper /usr/bin/mise "${fake_home_bin}/mise"
-
+declare -a active_tool_specs=()
 if [[ -d "${mise_shims}" ]]; then
   while IFS= read -r shim_path; do
     shim_name="$(basename "${shim_path}")"
     [[ "${shim_name}" == "mise" ]] && continue
     resolved_shim_target="$("${MISE_BIN}" which "${shim_name}" 2>/dev/null || true)"
     [[ -n "${resolved_shim_target}" ]] || continue
-    write_exec_wrapper "${resolved_shim_target}" "${fake_home_bin}/${shim_name}"
+    active_tool_specs+=("${shim_name}=${resolved_shim_target}")
   done < <(find "${mise_shims}" -maxdepth 1 -type l | sort)
 fi
 
-cat > "${fake_home}/.gitconfig" <<'EOF'
-[user]
-  name = Scrubs Dirty
-  email = dirty@example.invalid
-[credential]
-  helper =
-EOF
+mkdir -p "${runtime_cache_root}" /tmp/mise-cache
+
+runtime_cache_key="$(
+  printf '%s\n' \
+    "${runtime_cache_version}" \
+    "${project_root}" \
+    "${active_tool_specs[@]}" \
+  | cksum \
+  | awk '{print $1 "-" $2}'
+)"
+runtime_cache_dir="${runtime_cache_root}/${runtime_cache_key}"
+fake_home="${runtime_cache_dir}/home"
+
+if [[ ! -x "${fake_home}/.local/bin/mise" ]]; then
+  build_runtime_cache "${runtime_cache_dir}"
+fi
 
 declare -a store_ro_binds=()
 declare -A seen_store_paths=()
