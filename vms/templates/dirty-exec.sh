@@ -27,11 +27,14 @@ resolved_target="$("${MISE_BIN}" which "${command_name}" 2>/dev/null || true)"
 current_user="$(id -un)"
 helper_root="${HOME}/.local/share/scrubs/helper-root"
 fake_home="${HOME}/.local/share/scrubs/dirty-home"
+fake_home_bin="${fake_home}/.local/bin"
+fake_mise_state_dir="${fake_home}/.local/state/mise"
 project_root="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || pwd -P)"
 working_dir="$(pwd -P)"
 mise_root="${HOME}/.local/share/mise"
 mise_shims="${mise_root}/shims"
 mise_config_dir="${HOME}/.config/mise"
+mise_state_dir="${HOME}/.local/state/mise"
 node_modules_bin="${project_root}/node_modules/.bin"
 ssl_cert_file="/etc/ssl/certs/ca-bundle.crt"
 nix_ld="/run/current-system/sw/share/nix-ld/lib/ld.so"
@@ -49,7 +52,13 @@ done
 [[ -d "${mise_root}" ]] || die "missing mise data directory at ${mise_root}"
 [[ -d "${mise_config_dir}" ]] || die "missing mise config directory at ${mise_config_dir}"
 
-mkdir -p "${fake_home}/.config" "${fake_home}/.local/share" /tmp/mise-cache
+mkdir -p \
+  "${fake_home}/.config" \
+  "${fake_home}/.local/share" \
+  "${fake_home_bin}" \
+  "${fake_mise_state_dir}" \
+  /tmp/mise-cache
+ln -snf /usr/bin/mise "${fake_home_bin}/mise"
 cat > "${fake_home}/.gitconfig" <<'EOF'
 [user]
   name = Scrubs Dirty
@@ -105,9 +114,14 @@ declare -a path_entries=()
 if [[ -d "${node_modules_bin}" ]]; then
   path_entries+=("${node_modules_bin}")
 fi
-path_entries+=("${mise_shims}" /bin /usr/bin)
+path_entries+=("${mise_shims}" "/home/${current_user}/.local/bin" /bin /usr/bin)
 
 dirty_path="$(IFS=:; echo "${path_entries[*]}")"
+
+declare -a mise_state_bind=()
+if [[ -d "${mise_state_dir}" ]]; then
+  mise_state_bind=(--ro-bind "${mise_state_dir}" "/home/${current_user}/.local/state/mise")
+fi
 
 exec "${BWRAP_BIN}" \
   --die-with-parent \
@@ -152,9 +166,11 @@ exec "${BWRAP_BIN}" \
   --setenv MISE_DATA_DIR "/home/${current_user}/.local/share/mise" \
   --setenv MISE_CONFIG_DIR "/home/${current_user}/.config/mise" \
   --setenv MISE_CACHE_DIR /tmp/mise-cache \
+  --setenv MISE_STATE_DIR "/home/${current_user}/.local/state/mise" \
   --setenv NIX_LD "${resolved_nix_ld}" \
   --setenv NIX_LD_LIBRARY_PATH "${resolved_nix_ld_library_path}" \
   --setenv SSL_CERT_FILE "${ssl_cert_file}" \
+  "${mise_state_bind[@]}" \
   "${store_ro_binds[@]}" \
   -- \
   "${resolved_target}" "$@"

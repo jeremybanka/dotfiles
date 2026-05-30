@@ -32,16 +32,15 @@ link_helper() {
 
 resolve_command_path() {
   command_name="$1"
-  resolved="$(command -v "$command_name" 2>/dev/null || true)"
+  if [ -x "/run/current-system/sw/bin/${command_name}" ]; then
+    printf '%s\n' "/run/current-system/sw/bin/${command_name}"
+    return 0
+  fi
 
+  resolved="$(command -v "$command_name" 2>/dev/null || true)"
   case "$resolved" in
     /*)
       printf '%s\n' "$resolved"
-      ;;
-    *)
-      if [ -x "/run/current-system/sw/bin/${command_name}" ]; then
-        printf '%s\n' "/run/current-system/sw/bin/${command_name}"
-      fi
       ;;
   esac
 }
