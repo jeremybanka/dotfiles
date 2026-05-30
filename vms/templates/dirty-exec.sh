@@ -227,6 +227,16 @@ if [[ -d "${mise_state_dir}" ]]; then
   mise_state_bind=(--ro-bind "${mise_state_dir}" "/home/${current_user}/.local/state/mise")
 fi
 
+declare -a localtime_bind=()
+if [[ -e /etc/localtime ]]; then
+  localtime_bind=(--ro-bind /etc/localtime /etc/localtime)
+fi
+
+declare -a sys_bind=()
+if [[ -d /sys ]]; then
+  sys_bind=(--ro-bind /sys /sys)
+fi
+
 exec "${BWRAP_BIN}" \
   --die-with-parent \
   --new-session \
@@ -236,14 +246,15 @@ exec "${BWRAP_BIN}" \
   --unshare-pid \
   --unshare-uts \
   --unshare-cgroup-try \
-  --proc /proc \
   --tmpfs / \
+  --proc /proc \
   --dir /dev \
   --dev-bind /dev /dev \
   --dir /usr \
   --dir /etc \
   --dir /home \
   --dir "/home/${current_user}" \
+  --dir /sys \
   --dir /run \
   --dir /tmp \
   --ro-bind /lib /lib \
@@ -255,6 +266,8 @@ exec "${BWRAP_BIN}" \
   --ro-bind "${helper_root}/etc/nsswitch.conf" /etc/nsswitch.conf \
   --ro-bind /etc/hosts /etc/hosts \
   --ro-bind /etc/resolv.conf /etc/resolv.conf \
+  "${localtime_bind[@]}" \
+  "${sys_bind[@]}" \
   --bind "${fake_home}" "/home/${current_user}" \
   --ro-bind "${mise_root}" "/home/${current_user}/.local/share/mise" \
   --ro-bind "${mise_config_dir}" "/home/${current_user}/.config/mise" \
