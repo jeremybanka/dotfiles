@@ -55,6 +55,29 @@ EOF
   mv "${cache_tmp_dir}" "${cache_dir}"
 }
 
+build_helper_closure_cache() {
+  local cache_file="$1"
+  local cache_tmp_file="${cache_file}.tmp.$$"
+  local helper_path
+  local closure_path
+  declare -A cache_seen_paths=()
+
+  rm -f "${cache_tmp_file}"
+  : > "${cache_tmp_file}"
+
+  for helper_path in "${helper_input_paths[@]}"; do
+    while IFS= read -r closure_path; do
+      [[ -n "${closure_path}" ]] || continue
+      if [[ -z "${cache_seen_paths["$closure_path"]+x}" ]]; then
+        cache_seen_paths["$closure_path"]=1
+        printf '%s\n' "${closure_path}" >> "${cache_tmp_file}"
+      fi
+    done < <("${NIX_STORE_BIN}" -qR "${helper_path}" 2>/dev/null)
+  done
+
+  mv "${cache_tmp_file}" "${cache_file}"
+}
+
 command_name="$(basename "$0")"
 if [[ "$command_name" == "scrubs-dirty-exec" ]]; then
   [[ "$#" -gt 0 ]] || die "expected a command name"
@@ -82,12 +105,14 @@ mise_shims="${mise_root}/shims"
 mise_config_dir="${HOME}/.config/mise"
 mise_state_dir="${HOME}/.local/state/mise"
 runtime_cache_root="${HOME}/.local/share/scrubs/dirty-runtime-cache"
+helper_closure_cache_root="${HOME}/.local/share/scrubs/helper-closure-cache"
 node_modules_bin="${project_root}/node_modules/.bin"
 ssl_cert_file="/etc/ssl/certs/ca-bundle.crt"
 nix_ld="/run/current-system/sw/share/nix-ld/lib/ld.so"
 nix_ld_library_path="/run/current-system/sw/share/nix-ld/lib"
 guest_loader=""
 runtime_cache_version="1"
+helper_closure_cache_version="1"
 
 for candidate_loader in /lib/ld-linux-aarch64.so.1 /lib64/ld-linux-x86-64.so.2; do
   if [[ -e "${candidate_loader}" ]]; then
@@ -130,37 +155,55 @@ fi
 
 declare -a store_ro_binds=()
 declare -A seen_store_paths=()
+declare -a helper_input_paths=()
 
-append_store_closure() {
-  local path="$1"
-  local closure_path
+append_cached_store_path() {
+  local closure_path="$1"
 
-  [[ -n "$path" && -e "$path" ]] || return 0
-
-  while IFS= read -r closure_path; do
-    [[ -n "${closure_path}" ]] || continue
-    if [[ -z "${seen_store_paths["$closure_path"]+x}" ]]; then
-      seen_store_paths["$closure_path"]=1
-      store_ro_binds+=(--ro-bind "$closure_path" "$closure_path")
-    fi
-  done < <("${NIX_STORE_BIN}" -qR "$path" 2>/dev/null)
+  [[ -n "${closure_path}" ]] || return 0
+  if [[ -z "${seen_store_paths["$closure_path"]+x}" ]]; then
+    seen_store_paths["$closure_path"]=1
+    store_ro_binds+=(--ro-bind "$closure_path" "$closure_path")
+  fi
 }
 
-append_helper_if_present() {
+collect_helper_input_if_present() {
   local helper_path="$1"
+  local resolved_helper_path
 
   [[ -e "$helper_path" ]] || return 0
-  append_store_closure "$(readlink -f "$helper_path")"
+  resolved_helper_path="$(readlink -f "$helper_path")"
+  [[ -n "${resolved_helper_path}" ]] || return 0
+  helper_input_paths+=("${resolved_helper_path}")
 }
 
-append_helper_if_present "${helper_root}/bin/bash"
-append_helper_if_present "${helper_root}/usr/bin/env"
-append_helper_if_present "${helper_root}/usr/bin/git"
-append_helper_if_present "${helper_root}/usr/bin/mise"
-append_helper_if_present "${helper_root}/etc/ssl/certs/ca-bundle.crt"
-append_helper_if_present "${guest_loader}"
-append_helper_if_present "${nix_ld}"
-append_helper_if_present "${nix_ld_library_path}"
+collect_helper_input_if_present "${helper_root}/bin/bash"
+collect_helper_input_if_present "${helper_root}/usr/bin/env"
+collect_helper_input_if_present "${helper_root}/usr/bin/git"
+collect_helper_input_if_present "${helper_root}/usr/bin/mise"
+collect_helper_input_if_present "${helper_root}/etc/ssl/certs/ca-bundle.crt"
+collect_helper_input_if_present "${guest_loader}"
+collect_helper_input_if_present "${nix_ld}"
+collect_helper_input_if_present "${nix_ld_library_path}"
+
+mkdir -p "${helper_closure_cache_root}"
+
+helper_closure_cache_key="$(
+  printf '%s\n' \
+    "${helper_closure_cache_version}" \
+    "${helper_input_paths[@]}" \
+  | cksum \
+  | awk '{print $1 "-" $2}'
+)"
+helper_closure_cache_file="${helper_closure_cache_root}/${helper_closure_cache_key}.paths"
+
+if [[ ! -f "${helper_closure_cache_file}" ]]; then
+  build_helper_closure_cache "${helper_closure_cache_file}"
+fi
+
+while IFS= read -r closure_path; do
+  append_cached_store_path "${closure_path}"
+done < "${helper_closure_cache_file}"
 
 resolved_nix_ld=""
 resolved_nix_ld_library_path=""
