@@ -1,4 +1,5 @@
 #!/bin/bash
+# SCRUBS_BASHRC
 case $- in
   *i*) ;;
   *) return ;;

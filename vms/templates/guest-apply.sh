@@ -12,6 +12,14 @@ cp "$payload/home/.local/libexec/scrubs/"* "$HOME/.local/libexec/scrubs/"
 chmod 755 "$HOME/.local/libexec/scrubs/"*.sh
 "$HOME/.local/libexec/scrubs/install-dirty-tools.sh"
 
+is_legacy_scrubs_bashrc() {
+  file_path="$1"
+  [ -f "$file_path" ] || return 1
+  grep -Fq 'SCRUBS_BASHRC' "$file_path" && return 1
+  grep -Fq 'if [ -f "$HOME/.bashrc.pre-scrubs" ]; then' "$file_path" || return 1
+  grep -Fq 'PATH="$HOME/.local/bin:$PATH"' "$file_path" || return 1
+}
+
 mkdir -p "$HOME/.gnupg"
 chmod 700 "$HOME/.gnupg"
 if [ -f "$HOME/.gnupg/common.conf" ]; then
@@ -21,7 +29,14 @@ fi
 gpgconf --kill keyboxd || true
 rm -f "$HOME/.gnupg/public-keys.d/pubring.db.lock" "$HOME/.gnupg/public-keys.d"/.#lk* || true
 
-if [ -f "$HOME/.bashrc" ] && ! grep -Fq 'SCRUBS_BASHRC' "$HOME/.bashrc"; then
+if is_legacy_scrubs_bashrc "$HOME/.bashrc.pre-scrubs"; then
+  rm -f "$HOME/.bashrc.pre-scrubs"
+fi
+
+if [ -f "$HOME/.bashrc" ] \
+  && ! grep -Fq 'SCRUBS_BASHRC' "$HOME/.bashrc" \
+  && ! is_legacy_scrubs_bashrc "$HOME/.bashrc"
+then
   cp "$HOME/.bashrc" "$HOME/.bashrc.pre-scrubs"
 fi
 if [ -f "$HOME/.profile" ] && ! grep -Fq 'SCRUBS_PROFILE' "$HOME/.profile"; then
