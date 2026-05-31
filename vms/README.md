@@ -417,7 +417,7 @@ store bloat into the exported image.
 
 ## Notes
 
-[SEED-INSTALL-CHECKLIST.md](/Users/jem/dotfiles/vms/SEED-INSTALL-CHECKLIST.md)
+[SEED-INSTALL-CHECKLIST.md](/Users/jem/dotfiles/vms/docs/SEED-INSTALL-CHECKLIST.md)
 is the exact manual runbook for the live installer path. Treat this README as
 the canonical operator guide and the checklist as the precise recovery or
 factory-bootstrap procedure.
