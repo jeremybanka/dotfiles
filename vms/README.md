@@ -37,7 +37,7 @@ keeping the VM isolation model intact.
 - your `git` config
 - your `nushell` config
 - your `mise` config
-- implicit `mise` shims for non-interactive bash, plus full activation for interactive bash
+- clean shells that stay Nix-first while `mise`-backed tools are proxied through the scrubs dirty-runtime launcher
 - a writable `mise` cache under `/tmp` so sandboxed commands stay quiet
 - `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
 - hardened SSH defaults inside the guest
@@ -361,6 +361,24 @@ should be:
 2. decide whether to keep Lima-created users or move to `user: false`
 3. remove the unlock-script workaround if the seed owns the bootstrap user
 4. reassess `UsePAM = false` in [seed/base.nix](/Users/jem/dotfiles/vms/seed/base.nix)
+
+## Validation Baseline
+
+The default validation pass for scrubs guest changes is intentionally simple:
+prove that a fresh guest still survives a repeat bootstrap without losing
+operator access.
+
+For any new or materially changed guest flow:
+
+1. create a fresh throwaway guest
+2. confirm `limactl shell <instance>` opens an interactive shell
+3. run `just bootstrap <instance>` again on that same guest
+4. confirm `limactl shell <instance>` still opens an interactive shell
+
+This does not replace workload-specific validation, but it is the baseline
+guardrail for idempotence. A guest that cannot survive re-bootstrap without
+locking out `limactl shell` is not healthy enough to treat as upgradable in
+place.
 
 ## Troubleshooting
 
