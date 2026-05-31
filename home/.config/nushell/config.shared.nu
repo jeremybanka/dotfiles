@@ -1,5 +1,4 @@
 use ~/.config/nushell/kolo.nu *
-use ~/.config/nushell/mise.nu
 use ~/.config/nushell/ni-completions.nu *
 use ~/.config/nushell/vite-plus.nu *
 

@@ -37,7 +37,7 @@ keeping the VM isolation model intact.
 - your `git` config
 - your `nushell` config
 - your `mise` config
-- implicit `mise` shims for non-interactive bash, plus full activation for interactive bash
+- clean shells that stay Nix-first while `mise`-backed tools are proxied through the scrubs dirty-runtime launcher
 - a writable `mise` cache under `/tmp` so sandboxed commands stay quiet
 - `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
 - hardened SSH defaults inside the guest
@@ -362,6 +362,24 @@ should be:
 3. remove the unlock-script workaround if the seed owns the bootstrap user
 4. reassess `UsePAM = false` in [seed/base.nix](/Users/jem/dotfiles/vms/seed/base.nix)
 
+## Validation Baseline
+
+The default validation pass for scrubs guest changes is intentionally simple:
+prove that a fresh guest still survives a repeat bootstrap without losing
+operator access.
+
+For any new or materially changed guest flow:
+
+1. create a fresh throwaway guest
+2. confirm `limactl shell <instance>` opens an interactive shell
+3. run `just bootstrap <instance>` again on that same guest
+4. confirm `limactl shell <instance>` still opens an interactive shell
+
+This does not replace workload-specific validation, but it is the baseline
+guardrail for idempotence. A guest that cannot survive re-bootstrap without
+locking out `limactl shell` is not healthy enough to treat as upgradable in
+place.
+
 ## Troubleshooting
 
 If Lima stalls before SSH comes up, check the serial log:
@@ -423,6 +441,11 @@ shim-name override:
 - `guest.nix` is copied into the guest payload as `modules/project-shim.nix`
 - optional `lima.yaml` currently supports a `portForwards` list that gets
   appended to the generated Lima `portForwards` list for that VM only
+- optional `sandbox-definition.sh` replaces the guest's dirty-space sandbox
+  definition; it can source the base artifact at
+  `~/.local/libexec/scrubs/sandbox-default-definition.sh` and then adjust the
+  declared helper commands, mounted system facts, or other guest-wide sandbox
+  settings
 
 This keeps project-specific accommodations in version control without baking
 them into the reusable base image.

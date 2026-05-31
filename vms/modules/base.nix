@@ -79,7 +79,6 @@ in
 
   environment.systemPackages = with pkgs; [
     bubblewrap
-    bun
     carapace
     codex
     curl
@@ -92,7 +91,6 @@ in
     jq
     lazygit
     unstablePkgs.mise
-    ni
     nushell
     ripgrep
     tokei

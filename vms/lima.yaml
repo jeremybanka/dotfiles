@@ -82,7 +82,7 @@ provision:
       for entry in "${cidata_mnt}"/*; do
         base="$(basename "${entry}")"
         case "${base}" in
-          "boot.${UNAME}")
+          "boot.${UNAME}"|boot.sh)
             ;;
           *)
             ln -sf "${entry}" "${patched_cidata_mnt}/${base}"

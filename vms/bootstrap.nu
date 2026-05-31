@@ -48,17 +48,20 @@ def resolve-project-shim [projects_dir: string, shim_name: string] {
   if ($shim_dir | path exists) {
     let guest_module = ($shim_dir | path join "guest.nix")
     let lima_config = ($shim_dir | path join "lima.yaml")
+    let sandbox_definition = ($shim_dir | path join "sandbox-definition.sh")
 
     {
       source: $shim_dir
       guest_module: (if ($guest_module | path exists) { $guest_module } else { "" })
       lima_config: (if ($lima_config | path exists) { $lima_config } else { "" })
+      sandbox_definition: (if ($sandbox_definition | path exists) { $sandbox_definition } else { "" })
     }
   } else {
     {
       source: ""
       guest_module: ""
       lima_config: ""
+      sandbox_definition: ""
     }
   }
 }
@@ -147,6 +150,7 @@ def main [
   mkdir $key_dir
   mkdir ($payload_dir | path join "home" ".config" "nushell")
   mkdir ($payload_dir | path join "home" ".config" "mise")
+  mkdir ($payload_dir | path join "home" ".local" "libexec" "scrubs")
   mkdir ($payload_dir | path join "scrubs" "modules")
   mkdir ($payload_dir | path join "scrubs" "projects")
 
@@ -166,8 +170,19 @@ def main [
 
   cp ($repo_root | path join "home" ".gitconfig") ($payload_dir | path join "home" ".gitconfig")
   cp ($repo_root | path join "home" ".config" "mise" "config.toml") ($payload_dir | path join "home" ".config" "mise" "config.toml")
+  cp ($vms_dir | path join "templates" "profile") ($payload_dir | path join "home" ".profile")
   cp ($vms_dir | path join "templates" "bash_profile") ($payload_dir | path join "home" ".bash_profile")
   cp ($vms_dir | path join "templates" "bashrc") ($payload_dir | path join "home" ".bashrc")
+  cp ($vms_dir | path join "templates" "install-dirty-tools.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools.sh")
+  cp ($vms_dir | path join "templates" "dirty-exec.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "dirty-exec.sh")
+  cp ($vms_dir | path join "templates" "mise-wrapper.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "mise-wrapper.sh")
+  cp ($vms_dir | path join "templates" "sandbox-default-definition.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-default-definition.sh")
+  let sandbox_definition_source = if $project_shim.sandbox_definition == "" {
+    ($vms_dir | path join "templates" "sandbox-definition.sh")
+  } else {
+    $project_shim.sandbox_definition
+  }
+  cp $sandbox_definition_source ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-definition.sh")
 
   for file_name in [
     "carapace-init.nu"
@@ -180,7 +195,6 @@ def main [
     "env.darwin.nu"
     "env.linux.nu"
     "kolo.nu"
-    "mise.nu"
     "ni-completions.nu"
     "vite-plus.nu"
   ] {
