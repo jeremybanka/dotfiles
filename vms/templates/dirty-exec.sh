@@ -88,10 +88,16 @@ fi
 MISE_BIN="/run/current-system/sw/bin/mise"
 BWRAP_BIN="/run/current-system/sw/bin/bwrap"
 NIX_STORE_BIN="/run/current-system/sw/bin/nix-store"
+SCRUBS_DIR="${HOME}/.local/libexec/scrubs"
+SANDBOX_DEFINITION="${SCRUBS_DIR}/sandbox-definition.sh"
 
 [[ -x "${MISE_BIN}" ]] || die "missing clean mise binary at ${MISE_BIN}"
 [[ -x "${BWRAP_BIN}" ]] || die "missing bubblewrap binary at ${BWRAP_BIN}"
 [[ -x "${NIX_STORE_BIN}" ]] || die "missing nix-store binary at ${NIX_STORE_BIN}"
+[[ -f "${SANDBOX_DEFINITION}" ]] || die "missing sandbox definition at ${SANDBOX_DEFINITION}"
+
+# shellcheck source=/dev/null
+source "${SANDBOX_DEFINITION}"
 
 resolved_target="$("${MISE_BIN}" which "${command_name}" 2>/dev/null || true)"
 [[ -n "${resolved_target}" ]] || die "${command_name} is not configured in mise for this directory"
@@ -156,6 +162,10 @@ fi
 declare -a store_ro_binds=()
 declare -A seen_store_paths=()
 declare -a helper_input_paths=()
+declare -a sandbox_dirs=()
+declare -A seen_sandbox_dirs=()
+declare -a extra_ro_binds=()
+declare -a helper_file_binds=()
 
 append_cached_store_path() {
   local closure_path="$1"
@@ -177,11 +187,33 @@ collect_helper_input_if_present() {
   helper_input_paths+=("${resolved_helper_path}")
 }
 
-collect_helper_input_if_present "${helper_root}/bin/bash"
-collect_helper_input_if_present "${helper_root}/usr/bin/env"
-collect_helper_input_if_present "${helper_root}/usr/bin/git"
-collect_helper_input_if_present "${helper_root}/usr/bin/mise"
-collect_helper_input_if_present "${helper_root}/etc/ssl/certs/ca-bundle.crt"
+append_sandbox_dir() {
+  local dir_path="$1"
+
+  [[ -n "${dir_path}" ]] || return 0
+  if [[ -z "${seen_sandbox_dirs["$dir_path"]+x}" ]]; then
+    seen_sandbox_dirs["$dir_path"]=1
+    sandbox_dirs+=(--dir "${dir_path}")
+  fi
+}
+
+append_parent_dirs() {
+  local path_value="$1"
+  local current_parent
+
+  current_parent="$(dirname "${path_value}")"
+  while [[ "${current_parent}" != "/" && "${current_parent}" != "." ]]; do
+    append_sandbox_dir "${current_parent}"
+    current_parent="$(dirname "${current_parent}")"
+  done
+}
+
+if [[ -d "${helper_root}" ]]; then
+  while IFS= read -r helper_entry; do
+    collect_helper_input_if_present "${helper_entry}"
+  done < <(find "${helper_root}" -mindepth 1 \( -type f -o -type l \) | sort)
+fi
+
 collect_helper_input_if_present "${guest_loader}"
 collect_helper_input_if_present "${nix_ld}"
 collect_helper_input_if_present "${nix_ld_library_path}"
@@ -227,14 +259,29 @@ if [[ -d "${mise_state_dir}" ]]; then
   mise_state_bind=(--ro-bind "${mise_state_dir}" "/home/${current_user}/.local/state/mise")
 fi
 
-declare -a localtime_bind=()
-if [[ -e /etc/localtime ]]; then
-  localtime_bind=(--ro-bind /etc/localtime /etc/localtime)
-fi
+for dir_path in "${SCRUBS_DIR_PATHS[@]}"; do
+  append_sandbox_dir "${dir_path}"
+done
 
-declare -a sys_bind=()
-if [[ -d /sys ]]; then
-  sys_bind=(--ro-bind /sys /sys)
+for helper_file in "${SCRUBS_HELPER_COPY_FILES[@]}" "${SCRUBS_HELPER_LINK_FILES[@]}"; do
+  [[ -e "${helper_root}${helper_file}" ]] || continue
+  append_parent_dirs "${helper_file}"
+  helper_file_binds+=(--ro-bind "${helper_root}${helper_file}" "${helper_file}")
+done
+
+for bind_path in "${SCRUBS_RO_BIND_PATHS[@]}"; do
+  [[ -e "${bind_path}" ]] || continue
+  if [[ -d "${bind_path}" ]]; then
+    append_sandbox_dir "${bind_path}"
+  else
+    append_parent_dirs "${bind_path}"
+  fi
+  extra_ro_binds+=(--ro-bind "${bind_path}" "${bind_path}")
+done
+
+declare -a proc_bind=()
+if [[ "${SCRUBS_ENABLE_PROC}" == "1" ]]; then
+  proc_bind=(--proc /proc)
 fi
 
 exec "${BWRAP_BIN}" \
@@ -247,27 +294,17 @@ exec "${BWRAP_BIN}" \
   --unshare-uts \
   --unshare-cgroup-try \
   --tmpfs / \
-  --proc /proc \
+  "${proc_bind[@]}" \
   --dir /dev \
   --dev-bind /dev /dev \
-  --dir /usr \
-  --dir /etc \
-  --dir /home \
+  "${sandbox_dirs[@]}" \
   --dir "/home/${current_user}" \
-  --dir /sys \
-  --dir /run \
-  --dir /tmp \
   --ro-bind /lib /lib \
   --bind /tmp /tmp \
   --ro-bind "${helper_root}/bin" /bin \
   --ro-bind "${helper_root}/usr/bin" /usr/bin \
-  --ro-bind "${helper_root}/etc/passwd" /etc/passwd \
-  --ro-bind "${helper_root}/etc/group" /etc/group \
-  --ro-bind "${helper_root}/etc/nsswitch.conf" /etc/nsswitch.conf \
-  --ro-bind /etc/hosts /etc/hosts \
-  --ro-bind /etc/resolv.conf /etc/resolv.conf \
-  "${localtime_bind[@]}" \
-  "${sys_bind[@]}" \
+  "${helper_file_binds[@]}" \
+  "${extra_ro_binds[@]}" \
   --bind "${fake_home}" "/home/${current_user}" \
   --ro-bind "${mise_root}" "/home/${current_user}/.local/share/mise" \
   --ro-bind "${mise_config_dir}" "/home/${current_user}/.config/mise" \
