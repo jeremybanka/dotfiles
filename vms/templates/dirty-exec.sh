@@ -12,7 +12,7 @@ write_exec_wrapper() {
 
   mkdir -p "$(dirname "${wrapper_path}")"
   rm -f "${wrapper_path}"
-  cat > "${wrapper_path}" <<EOF
+  cat > "${wrapper_path}" << EOF
 #!/bin/sh
 exec '${target_path}' "\$@"
 EOF
@@ -44,7 +44,7 @@ build_runtime_cache() {
     write_exec_wrapper "${resolved_shim_target}" "${cache_home_bin}/${shim_name}"
   done
 
-  cat > "${cache_home}/.gitconfig" <<'EOF'
+  cat > "${cache_home}/.gitconfig" << 'EOF'
 [user]
   name = Scrubs Dirty
   email = dirty@example.invalid
@@ -72,7 +72,7 @@ build_helper_closure_cache() {
         cache_seen_paths["$closure_path"]=1
         printf '%s\n' "${closure_path}" >> "${cache_tmp_file}"
       fi
-    done < <("${NIX_STORE_BIN}" -qR "${helper_path}" 2>/dev/null)
+    done < <("${NIX_STORE_BIN}" -qR "${helper_path}" 2> /dev/null)
   done
 
   mv "${cache_tmp_file}" "${cache_file}"
@@ -99,12 +99,12 @@ SANDBOX_DEFINITION="${SCRUBS_DIR}/sandbox-definition.sh"
 # shellcheck source=/dev/null
 source "${SANDBOX_DEFINITION}"
 
-resolved_target="$("${MISE_BIN}" which "${command_name}" 2>/dev/null || true)"
+resolved_target="$("${MISE_BIN}" which "${command_name}" 2> /dev/null || true)"
 [[ -n "${resolved_target}" ]] || die "${command_name} is not configured in mise for this directory"
 
 current_user="$(id -un)"
 helper_root="${HOME}/.local/share/scrubs/helper-root"
-project_root="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || pwd -P)"
+project_root="$(git -C "$PWD" rev-parse --show-toplevel 2> /dev/null || pwd -P)"
 working_dir="$(pwd -P)"
 mise_root="${HOME}/.local/share/mise"
 mise_shims="${mise_root}/shims"
@@ -136,7 +136,7 @@ if [[ -d "${mise_shims}" ]]; then
   while IFS= read -r shim_path; do
     shim_name="$(basename "${shim_path}")"
     [[ "${shim_name}" == "mise" ]] && continue
-    resolved_shim_target="$("${MISE_BIN}" which "${shim_name}" 2>/dev/null || true)"
+    resolved_shim_target="$("${MISE_BIN}" which "${shim_name}" 2> /dev/null || true)"
     [[ -n "${resolved_shim_target}" ]] || continue
     active_tool_specs+=("${shim_name}=${resolved_shim_target}")
   done < <(find "${mise_shims}" -maxdepth 1 -type l | sort)
@@ -149,8 +149,8 @@ runtime_cache_key="$(
     "${runtime_cache_version}" \
     "${project_root}" \
     "${active_tool_specs[@]}" \
-  | cksum \
-  | awk '{print $1 "-" $2}'
+    | cksum \
+    | awk '{print $1 "-" $2}'
 )"
 runtime_cache_dir="${runtime_cache_root}/${runtime_cache_key}"
 fake_home="${runtime_cache_dir}/home"
@@ -224,8 +224,8 @@ helper_closure_cache_key="$(
   printf '%s\n' \
     "${helper_closure_cache_version}" \
     "${helper_input_paths[@]}" \
-  | cksum \
-  | awk '{print $1 "-" $2}'
+    | cksum \
+    | awk '{print $1 "-" $2}'
 )"
 helper_closure_cache_file="${helper_closure_cache_root}/${helper_closure_cache_key}.paths"
 
@@ -252,7 +252,10 @@ if [[ -d "${node_modules_bin}" ]]; then
 fi
 path_entries+=("/home/${current_user}/.local/bin" "${mise_shims}" /bin /usr/bin)
 
-dirty_path="$(IFS=:; echo "${path_entries[*]}")"
+dirty_path="$(
+  IFS=:
+  echo "${path_entries[*]}"
+)"
 
 declare -a mise_state_bind=()
 if [[ -d "${mise_state_dir}" ]]; then

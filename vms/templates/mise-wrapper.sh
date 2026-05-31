@@ -10,7 +10,7 @@ status=$?
 set -e
 
 if [ "${status}" -eq 0 ] && [ -x "${refresh_script}" ]; then
-  "${refresh_script}" >/dev/null 2>&1 || true
+  "${refresh_script}" > /dev/null 2>&1 || true
 fi
 
 exit "${status}"

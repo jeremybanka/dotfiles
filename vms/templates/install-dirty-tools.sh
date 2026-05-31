@@ -50,7 +50,7 @@ resolve_command_path() {
     return 0
   fi
 
-  resolved="$(command -v "$command_name" 2>/dev/null || true)"
+  resolved="$(command -v "$command_name" 2> /dev/null || true)"
   case "$resolved" in
     /*)
       printf '%s\n' "$resolved"
@@ -80,7 +80,7 @@ done
 
 for proxy_path in "${proxy_dir}"/*; do
   [[ -e "${proxy_path}" ]] || continue
-  if [[ "$(readlink "${proxy_path}" 2>/dev/null || true)" == "${dirty_exec}" ]]; then
+  if [[ "$(readlink "${proxy_path}" 2> /dev/null || true)" == "${dirty_exec}" ]]; then
     rm -f "${proxy_path}"
   fi
 done

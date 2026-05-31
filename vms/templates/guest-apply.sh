@@ -35,8 +35,7 @@ fi
 
 if [ -f "$HOME/.bashrc" ] \
   && ! grep -Fq 'SCRUBS_BASHRC' "$HOME/.bashrc" \
-  && ! is_legacy_scrubs_bashrc "$HOME/.bashrc"
-then
+  && ! is_legacy_scrubs_bashrc "$HOME/.bashrc"; then
   cp "$HOME/.bashrc" "$HOME/.bashrc.pre-scrubs"
 fi
 if [ -f "$HOME/.profile" ] && ! grep -Fq 'SCRUBS_PROFILE' "$HOME/.profile"; then
