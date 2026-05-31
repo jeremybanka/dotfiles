@@ -1,0 +1,42 @@
+issue(id="0005" status="open")
+  title Refactor scrubs sandbox policy toward Nushell and declarative artifacts
+  user-story
+    as-a scrubs maintainer evolving the dirty-runtime system
+    i-want the sandbox policy layer to be more declarative and more naturally authored in Nushell where practical
+    so-that the current working shell-heavy implementation can become easier to inspect, override, and maintain without destabilizing bootstrap-time safety
+  premise.
+    The current scrubs dirty-runtime implementation is working well, but it now
+    relies on a meaningful amount of shell code. That is acceptable for the
+    bootstrap path where `/bin/sh` remains the safest contract, yet some of the
+    current shell surface is really policy or data rather than inherently
+    POSIX-only logic. In particular, the guest-wide sandbox definition is a
+    declared artifact conceptually, but today it is still expressed as sourced
+    shell arrays and helper variables because the launcher and installer
+    consume it directly.
+
+    A cleaner long-term shape would preserve POSIX shell for the narrow parts
+    of scrubs that truly need to run before Nushell can be assumed, while
+    moving the sandbox policy layer toward a more declarative artifact that can
+    be authored or generated with Nushell. That would improve operator
+    visibility, make project-shim overrides easier to reason about, and reduce
+    the amount of imperative shell used for policy expression without forcing a
+    risky all-at-once rewrite of the runtime launcher.
+  acceptance-criteria
+    criterion Scrubs has a documented split between bootstrap-time code that should remain POSIX shell and runtime policy that is a candidate for Nushell or another declarative representation.
+    criterion The guest sandbox definition is no longer coupled exclusively to sourced shell arrays, and there is a clearer artifact boundary for helper commands, copied files, read-only binds, writable paths, and ambient Linux facts.
+    criterion Project shims can continue to provide guest-specific sandbox overrides through the resulting artifact model without becoming more fragile than the current shell-based override path.
+    criterion Any migration path preserves the current working dirty-runtime behavior, including proxy-shim generation, helper-root assembly, and repeat bootstrap survivability.
+    criterion The work explicitly avoids rewriting bootstrap-critical scripts into Nushell unless the new contract is shown to be at least as reliable in early-boot and recovery scenarios.
+  review-items
+    item(status="open").
+      Decide whether the best intermediate form is Nushell-authored data,
+      generated shell artifacts, a plain data file format, or some combination
+      of those approaches.
+    item(status="open").
+      Identify whether `install-dirty-tools.sh` should migrate before
+      `dirty-exec.sh`, since the policy layer likely offers better leverage
+      than a full launcher rewrite.
+    item(status="open").
+      Keep `guest-apply.sh` and the seed installer under explicit scrutiny
+      before attempting any Nushell migration there; they likely remain better
+      served by POSIX shell for the foreseeable future.

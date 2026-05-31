@@ -1,0 +1,53 @@
+issue(id="0006" status="review")
+  title Explore porting notes and task files to Pug
+  user-story
+    as-a maintainer working across Markdown notes and Pug task files
+    i-want to finish validating the new split between selectively retained Markdown docs and Pug-authored task records
+    so-that the repo can keep raw-readable prose where it helps while standardizing structured work items around a more ergonomic shape
+  premise.
+    The repo now keeps human-authored prose notes as Markdown where that still
+    feels like the best raw-readable format, while structured work items have
+    been ported to Pug. That is already a meaningful simplification for task
+    authoring, but it still leaves an open question about how broadly Pug
+    should spread beyond the task system and how much additional tooling or
+    workflow support the new shape deserves.
+
+    The task-file side of the migration is no longer hypothetical. The Pug
+    task shape is readable enough in raw form that it now serves as the
+    canonical workflow artifact. The remaining exploration is narrower:
+    whether selected Markdown notes should also move, what conventions should
+    govern those decisions, and how diffs, editor ergonomics, formatting, and
+    agent ingestion behave once Pug is part of normal authoring.
+
+    With the likely exception of README-style files, the purpose of these
+    notes is not primarily to render them into another presentation layer. The
+    raw files themselves are the product: humans read them directly in editors
+    and terminals, and agents ingest them as source material. That means a Pug
+    proposal should be treated skeptically if it depends on a render step for
+    ordinary use, weakens raw-file readability, or introduces tooling that
+    makes the canonical text less accessible than today's Markdown and XML.
+  acceptance-criteria
+    criterion The repo has a written evaluation of Pug as a source format for note-like documents in a world where task records are already canonically authored in Pug.
+    criterion The evaluation compares at least three note strategies: keep Markdown as-is, use Pug only for selected note classes, or adopt a broader Pug-centered note model, while treating render-dependent workflows as a poor fit outside README-like exceptions.
+    criterion The exploration identifies how metadata, headings, lists, code blocks, and other note-oriented structure would be represented without losing important readability or validation properties.
+    criterion The work evaluates raw-file readability and agent-ingestion ergonomics as first-class requirements, including whether a maintainer can comfortably read and edit representative files without compiling or previewing them.
+    criterion The work includes a concrete proposal for how review ergonomics, formatting, and automation would function, including whether `dprint` can format the chosen source shape directly or would need new plugins, custom tooling, or an intentional gap.
+    criterion The exploration records whether Pug has solid syntax-highlighting and editing support in the editors we actually favor, and treats weak editor support as a meaningful strike against migration.
+    criterion If broader note migration still looks viable, the task leaves behind a narrow pilot plan for one representative Markdown note before any wider conversion is attempted.
+  review-items
+    item(status="open").
+      Decide whether Pug should remain specific to structured task records or
+      expand into selected note types where the raw-reading experience stays
+      strong enough.
+    item(status="open").
+      Compare raw-file readability carefully, since the remaining question is
+      about notes that are meant to be read directly by humans and ingested
+      directly by agents.
+    item(status="open").
+      Check formatter and editor support early, especially whether `dprint`
+      can participate and whether favored editors offer dependable syntax
+      highlighting and editing behavior for Pug.
+    item(status="open").
+      Identify the smallest realistic note pilot so the evaluation can test
+      author experience, diff quality, automation burden, and ingestion
+      ergonomics before touching the broader corpus.

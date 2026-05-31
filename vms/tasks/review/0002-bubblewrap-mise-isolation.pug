@@ -1,12 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<issue id="0002" status="review">
-  <title>Isolate mise-backed tools behind bubblewrap in scrubs guests</title>
-  <user-story>
-    <as-a>scrubs VM user with clean guest-local credentials</as-a>
-    <i-want>mise-backed tools and package-manager workloads to run inside a constrained bubblewrap boundary by default</i-want>
-    <so-that>dirty JavaScript and Rust workflows can use project tooling without gaining ambient access to clean credentials, unrelated files, or arbitrary clean executables</so-that>
-  </user-story>
-  <premise>
+issue(id="0002" status="review")
+  title Isolate mise-backed tools behind bubblewrap in scrubs guests
+  user-story
+    as-a scrubs VM user with clean guest-local credentials
+    i-want mise-backed tools and package-manager workloads to run inside a constrained bubblewrap boundary by default
+    so-that dirty JavaScript and Rust workflows can use project tooling without gaining ambient access to clean credentials, unrelated files, or arbitrary clean executables
+  premise.
     The working model is: clean space is the Nix store plus guest-local
     credential-bearing configuration, while dirty space is the `mise` store
     and the developer tooling reached through it. Clean space may launch dirty
@@ -23,33 +21,29 @@
     from clean space. `git` is a special case: some dirty workflows need it,
     but it should run there with fake or stripped credentials rather than
     inheriting the clean identity.
-  </premise>
-  <acceptance-criteria>
-    <criterion>Clean interactive shells no longer ambiently activate `mise`, and direct use of known dirty commands fails closed unless it goes through the scrubs launcher.</criterion>
-    <criterion>A proxy-shim or equivalent dispatcher preserves normal command names such as `node`, `pnpm`, `bun`, and `cargo` while executing the real `mise`-managed tool inside bubblewrap.</criterion>
-    <criterion>Dirty execution receives a synthetic home plus only the project working tree, `/tmp`, and other explicitly approved writable paths.</criterion>
-    <criterion>Dirty execution cannot read the real guest credential stores for `gh`, `codex`, SSH, or other clean-space identities.</criterion>
-    <criterion>Dirty execution can reach only a curated helper-tool subset from clean space rather than the full clean profile.</criterion>
-    <criterion>At least one workflow that shells out to `git` works in dirty space with fake or stripped credentials and without access to the clean identity.</criterion>
-    <criterion>The default user experience still supports ordinary command entry and completions for the wrapped tools without requiring users to learn alternate command names.</criterion>
-  </acceptance-criteria>
-  <review-items>
-    <item status="covered">
+  acceptance-criteria
+    criterion Clean interactive shells no longer ambiently activate `mise`, and direct use of known dirty commands fails closed unless it goes through the scrubs launcher.
+    criterion A proxy-shim or equivalent dispatcher preserves normal command names such as `node`, `pnpm`, `bun`, and `cargo` while executing the real `mise`-managed tool inside bubblewrap.
+    criterion Dirty execution receives a synthetic home plus only the project working tree, `/tmp`, and other explicitly approved writable paths.
+    criterion Dirty execution cannot read the real guest credential stores for `gh`, `codex`, SSH, or other clean-space identities.
+    criterion Dirty execution can reach only a curated helper-tool subset from clean space rather than the full clean profile.
+    criterion At least one workflow that shells out to `git` works in dirty space with fake or stripped credentials and without access to the clean identity.
+    criterion The default user experience still supports ordinary command entry and completions for the wrapped tools without requiring users to learn alternate command names.
+  review-items
+    item(status="covered").
       The dirty guest habitat is now a first-class guest-wide sandbox
       definition rather than an implicit collection of shell-script decisions.
       The helper command basket, copied identity files, read-only ambient
       system facts, and `/proc` exposure now live in a declared artifact, and
       project shims may replace that artifact with a guest-specific sandbox
       definition when they need a different dirty-world view.
-    </item>
-    <item status="covered">
+    item(status="covered").
       The `wayforge` Bun regression established that the dirty habitat must be
       minimal but believable, not merely sparse. Validation covered the choice
       to expose `/proc`, `/sys`, `/etc/localtime`, and other low-sensitivity
       runtime facts so modern `mise` tooling can function without reopening the
       full clean environment.
-    </item>
-    <item status="covered">
+    item(status="covered").
       A re-bootstrap regression in the shell-startup path was introduced while
       this work was in flight, likely by this task or the Docker lifecycle work
       in `0001`. Interactive `limactl shell` sessions began crashing after a
@@ -58,23 +52,18 @@
       missing `SCRUBS_BASHRC` marker and the migration path for already-broken
       guests have both been fixed, and repeat bootstrap validation restored
       interactive shell access on the same guest across successive bootstraps.
-    </item>
-    <item status="open">
+    item(status="open").
       Continue reviewing whether the declared guest-wide habitat is still
       narrow enough as more runtimes are exercised, especially when new tools
       require additional ambient Linux facts or helper commands.
-    </item>
-    <item status="open">
+    item(status="open").
       Decide how dirty `git` should be provisioned, including fake identity,
       disabled credential helpers, and any narrowly scoped auth that specific
       tools may still require.
-    </item>
-    <item status="open">
+    item(status="open").
       Validate the boundary with a red-team style probe that confirms dirty
       commands can see the project and approved scratch space but not real
       clean-space credential directories or unrelated files. This is now being
       broken out into a dedicated follow-on audit task so it can wait on the
       design of a purpose-built "virtual burglar" harness.
-    </item>
-  </review-items>
-</issue>
+

@@ -1,12 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<issue id="0001" status="closed">
-  <title>Get Docker working reliably in scrubs guests</title>
-  <user-story>
-    <as-a>scrubs VM user</as-a>
-    <i-want>Docker-backed guests to start, stop, and re-bootstrap without losing Docker usability</i-want>
-    <so-that>I can rely on Docker-enabled scrubs environments for iterative project work instead of rebuilding them after lifecycle events</so-that>
-  </user-story>
-  <premise>
+issue(id="0001" status="closed")
+  title Get Docker working reliably in scrubs guests
+  user-story
+    as-a scrubs VM user
+    i-want Docker-backed guests to start, stop, and re-bootstrap without losing Docker usability
+    so-that I can rely on Docker-enabled scrubs environments for iterative project work instead of rebuilding them after lifecycle events
+  premise.
     A reusable Docker guest shim now exists and is shared by `systemd-ts`. The
     scrubs bootstrap flow now preserves project shim import paths, avoids the
     Lima boot scripts that mutate immutable NixOS `/etc` state, keeps
@@ -25,22 +23,19 @@
     refreshes existing instance `~/.lima/&lt;instance&gt;/lima.yaml` files so
     older guests can pick up the quieter host-side config on their next
     bootstrap without delete-and-recreate.
-  </premise>
-  <acceptance-criteria>
-    <criterion>Docker can be used on the guest to create and run containers successfully.</criterion>
-    <criterion>A reusable Docker-focused guest shim exists and can be used by Docker-dependent guests such as `systemd-ts`.</criterion>
-    <criterion>Guests using the Docker shim remain usable across the standard lifecycle: bootstrap, shutdown, startup, re-bootstrap, shutdown, and startup.</criterion>
-    <criterion>After that lifecycle, Lima SSH readiness succeeds and `limactl shell &lt;instance&gt;` remains functional.</criterion>
-  </acceptance-criteria>
-  <review-items>
-    <item status="covered">
+  acceptance-criteria
+    criterion Docker can be used on the guest to create and run containers successfully.
+    criterion A reusable Docker-focused guest shim exists and can be used by Docker-dependent guests such as `systemd-ts`.
+    criterion Guests using the Docker shim remain usable across the standard lifecycle: bootstrap, shutdown, startup, re-bootstrap, shutdown, and startup.
+    criterion After that lifecycle, Lima SSH readiness succeeds and `limactl shell &lt;instance&gt;` remains functional.
+  review-items
+    item(status="covered").
       A fresh guest without any Docker shim was exercised through the same
       ordered lifecycle on May 28, 2026: bootstrap, shutdown, startup,
       re-bootstrap, shutdown, and startup. The guest remained reachable
       through `limactl shell`, and `docker` was absent as expected on the
       non-Docker path.
-    </item>
-    <item status="covered">
+    item(status="covered").
       The Lima boot-script sanitize path no longer embeds `LIMA_CIDATA_*`
       references in scrubs-managed instance configs. On May 28, 2026, a fresh
       `cidata-clean` guest validated cleanly with `limactl validate` and
@@ -51,6 +46,4 @@
       after which its `~/.lima/nondocker-lifecycle/lima.yaml` no longer
       contained `LIMA_CIDATA` and `limactl shell nondocker-lifecycle -- true`
       was also quiet.
-    </item>
-  </review-items>
-</issue>
+
