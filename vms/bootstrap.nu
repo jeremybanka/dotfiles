@@ -195,7 +195,6 @@ def main [
     "env.darwin.nu"
     "env.linux.nu"
     "kolo.nu"
-    "mise.nu"
     "ni-completions.nu"
     "vite-plus.nu"
   ] {
