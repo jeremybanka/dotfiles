@@ -196,20 +196,61 @@ cp ./vms/settings.env.example ./vms/settings.env
 Then edit `vms/settings.env` to point at your generic NixOS image.
 
 If you want bootstrap to pre-provision clean-space auth for `gh` or `codex`,
-you can also point scrubs at macOS Keychain items:
+you can point scrubs at a GitHub Keychain item and, optionally, a host Codex
+auth bundle path:
 
 ```sh
 SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE=scrubs-gh-token
 SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT=github.com
-SCRUBS_CODEX_API_KEY_KEYCHAIN_SERVICE=scrubs-codex-api-key
-SCRUBS_CODEX_API_KEY_KEYCHAIN_ACCOUNT=default
+SCRUBS_CODEX_AUTH_JSON_PATH=~/.codex/auth.json
 ```
 
-Direct values are also supported through `SCRUBS_GH_TOKEN` and
-`SCRUBS_CODEX_API_KEY`, but the intended strong path is host-password-manager
-sourcing. When configured, bootstrap seals guest-local auth artifacts and
-installs clean wrappers that materialize those credentials only for the `gh`
-or `codex` process being launched.
+For GitHub, a direct `SCRUBS_GH_TOKEN` value is also supported, but the
+intended strong path is host-password-manager sourcing. For Codex, the strong
+path is the host ChatGPT login bundle from `~/.codex/auth.json` or an explicit
+`SCRUBS_CODEX_AUTH_JSON_PATH`; scrubs does not use API-key auth for Codex in
+the guest path. When configured, bootstrap seals guest-local auth artifacts
+and installs clean wrappers that materialize those credentials only for the
+`gh` or `codex` process being launched.
+
+The intended host-side flow is:
+
+```sh
+just scrubs-auth-set-gh
+codex login
+just scrubs-auth-status
+```
+
+GitHub uses the macOS Keychain entry:
+
+- service `scrubs-gh-token`, account `github.com`
+
+Codex uses the host ChatGPT auth bundle at:
+
+- `SCRUBS_CODEX_AUTH_JSON_PATH` if set
+- otherwise `~/.codex/auth.json`
+
+If you want a different GitHub account label, the set recipe accepts an
+override:
+
+```sh
+just scrubs-auth-set-gh account=my-gh-label
+```
+
+Then point `vms/settings.env` at the matching GitHub service/account pair
+before bootstrapping the guest. For Codex, make sure the host auth bundle
+exists by logging in on the host first.
+
+For rotation or cleanup:
+
+```sh
+just scrubs-auth-delete-gh
+just scrubs-auth-delete-codex
+```
+
+`just scrubs-auth-delete-codex` is advisory and reminds you to run
+`codex logout` on the host, because the host-side ChatGPT login bundle is the
+source of truth.
 
 The default local convention for active base images is:
 

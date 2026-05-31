@@ -84,6 +84,49 @@ def resolve-clean-secret [
   macos-keychain-secret $keychain_service $keychain_account
 }
 
+def validate-codex-auth-json [auth_json: string] {
+  let parsed = try {
+    $auth_json | from json
+  } catch {
+    error make {
+      msg: "Failed to parse Codex auth JSON."
+    }
+  }
+
+  let auth_mode = ($parsed.auth_mode? | default "")
+  let access_token = ($parsed.tokens.access_token? | default "")
+  let refresh_token = ($parsed.tokens.refresh_token? | default "")
+
+  if $auth_mode != "chatgpt" {
+    error make {
+      msg: $"Codex auth JSON must use ChatGPT auth mode, got ($auth_mode | default "<missing>")."
+    }
+  }
+
+  if $access_token == "" or $refresh_token == "" {
+    error make {
+      msg: "Codex auth JSON is missing the ChatGPT token bundle."
+    }
+  }
+}
+
+def resolve-codex-auth-json [settings: record] {
+  let configured_path = (get-setting $settings "SCRUBS_CODEX_AUTH_JSON_PATH" "")
+  let candidate_path = if $configured_path == "" {
+    ($env.HOME | path join ".codex" "auth.json")
+  } else {
+    $configured_path | path expand
+  }
+
+  if not ($candidate_path | path exists) {
+    return ""
+  }
+
+  let auth_json = (open --raw $candidate_path)
+  validate-codex-auth-json $auth_json
+  $auth_json
+}
+
 def write-sealed-secret [secret_value: string, key_path: string, ciphertext_path: string] {
   let plaintext_path = $"($ciphertext_path).plain"
 
@@ -281,13 +324,7 @@ def main [
       "SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE"
       "SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT"
   )
-  let codex_api_key = (
-    resolve-clean-secret
-      $settings
-      "SCRUBS_CODEX_API_KEY"
-      "SCRUBS_CODEX_API_KEY_KEYCHAIN_SERVICE"
-      "SCRUBS_CODEX_API_KEY_KEYCHAIN_ACCOUNT"
-  )
+  let codex_auth_json = (resolve-codex-auth-json $settings)
   let clean_secret_specs = [
     {
       name: "gh"
@@ -296,8 +333,8 @@ def main [
     }
     {
       name: "codex"
-      ciphertext_file: "codex-api-key.enc"
-      value: $codex_api_key
+      ciphertext_file: "codex-auth.json.enc"
+      value: $codex_auth_json
     }
   ]
   let enabled_clean_secrets = ($clean_secret_specs | where {|spec| $spec.value != "" })

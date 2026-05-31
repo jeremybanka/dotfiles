@@ -9,29 +9,39 @@ if [ ! -x "${real_codex}" ]; then
   exit 1
 fi
 
-if [ -n "${OPENAI_API_KEY:-}" ] || [ -n "${CODEX_ACCESS_TOKEN:-}" ]; then
-  exec "${real_codex}" "$@"
-fi
-
-if [ "${1-}" = "logout" ]; then
-  exec "${real_codex}" "$@"
-fi
-
-if [ "${1-}" = "login" ] && [ "${2-}" != "status" ]; then
+if [ -n "${OPENAI_API_KEY:-}" ] || [ -n "${CODEX_ACCESS_TOKEN:-}" ] || [ -n "${CODEX_HOME:-}" ]; then
   exec "${real_codex}" "$@"
 fi
 
 . "${lib_path}"
 
-ciphertext_path="$(scrubs_clean_secret_path codex-api-key.enc)"
+ciphertext_path="$(scrubs_clean_secret_path codex-auth.json.enc)"
 if ! scrubs_has_clean_secret "${ciphertext_path}"; then
   exec "${real_codex}" "$@"
 fi
 
-codex_api_key="$(scrubs_decrypt_clean_secret "${ciphertext_path}" | tr -d '\r\n')"
-if [ -z "${codex_api_key}" ]; then
-  echo "scrubs codex wrapper: decrypted an empty API key" >&2
+runtime_auth_dir="$(scrubs_runtime_auth_dir)"
+runtime_codex_home="${runtime_auth_dir}/codex-home"
+runtime_auth_json="${runtime_codex_home}/auth.json"
+guest_codex_config_dir="${HOME}/.codex"
+guest_codex_config="${guest_codex_config_dir}/config.toml"
+
+umask 077
+mkdir -p "${runtime_codex_home}"
+chmod 700 "${runtime_codex_home}"
+
+if [ -f "${guest_codex_config}" ]; then
+  ln -snf "${guest_codex_config}" "${runtime_codex_home}/config.toml"
+fi
+
+if ! scrubs_materialize_runtime_secret "${ciphertext_path}" "${runtime_auth_json}"; then
+  echo "scrubs codex wrapper: failed to materialize the sealed auth bundle" >&2
   exit 1
 fi
 
-OPENAI_API_KEY="${codex_api_key}" exec "${real_codex}" "$@"
+if ! grep -Eq '"auth_mode"[[:space:]]*:[[:space:]]*"chatgpt"' "${runtime_auth_json}"; then
+  echo "scrubs codex wrapper: runtime auth bundle is not using ChatGPT auth mode" >&2
+  exit 1
+fi
+
+CODEX_HOME="${runtime_codex_home}" exec "${real_codex}" "$@"
