@@ -1,0 +1,52 @@
+issue(id="0006" status="open")
+  title Explore porting notes and task files to Pug
+  user-story
+    as-a maintainer working across Markdown notes and XML task files
+    i-want to evaluate whether those authoring formats should move to Pug or a Pug-centered source model
+    so-that the repo can use a more uniform, ergonomic authoring shape without giving up clarity, structure, or reviewability
+  premise.
+    The repo currently keeps human-authored notes as Markdown documents and
+    structured work items as XML issue files. That split is workable, but it
+    means authoring conventions, tooling, and formatting differ between two
+    adjacent kinds of project documentation. A Pug-centered approach might
+    offer a more concise writing experience and a shared shape for both looser
+    notes and more structured task records.
+
+    This should begin as an exploration, not an assumed migration. Markdown
+    remains highly readable in raw form, XML remains explicit and easy to
+    validate structurally, and both are broadly tool-friendly. Any proposal to
+    port either notes or task files to Pug needs to explain what becomes
+    better, what becomes harder, and how diffs, editor ergonomics, formatting,
+    and agent ingestion would change.
+
+    With the likely exception of README-style files, the purpose of these
+    notes is not primarily to render them into another presentation layer. The
+    raw files themselves are the product: humans read them directly in editors
+    and terminals, and agents ingest them as source material. That means a Pug
+    proposal should be treated skeptically if it depends on a render step for
+    ordinary use, weakens raw-file readability, or introduces tooling that
+    makes the canonical text less accessible than today's Markdown and XML.
+  acceptance-criteria
+    criterion The repo has a written evaluation of Pug as a source format for both note-like documents and structured task records, including benefits, drawbacks, and non-goals.
+    criterion The evaluation compares at least three shapes: keep Markdown and XML as-is, use Pug only for one document class, or adopt a Pug-centered source model, while treating render-dependent workflows as a poor fit outside README-like exceptions.
+    criterion The exploration identifies how metadata, headings, lists, code blocks, and task-specific structured fields would be represented without losing important readability or validation properties.
+    criterion The work evaluates raw-file readability and agent-ingestion ergonomics as first-class requirements, including whether a maintainer can comfortably read and edit representative files without compiling or previewing them.
+    criterion The work includes a concrete proposal for how review ergonomics, formatting, and automation would function, including whether `dprint` can format the chosen source shape directly or would need new plugins, custom tooling, or an intentional gap.
+    criterion The exploration records whether Pug has solid syntax-highlighting and editing support in the editors we actually favor, and treats weak editor support as a meaningful strike against migration.
+    criterion If Pug looks viable, the task leaves behind a narrow pilot plan for one representative note file and one representative task file before any broad migration is attempted.
+  review-items
+    item(status="open").
+      Decide whether Pug would be a direct replacement format, an authoring
+      source for canonical raw files, or merely a templating aid for selected
+      structured documents where raw readability matters less.
+    item(status="open").
+      Compare raw-file readability carefully, since these notes and task files
+      are meant to be read directly by humans and ingested directly by agents.
+    item(status="open").
+      Check formatter and editor support early, especially whether `dprint`
+      can participate and whether favored editors offer dependable syntax
+      highlighting and editing behavior for Pug.
+    item(status="open").
+      Identify the smallest realistic pilot so the evaluation can test author
+      experience, diff quality, automation burden, and ingestion ergonomics
+      before touching the broader corpus.
