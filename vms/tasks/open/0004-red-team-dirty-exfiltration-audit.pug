@@ -1,0 +1,44 @@
+issue(id="0004" status="open")
+  title Red-team the dirty-runtime boundary against package-borne secret exfiltration
+  user-story
+    as-a scrubs VM user relying on the clean/dirty split
+    i-want a purpose-built adversarial audit of dirty package execution paths
+    so-that I can measure whether npm and cargo supply-chain malware would actually fail to reach or exfiltrate the clean-space secrets we care about
+  premise.
+    Scrubs now routes `mise`-backed tooling through a guest-wide bubblewrap
+    habitat with explicit helper commands and ambient Linux facts. That gives
+    us a meaningful defensive boundary, but our primary threat model is not a
+    friendly compatibility smoke test. It is package-borne malware arriving
+    through npm, pnpm, Bun, Cargo, or adjacent tooling and attempting to read
+    or exfiltrate secrets from the guest.
+
+    The right way to evaluate that boundary is not just ad hoc manual poking.
+    We need a purpose-built "virtual burglar" harness that behaves like a dirty
+    package with realistic exfiltration goals: enumerate accessible files,
+    inspect environment and helper tools, attempt access to clean credential
+    stores, try common subprocess pivots, and prove what can and cannot leave
+    the sandbox over the network. That harness does not exist yet, so this task
+    is intentionally blocked on designing it well.
+  acceptance-criteria
+    criterion Scrubs has a documented adversarial audit harness or equivalent repeatable test plan that models npm- and cargo-borne secret-exfiltration malware inside dirty execution.
+    criterion The audit explicitly targets the clean-space secrets and metadata that matter to the scrubs threat model, including GitHub CLI, Codex, SSH material, unrelated home-directory files, and other guest-local clean credentials.
+    criterion The audit captures both read-access attempts and exfiltration attempts, including what a dirty process can discover through environment variables, helper binaries, ambient Linux facts, network egress, and subprocess spawning.
+    criterion At least one validation run demonstrates what the harness can and cannot reach under the current sandbox policy, with concrete evidence that can be reviewed later.
+    criterion The resulting findings either confirm the current defensive posture against the primary threat model or produce concrete follow-on hardening issues.
+  review-items
+    item(status="open").
+      Design the "virtual burglar" harness so it is realistic enough to model
+      hostile package behavior without itself becoming an unreviewable blob of
+      ad hoc probes.
+    item(status="open").
+      Decide how much of the harness should live as code in the repo versus a
+      documented repeatable operator procedure, especially if some probes need
+      intentionally malicious behavior.
+    item(status="open").
+      Decide how the audit should account for network egress, since the primary
+      threat model is not just secret readability but successful exfiltration.
+    item(status="open").
+      Keep this task blocked until `0002` and `0003` are merged far enough that
+      the harness would be auditing the intended baseline rather than a moving
+      target.
+
