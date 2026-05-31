@@ -21,6 +21,26 @@ chmod 755 "$HOME/.local/libexec/scrubs/"*.sh
 ln -snf "$HOME/.local/libexec/scrubs/gh-clean.sh" "$HOME/.local/bin/gh"
 ln -snf "$HOME/.local/libexec/scrubs/codex-clean.sh" "$HOME/.local/bin/codex"
 
+configure_github_git_helper() {
+  gh_wrapper="$HOME/.local/bin/gh"
+  github_helper_key="credential.https://github.com.helper"
+  gist_helper_key="credential.https://gist.github.com.helper"
+
+  git config --global --unset-all "$github_helper_key" || true
+  git config --global --unset-all "$gist_helper_key" || true
+
+  if [ ! -x "$gh_wrapper" ] || [ ! -f "$HOME/.local/share/scrubs/clean-auth/gh-token.enc" ]; then
+    return 0
+  fi
+
+  git config --global --add "$github_helper_key" ""
+  git config --global --add "$github_helper_key" "!$gh_wrapper auth git-credential"
+  git config --global --add "$gist_helper_key" ""
+  git config --global --add "$gist_helper_key" "!$gh_wrapper auth git-credential"
+}
+
+configure_github_git_helper
+
 is_legacy_scrubs_bashrc() {
   file_path="$1"
   [ -f "$file_path" ] || return 1

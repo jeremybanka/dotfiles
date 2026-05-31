@@ -211,7 +211,11 @@ path is the host ChatGPT login bundle from `~/.codex/auth.json` or an explicit
 `SCRUBS_CODEX_AUTH_JSON_PATH`; scrubs does not use API-key auth for Codex in
 the guest path. When configured, bootstrap seals guest-local auth artifacts
 and installs clean wrappers that materialize those credentials only for the
-`gh` or `codex` process being launched.
+`gh` or `codex` process being launched. When sealed GitHub auth is present,
+scrubs also writes the Git credential helper configuration for
+`https://github.com` and `https://gist.github.com` so ordinary HTTPS Git
+operations flow through the scrubs `gh` wrapper rather than depending on
+`gh auth setup-git`.
 
 The intended host-side flow is:
 
