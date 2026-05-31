@@ -38,6 +38,7 @@ keeping the VM isolation model intact.
 - your `nushell` config
 - your `mise` config
 - clean shells that stay Nix-first while `mise`-backed tools are proxied through the scrubs dirty-runtime launcher
+- optional sealed clean-auth wrappers for `gh` and `codex` when host secrets are configured
 - a writable `mise` cache under `/tmp` so sandboxed commands stay quiet
 - `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
 - hardened SSH defaults inside the guest
@@ -193,6 +194,22 @@ cp ./vms/settings.env.example ./vms/settings.env
 ```
 
 Then edit `vms/settings.env` to point at your generic NixOS image.
+
+If you want bootstrap to pre-provision clean-space auth for `gh` or `codex`,
+you can also point scrubs at macOS Keychain items:
+
+```sh
+SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE=scrubs-gh-token
+SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT=github.com
+SCRUBS_CODEX_API_KEY_KEYCHAIN_SERVICE=scrubs-codex-api-key
+SCRUBS_CODEX_API_KEY_KEYCHAIN_ACCOUNT=default
+```
+
+Direct values are also supported through `SCRUBS_GH_TOKEN` and
+`SCRUBS_CODEX_API_KEY`, but the intended strong path is host-password-manager
+sourcing. When configured, bootstrap seals guest-local auth artifacts and
+installs clean wrappers that materialize those credentials only for the `gh`
+or `codex` process being launched.
 
 The default local convention for active base images is:
 
