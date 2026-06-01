@@ -1,0 +1,48 @@
+issue(id="0010" status="open")
+  title Support sealed host-sourced auth for clean modules such as gcloud
+  user-story
+    as-a scrubs VM user relying on clean-space cloud tooling
+    i-want tools such as gcloud to arrive with a strong non-interactive clean auth path
+    so-that I can use cloud CLIs immediately after bootstrap without reintroducing plaintext guest credentials or weakening the clean/dirty boundary
+  premise.
+    Scrubs already has a strong motivation for host-sourced clean auth: tools
+    that belong to clean space should not force ad hoc guest login ceremony,
+    and they should not encourage plaintext token persistence inside the guest.
+    That need is not limited to GitHub CLI and Codex. Clean modules such as
+    gcloud will also need an opinionated auth path if they are going to feel
+    product-ready inside scrubs.
+
+    gcloud is a particularly useful forcing function because its host-side auth
+    state is not a single obvious token file. The Cloud SDK can involve
+    configuration files, token databases, and application-default-credentials
+    material. The right solution therefore is probably not "copy the whole host
+    directory blindly," but rather a narrower sealed artifact plus a clean
+    wrapper that materializes only the runtime state the target process needs.
+
+    The broader design question is how scrubs should let clean modules opt into
+    auth support without mixing secret acquisition into the module definition
+    itself. The likely model is that bootstrap owns host discovery and sealing,
+    while the clean module or companion wrapper owns runtime materialization.
+  acceptance-criteria
+    criterion Scrubs has a documented policy for extending the sealed clean-auth model to clean modules beyond `gh` and Codex, with gcloud as the first concrete target.
+    criterion A fresh guest can use gcloud through a non-interactive clean auth path sourced from the host rather than guest-local login ceremony.
+    criterion Any guest-local persisted gcloud auth material is stored only as a sealed artifact or equivalent encrypted form, not as plaintext token files or copied host state.
+    criterion Runtime materialization for gcloud occurs only when the clean launch path is invoked, and the materialized plaintext state is scoped narrowly enough that ordinary dirty execution cannot discover or reuse it.
+    criterion The chosen design clearly separates module composition, host auth discovery, secret sealing, runtime wrapper behavior, and rotation or revocation guidance.
+    criterion At least one validation path demonstrates the intended gcloud behavior end to end, including evidence that clean-space auth works after bootstrap and that dirty execution cannot reach the sealed gcloud auth surface.
+  review-items
+    item(status="open").
+      Decide whether gcloud should consume a sealed minimal config bundle, a
+      sealed ADC-style credential artifact, or some other narrower host-sourced
+      representation.
+    item(status="open").
+      Decide how clean modules should declare that they need auth support
+      without turning Nix modules into secret-discovery code.
+    item(status="open").
+      Decide how much host Cloud SDK state is safe and necessary to copy, and
+      explicitly exclude caches, logs, or other incidental files that do not
+      belong in the guest auth surface.
+    item(status="open").
+      Make sure the design covers both CLI-shaped usage and application-default
+      credential usage where appropriate, without assuming they are the same
+      problem.

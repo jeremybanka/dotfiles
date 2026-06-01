@@ -1,0 +1,42 @@
+issue(id="0011" status="open")
+  title Support selectable clean auth profiles at bootstrap time
+  user-story
+    as-a scrubs user working across personal and organization contexts
+    i-want to choose which clean auth profile a guest should use at bootstrap time
+    so-that a fresh guest can come up with the right host-sourced credentials without forcing one token or account context to serve every repo
+  premise.
+    Scrubs currently has a strong clean-auth path for GitHub CLI and Codex:
+    host-side credentials are the source of truth, bootstrap seals guest-local
+    artifacts, and clean wrappers materialize those credentials only on demand.
+
+    That model works well for a single GitHub token, but GitHub fine-grained
+    personal access tokens are owner-scoped. In practice this means a token
+    that works well for personal repositories may not be the right token for
+    organization-owned repositories, especially when the organization requires
+    approval, limits repository scope, or expects the token to be created for
+    the organization as the resource owner.
+
+    Scrubs therefore needs a way to select among multiple host-side auth
+    sources when bootstrapping a guest. GitHub is the immediate motivation,
+    but the design should be open to other clean auth domains where a user may
+    legitimately want distinct personal, work, or environment-specific
+    profiles.
+  acceptance-criteria
+    criterion Scrubs has a documented model for multiple selectable clean auth profiles rather than assuming a single GitHub token source.
+    criterion A bootstrap-time path exists to choose which GitHub token source a guest should use, without requiring manual in-guest login ceremony.
+    criterion The selected profile remains compatible with the existing sealed clean-auth design, including `gh` usage and the HTTPS Git helper path.
+    criterion The configuration model is understandable for users who want at least personal and work profiles, including how host-side secrets are named and how a guest chooses between them.
+    criterion The design does not regress the default simple path for users who only need one clean auth profile.
+  review-items
+    item(status="open").
+      Decide whether profile selection should be driven by an explicit bootstrap
+      argument, a named shim-level default, a settings variable, or some
+      combination of those inputs.
+    item(status="open").
+      Decide how host-side secret naming should work for multiple GitHub token
+      profiles, including whether the naming scheme should be GitHub-specific
+      or part of a more general clean-auth profile abstraction.
+    item(status="open").
+      Decide how broadly the feature should generalize beyond GitHub, especially
+      for other clean-side auth domains that may also want distinct personal,
+      work, or environment-specific profiles.
