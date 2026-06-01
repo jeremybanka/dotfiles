@@ -1,44 +1,56 @@
 issue(id="0009" status="open")
-  title Introduce clean/dirty module naming and stack composition for scrubs guests
+  title Extract reusable clean/dirty modules with boundary-explicit naming
   user-story
-    as-a scrubs maintainer evolving guest customization
-    i-want guest extensions organized as boundary-aware modules composed into named stacks
-    so-that reusable guest behavior stays legible, safer to review, and easier to mix without burying too much policy inside one-off guest shims
+    as-a scrubs maintainer extracting reusable guest behavior
+    i-want guest extensions split into clearly named clean and dirty modules with a sharp boundary between reusable capability and project policy
+    so-that we can reuse tooling confidently, review trust-boundary intent quickly, and keep project-specific concerns inside project guest files rather than inside shared modules
   premise.
-    Scrubs currently has an extension layer for per-guest accommodations, but
-    its shape is still too close to ad hoc shims. That makes reuse possible,
-    yet it does not clearly communicate whether a given capability belongs to
-    clean space, dirty space, or a one-off guest policy. Over time, that
-    ambiguity risks pulling too much meaning into guest-local override files
-    and making the trust boundary harder to audit.
+    Scrubs currently has guest-extension points that can carry reusable logic,
+    but the shape is still too close to ad hoc shims. That makes it too easy
+    for a file to mix together trust-boundary meaning, host-specific bootstrap
+    concerns, and project-local policy without making those categories obvious
+    to the next reader.
 
-    The desired direction is a clearer composition model. Reusable building
-    blocks should be named for the space they support, such as
-    `clean-docker.nix`, `clean-gcloud.nix`, or `dirty-postgres.nix`, and
-    named stack directories should compose those modules into coherent guest
-    profiles. Bootstrap should then be able to bring up either a plain default
-    guest or a guest shaped by a selected stack, with an ergonomic lookup path
-    that does not require every repo to own the whole machine definition.
+    This issue is about extracting reusable modules as first-class building
+    blocks and naming them so their intent is visible immediately. Reusable
+    modules should use names such as `clean-gcloud.nix`,
+    `clean-docker.nix`, or `dirty-postgres.nix`, where the prefix tells the
+    reader which space the module serves.
+
+    A clean module is a ready-to-use cleanspace capability: it includes the
+    nixpkg intended to run in cleanspace and the configuration required for
+    that tool. If a tool does not need accompanying configuration, it does not
+    need a dedicated module and can remain just a package choice at the project
+    level.
+
+    A dirty module is not a dirty runtime application bundle. It is a reusable
+    module that installs the cleanspace foundations required to build software
+    that will live in dirtyspace. Its job is to provide build-time support,
+    not to smuggle project policy or project-owned runtime concerns into shared
+    scrubs base.
+
+    Reusable modules should stay neutral and should not refer to specific
+    projects. Any project-specific wiring, enablement, or policy belongs in
+    the relevant project `guest.nix` file, which can compose the reusable
+    clean and dirty modules it needs.
   acceptance-criteria
-    criterion Scrubs has a documented guest-extension model based on named stacks rather than loosely named per-project shims.
-    criterion Reusable guest modules are named to reflect the trust boundary they support, so clean-space and dirty-space responsibilities are explicit in the filename and intent.
-    criterion At least one composed stack demonstrates that multiple reusable modules can be combined without collapsing their trust-boundary meaning into a monolithic guest file.
-    criterion Bootstrap has a clear operator path for launching a plain default guest and for launching a guest from a selected stack.
-    criterion The resulting layout is documented well enough that future maintainers can add a new clean or dirty capability without guessing where it belongs.
+    criterion Scrubs has a documented reusable-module model that distinguishes shared clean modules, shared dirty modules, and project-specific `guest.nix` concerns.
+    criterion Reusable modules use boundary-explicit names such as `clean-...` and `dirty-...`, so the filename and intent immediately communicate which space the module serves.
+    criterion The definition of a clean module is documented: it packages a cleanspace tool together with any configuration needed to use that tool in cleanspace, and modules are not introduced for tools that need no configuration.
+    criterion The definition of a dirty module is documented: it provides the cleanspace foundations needed to build software that will live in dirtyspace, rather than bundling project-specific dirty runtime behavior.
+    criterion The resulting module layout and examples make it clear that reusable modules must not refer to particular projects, and that project-specific behavior belongs in the project's `guest.nix`.
+    criterion At least one example composition shows a project `guest.nix` consuming reusable clean and/or dirty modules without moving project policy into the shared modules themselves.
   review-items
     item(status="open").
-      Decide whether bootstrap should prefer implicit stack lookup by instance
-      name, require an explicit stack flag, or support both with a predictable
-      precedence rule.
-    item(status="open").
       Decide which existing guest customizations should graduate into reusable
-      modules first, and which ones should stay stack-local because they encode
-      product-specific policy rather than reusable capability.
+      `clean-*` or `dirty-*` modules first, and which ones should remain in
+      project `guest.nix` because they encode project-specific policy.
     item(status="open").
-      Decide whether any legacy shim path should remain as a temporary
-      compatibility layer during the migration or whether the rename should be
-      intentionally breaking and cleaned up in one pass.
+      Decide whether modules that only add a package and no configuration
+      should be prohibited outright or merely discouraged in documentation and
+      review.
     item(status="open").
-      Make sure the module naming scheme continues to optimize for boundary
-      readability rather than drifting into generic names that hide whether a
-      tool belongs to clean space or dirty space.
+      Make sure the naming scheme continues to optimize for boundary
+      readability and that dirty modules are consistently described as
+      cleanspace build-tooling for dirtyspace outputs, not as generic dirty
+      app bundles.
