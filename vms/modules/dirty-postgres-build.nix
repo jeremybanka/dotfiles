@@ -25,13 +25,11 @@ in
     perl
     pkg-config
     python3
-  ]
-  ++ buildDeps
-  ++ [
     (writeShellScriptBin "python" ''
       exec ${python3}/bin/python3 "$@"
     '')
-  ];
+  ]
+  ++ buildDeps;
 
   environment.variables = buildEnv;
   environment.sessionVariables = buildEnv;
