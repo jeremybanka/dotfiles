@@ -10,6 +10,52 @@ The intended layering is:
 - `scrubs-base` is your personal CLI home inside that substrate
 - project-specific tweaks can be layered on top later
 
+## Mission
+
+Scrubs is a macOS developer's last line of defense.
+
+Stowaway malware programs in the package ecosystems we use every day, such as
+`npm`, `jsr`, and `cargo`, should not reach our development machines, but they
+want to, and it is safer to assume that the smartest among them eventually
+will. When that happens, the goal is not to pretend the risk never existed.
+The goal is to keep the blast radius small.
+
+Scrubs exists to make that outcome practical: a convenient local developer
+environment, running at native speed, without handing ambient secrets to every
+tool you try. The working hope is simple: if hostile dependency code lands in
+your workflow, it should not get far.
+
+## Security Posture
+
+Scrubs is a boundary-hardening tool, not a perfect isolation story.
+
+Its current strong path is:
+
+- macOS remains the trusted thin client
+- clean-space credentials are host-sourced and sealed at rest in the guest
+- dirty package-manager workloads are pushed through an explicit sandboxed path
+- ordinary developer workflows stay convenient enough to be the default
+
+The current design is intentionally aimed at "stowaway malware in ordinary
+developer tooling should not reach very far," not at "a fully compromised guest
+account or guest root should still be unable to recover secrets."
+
+## Caveats
+
+Scrubs inherits meaningful trust and maintenance assumptions from the guest OS
+and package base it stands on.
+
+The important caveats today are:
+
+- scrubs inherits the security weaknesses of NixOS and the pace of the pinned
+  `nixpkgs` inputs it depends on
+- urgent upstream security fixes may not land on the cadence you would expect
+  from a faster-moving distro or package channel
+- the Nix store is clean space; binaries and libraries you install from it are
+  treated as trusted code in this model
+- the current sealed-secret design is strong against the dirty-runtime
+  boundary, but it is not meant to survive a full clean-guest compromise
+
 ## Why This Shape
 
 We explored two broad approaches:
@@ -38,6 +84,7 @@ keeping the VM isolation model intact.
 - your `nushell` config
 - your `mise` config
 - clean shells that stay Nix-first while `mise`-backed tools are proxied through the scrubs dirty-runtime launcher
+- optional sealed clean-auth wrappers for `gh` and `codex` when host secrets are configured
 - a writable `mise` cache under `/tmp` so sandboxed commands stay quiet
 - `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
 - hardened SSH defaults inside the guest
@@ -193,6 +240,67 @@ cp ./vms/settings.env.example ./vms/settings.env
 ```
 
 Then edit `vms/settings.env` to point at your generic NixOS image.
+
+If you want bootstrap to pre-provision clean-space auth for `gh` or `codex`,
+you can point scrubs at a GitHub Keychain item and, optionally, a host Codex
+auth bundle path:
+
+```sh
+SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE=scrubs-gh-token
+SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT=github.com
+SCRUBS_CODEX_AUTH_JSON_PATH=~/.codex/auth.json
+```
+
+For GitHub, a direct `SCRUBS_GH_TOKEN` value is also supported, but the
+intended strong path is host-password-manager sourcing. For Codex, the strong
+path is the host ChatGPT login bundle from `~/.codex/auth.json` or an explicit
+`SCRUBS_CODEX_AUTH_JSON_PATH`; scrubs does not use API-key auth for Codex in
+the guest path. When configured, bootstrap seals guest-local auth artifacts
+and installs clean wrappers that materialize those credentials only for the
+`gh` or `codex` process being launched. When sealed GitHub auth is present,
+scrubs also writes the Git credential helper configuration for
+`https://github.com` and `https://gist.github.com` so ordinary HTTPS Git
+operations flow through the scrubs `gh` wrapper rather than depending on
+`gh auth setup-git`.
+
+The intended host-side flow is:
+
+```sh
+just scrubs-auth-set-gh
+codex login
+just scrubs-auth-status
+```
+
+GitHub uses the macOS Keychain entry:
+
+- service `scrubs-gh-token`, account `github.com`
+
+Codex uses the host ChatGPT auth bundle at:
+
+- `SCRUBS_CODEX_AUTH_JSON_PATH` if set
+- otherwise `~/.codex/auth.json`
+
+If you want a different GitHub account label, the set recipe accepts an
+override:
+
+```sh
+just scrubs-auth-set-gh account=my-gh-label
+```
+
+Then point `vms/settings.env` at the matching GitHub service/account pair
+before bootstrapping the guest. For Codex, make sure the host auth bundle
+exists by logging in on the host first.
+
+For rotation or cleanup:
+
+```sh
+just scrubs-auth-delete-gh
+just scrubs-auth-delete-codex
+```
+
+`just scrubs-auth-delete-codex` is advisory and reminds you to run
+`codex logout` on the host, because the host-side ChatGPT login bundle is the
+source of truth.
 
 The default local convention for active base images is:
 
@@ -364,21 +472,38 @@ should be:
 
 ## Validation Baseline
 
-The default validation pass for scrubs guest changes is intentionally simple:
-prove that a fresh guest still survives a repeat bootstrap without losing
-operator access.
+The default validation pass for scrubs guest changes should now be treated as
+a small regression plan rather than a single idempotence smoke check.
 
-For any new or materially changed guest flow:
+The core questions are:
+
+1. can a fresh guest bootstrap cleanly
+2. can the same guest survive a repeat bootstrap without losing operator access
+3. do clean-space auth paths still work without interactive login ceremony
+4. does dirty space remain unable to discover or invoke the clean auth surface
+5. does ordinary HTTPS Git still work through the scrubs-owned `gh` helper path
+
+For any new or materially changed guest flow, the baseline pass is:
 
 1. create a fresh throwaway guest
 2. confirm `limactl shell <instance>` opens an interactive shell
-3. run `just bootstrap <instance>` again on that same guest
-4. confirm `limactl shell <instance>` still opens an interactive shell
+3. confirm clean-space `gh` and Codex auth are usable without interactive login
+4. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
+5. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
+6. confirm an HTTPS read operation such as `git ls-remote` succeeds
+7. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
+8. run `just bootstrap <instance>` again on that same guest
+9. confirm `limactl shell <instance>` still opens an interactive shell
 
-This does not replace workload-specific validation, but it is the baseline
-guardrail for idempotence. A guest that cannot survive re-bootstrap without
-locking out `limactl shell` is not healthy enough to treat as upgradable in
-place.
+This does not replace workload-specific validation, but it is the default
+guardrail for scrubs changes. A guest that cannot survive re-bootstrap without
+locking out `limactl shell`, or that silently regresses its clean auth or Git
+boundaries, is not healthy enough to treat as upgradable in place.
+
+GitHub-hosted Actions can cover only part of this plan. The real Apple
+Silicon `vz` path should be treated as a local or self-hosted Apple Silicon
+runner concern, because GitHub-hosted macOS arm64 runners do not support the
+nested virtualization story needed for the full scrubs runtime path.
 
 ## Troubleshooting
 

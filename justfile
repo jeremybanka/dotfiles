@@ -63,6 +63,32 @@ seed instance_name="scrubs-seed":
 vm-shell instance_name:
     limactl shell {{ instance_name }}
 
+scrubs-auth-status:
+    @gh_status=missing; \
+    codex_status=missing; \
+    codex_path="${SCRUBS_CODEX_AUTH_JSON_PATH:-$HOME/.codex/auth.json}"; \
+    security find-generic-password -s scrubs-gh-token -a github.com > /dev/null 2>&1 && gh_status=present; \
+    if [ -s "$codex_path" ] && grep -Eq '"auth_mode"[[:space:]]*:[[:space:]]*"chatgpt"' "$codex_path"; then codex_status=present; fi; \
+    echo "GitHub Keychain item (scrubs-gh-token/github.com): $gh_status"; \
+    echo "Codex auth bundle ($codex_path): $codex_status"
+
+scrubs-auth-set-gh account="github.com":
+    @read -s "?GitHub token for {{ account }}: " token; \
+    echo; \
+    security add-generic-password -U -s scrubs-gh-token -a {{ account }} -w "$token"; \
+    echo "Stored GitHub token in macOS Keychain as scrubs-gh-token/{{ account }}"
+
+scrubs-auth-set-codex:
+    @echo "Codex clean auth is sourced from the host ChatGPT login bundle, not an API key."; \
+    echo "Run 'codex login' on the host, then re-run 'just scrubs-auth-status'."
+
+scrubs-auth-delete-gh account="github.com":
+    @security delete-generic-password -s scrubs-gh-token -a {{ account }} || true
+
+scrubs-auth-delete-codex:
+    @echo "Codex clean auth is sourced from the host ChatGPT login bundle."; \
+    echo "Run 'codex logout' on the host if you want to remove that source auth."
+
 sync-base-image-to-icloud image="scrubs.qcow2":
     nu ./vms/sync-base-image-to-icloud.nu {{ image }}
 

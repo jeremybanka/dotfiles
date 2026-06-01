@@ -23,7 +23,7 @@ build_runtime_cache() {
   local cache_dir="$1"
   local cache_tmp_dir="${cache_dir}.tmp.$$"
   local cache_home="${cache_tmp_dir}/home"
-  local cache_home_bin="${cache_home}/.local/bin"
+  local cache_home_bin="${cache_home}/.local/share/scrubs-dirty/bin"
   local cache_mise_state_dir="${cache_home}/.local/state/mise"
   local spec
   local shim_name
@@ -32,7 +32,9 @@ build_runtime_cache() {
   rm -rf "${cache_tmp_dir}"
   mkdir -p \
     "${cache_home}/.config" \
+    "${cache_home}/.local/bin" \
     "${cache_home}/.local/share" \
+    "${cache_home}/.local/share/scrubs" \
     "${cache_home_bin}" \
     "${cache_mise_state_dir}"
 
@@ -104,21 +106,21 @@ resolved_target="$("${MISE_BIN}" which "${command_name}" 2> /dev/null || true)"
 
 current_user="$(id -un)"
 helper_root="${HOME}/.local/share/scrubs/helper-root"
-project_root="$(git -C "$PWD" rev-parse --show-toplevel 2> /dev/null || pwd -P)"
 working_dir="$(pwd -P)"
+project_root="$(git -C "$working_dir" rev-parse --show-toplevel 2> /dev/null || true)"
 mise_root="${HOME}/.local/share/mise"
 mise_shims="${mise_root}/shims"
 mise_config_dir="${HOME}/.config/mise"
 mise_state_dir="${HOME}/.local/state/mise"
-runtime_cache_root="${HOME}/.local/share/scrubs/dirty-runtime-cache"
-helper_closure_cache_root="${HOME}/.local/share/scrubs/helper-closure-cache"
+runtime_cache_root="/tmp/scrubs-dirty-runtime-cache/${current_user}"
+helper_closure_cache_root="/tmp/scrubs-helper-closure-cache/${current_user}"
 node_modules_bin="${project_root}/node_modules/.bin"
 ssl_cert_file="/etc/ssl/certs/ca-bundle.crt"
 nix_ld="/run/current-system/sw/share/nix-ld/lib/ld.so"
 nix_ld_library_path="/run/current-system/sw/share/nix-ld/lib"
 guest_loader=""
-runtime_cache_version="1"
-helper_closure_cache_version="1"
+runtime_cache_version="3"
+helper_closure_cache_version="2"
 
 for candidate_loader in /lib/ld-linux-aarch64.so.1 /lib64/ld-linux-x86-64.so.2; do
   if [[ -e "${candidate_loader}" ]]; then
@@ -130,6 +132,7 @@ done
 [[ -d "${helper_root}" ]] || die "missing helper root at ${helper_root}"
 [[ -d "${mise_root}" ]] || die "missing mise data directory at ${mise_root}"
 [[ -d "${mise_config_dir}" ]] || die "missing mise config directory at ${mise_config_dir}"
+[[ -n "${project_root}" ]] || die "dirty commands must run inside a git worktree"
 
 declare -a active_tool_specs=()
 if [[ -d "${mise_shims}" ]]; then
@@ -142,7 +145,8 @@ if [[ -d "${mise_shims}" ]]; then
   done < <(find "${mise_shims}" -maxdepth 1 -type l | sort)
 fi
 
-mkdir -p "${runtime_cache_root}" /tmp/mise-cache
+mkdir -p "${runtime_cache_root}" "${helper_closure_cache_root}" /tmp/mise-cache
+chmod 700 "${runtime_cache_root}" "${helper_closure_cache_root}"
 
 runtime_cache_key="$(
   printf '%s\n' \
@@ -155,7 +159,7 @@ runtime_cache_key="$(
 runtime_cache_dir="${runtime_cache_root}/${runtime_cache_key}"
 fake_home="${runtime_cache_dir}/home"
 
-if [[ ! -x "${fake_home}/.local/bin/mise" ]]; then
+if [[ ! -x "${fake_home}/.local/share/scrubs-dirty/bin/mise" ]]; then
   build_runtime_cache "${runtime_cache_dir}"
 fi
 
@@ -218,8 +222,6 @@ collect_helper_input_if_present "${guest_loader}"
 collect_helper_input_if_present "${nix_ld}"
 collect_helper_input_if_present "${nix_ld_library_path}"
 
-mkdir -p "${helper_closure_cache_root}"
-
 helper_closure_cache_key="$(
   printf '%s\n' \
     "${helper_closure_cache_version}" \
@@ -250,7 +252,7 @@ declare -a path_entries=()
 if [[ -d "${node_modules_bin}" ]]; then
   path_entries+=("${node_modules_bin}")
 fi
-path_entries+=("/home/${current_user}/.local/bin" "${mise_shims}" /bin /usr/bin)
+path_entries+=("/home/${current_user}/.local/share/scrubs-dirty/bin" "${mise_shims}" /bin /usr/bin)
 
 dirty_path="$(
   IFS=:

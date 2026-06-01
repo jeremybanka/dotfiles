@@ -4,13 +4,42 @@ set -eu
 payload="$HOME/scrubs-bootstrap"
 bootstrap_marker="/var/lib/scrubs/bootstrap-complete"
 
-mkdir -p "$HOME/.config/nushell" "$HOME/.config/mise" "$HOME/.local/libexec/scrubs" "$HOME/.local/bin"
+mkdir -p "$HOME/.config/nushell" "$HOME/.config/mise" "$HOME/.local/libexec/scrubs" "$HOME/.local/bin" "$HOME/.local/share/scrubs"
+chmod 700 "$HOME/.local/share/scrubs"
 cp "$payload/home/.gitconfig" "$HOME/.gitconfig"
 cp "$payload/home/.config/mise/config.toml" "$HOME/.config/mise/config.toml"
 cp "$payload/home/.config/nushell/"* "$HOME/.config/nushell/"
 cp "$payload/home/.local/libexec/scrubs/"* "$HOME/.local/libexec/scrubs/"
+if [ -d "$payload/home/.local/share/scrubs/clean-auth" ]; then
+  mkdir -p "$HOME/.local/share/scrubs/clean-auth"
+  cp -R "$payload/home/.local/share/scrubs/clean-auth/." "$HOME/.local/share/scrubs/clean-auth/"
+  chmod 700 "$HOME/.local/share/scrubs/clean-auth"
+  find "$HOME/.local/share/scrubs/clean-auth" -type f -exec chmod 600 {} \;
+fi
 chmod 755 "$HOME/.local/libexec/scrubs/"*.sh
 "$HOME/.local/libexec/scrubs/install-dirty-tools.sh"
+ln -snf "$HOME/.local/libexec/scrubs/gh-clean.sh" "$HOME/.local/bin/gh"
+ln -snf "$HOME/.local/libexec/scrubs/codex-clean.sh" "$HOME/.local/bin/codex"
+
+configure_github_git_helper() {
+  gh_wrapper="$HOME/.local/bin/gh"
+  github_helper_key="credential.https://github.com.helper"
+  gist_helper_key="credential.https://gist.github.com.helper"
+
+  git config --global --unset-all "$github_helper_key" || true
+  git config --global --unset-all "$gist_helper_key" || true
+
+  if [ ! -x "$gh_wrapper" ] || [ ! -f "$HOME/.local/share/scrubs/clean-auth/gh-token.enc" ]; then
+    return 0
+  fi
+
+  git config --global --add "$github_helper_key" ""
+  git config --global --add "$github_helper_key" "!$gh_wrapper auth git-credential"
+  git config --global --add "$gist_helper_key" ""
+  git config --global --add "$gist_helper_key" "!$gh_wrapper auth git-credential"
+}
+
+configure_github_git_helper
 
 is_legacy_scrubs_bashrc() {
   file_path="$1"

@@ -92,6 +92,7 @@ in
     lazygit
     unstablePkgs.mise
     nushell
+    openssl
     ripgrep
     tokei
     tmux

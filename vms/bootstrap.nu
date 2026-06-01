@@ -42,6 +42,112 @@ def remote-shell-command [command: string] {
   $"sh -lc '($escaped)'"
 }
 
+def macos-keychain-secret [service: string, account: string = ""] {
+  let args = if $account == "" {
+    ["find-generic-password" "-w" "-s" $service]
+  } else {
+    ["find-generic-password" "-w" "-s" $service "-a" $account]
+  }
+  let result = (do { ^security ...$args } | complete)
+
+  if $result.exit_code != 0 {
+    let account_fragment = if $account == "" {
+      ""
+    } else {
+      $" and account ($account)"
+    }
+    error make {
+      msg: $"Failed to load macOS Keychain secret for service ($service)($account_fragment)."
+    }
+  }
+
+  $result.stdout | str trim
+}
+
+def resolve-clean-secret [
+  settings: record
+  value_key: string
+  keychain_service_key: string
+  keychain_account_key: string
+] {
+  let explicit_value = (get-setting $settings $value_key "")
+  if $explicit_value != "" {
+    return $explicit_value
+  }
+
+  let keychain_service = (get-setting $settings $keychain_service_key "")
+  if $keychain_service == "" {
+    return ""
+  }
+
+  let keychain_account = (get-setting $settings $keychain_account_key "")
+  macos-keychain-secret $keychain_service $keychain_account
+}
+
+def validate-codex-auth-json [auth_json: string] {
+  let parsed = try {
+    $auth_json | from json
+  } catch {
+    error make {
+      msg: "Failed to parse Codex auth JSON."
+    }
+  }
+
+  let auth_mode = ($parsed.auth_mode? | default "")
+  let access_token = ($parsed.tokens.access_token? | default "")
+  let refresh_token = ($parsed.tokens.refresh_token? | default "")
+
+  if $auth_mode != "chatgpt" {
+    error make {
+      msg: $"Codex auth JSON must use ChatGPT auth mode, got ($auth_mode | default "<missing>")."
+    }
+  }
+
+  if $access_token == "" or $refresh_token == "" {
+    error make {
+      msg: "Codex auth JSON is missing the ChatGPT token bundle."
+    }
+  }
+}
+
+def resolve-codex-auth-json [settings: record] {
+  let configured_path = (get-setting $settings "SCRUBS_CODEX_AUTH_JSON_PATH" "")
+  let candidate_path = if $configured_path == "" {
+    ($env.HOME | path join ".codex" "auth.json")
+  } else {
+    $configured_path | path expand
+  }
+
+  if not ($candidate_path | path exists) {
+    return ""
+  }
+
+  let auth_json = (open --raw $candidate_path)
+  validate-codex-auth-json $auth_json
+  $auth_json
+}
+
+def write-sealed-secret [secret_value: string, key_path: string, ciphertext_path: string] {
+  let plaintext_path = $"($ciphertext_path).plain"
+
+  $secret_value | save --force $plaintext_path
+  ^chmod 600 $plaintext_path
+
+  let encrypt_result = (
+    do {
+      ^openssl enc -aes-256-cbc -pbkdf2 -salt -pass $"file:($key_path)" -in $plaintext_path -out $ciphertext_path
+    }
+    | complete
+  )
+  rm -f $plaintext_path
+
+  if $encrypt_result.exit_code != 0 {
+    error make {
+      msg: $"Failed to seal clean secret into ($ciphertext_path)."
+    }
+  }
+}
+
 def resolve-project-shim [projects_dir: string, shim_name: string] {
   let shim_dir = ($projects_dir | path join $shim_name)
 
@@ -151,6 +257,7 @@ def main [
   mkdir ($payload_dir | path join "home" ".config" "nushell")
   mkdir ($payload_dir | path join "home" ".config" "mise")
   mkdir ($payload_dir | path join "home" ".local" "libexec" "scrubs")
+  mkdir ($payload_dir | path join "home" ".local" "share" "scrubs" "clean-auth")
   mkdir ($payload_dir | path join "scrubs" "modules")
   mkdir ($payload_dir | path join "scrubs" "projects")
 
@@ -176,6 +283,9 @@ def main [
   cp ($vms_dir | path join "templates" "install-dirty-tools.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools.sh")
   cp ($vms_dir | path join "templates" "dirty-exec.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "dirty-exec.sh")
   cp ($vms_dir | path join "templates" "mise-wrapper.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "mise-wrapper.sh")
+  cp ($vms_dir | path join "templates" "clean-auth-lib.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "clean-auth-lib.sh")
+  cp ($vms_dir | path join "templates" "gh-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "gh-clean.sh")
+  cp ($vms_dir | path join "templates" "codex-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "codex-clean.sh")
   cp ($vms_dir | path join "templates" "sandbox-default-definition.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-default-definition.sh")
   let sandbox_definition_source = if $project_shim.sandbox_definition == "" {
     ($vms_dir | path join "templates" "sandbox-definition.sh")
@@ -206,6 +316,45 @@ def main [
   cp ($vms_dir | path join "configuration.nix") ($payload_dir | path join "scrubs" "configuration.nix")
   cp ($vms_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
   cp ($vms_dir | path join "modules" "docker-shim.nix") ($payload_dir | path join "scrubs" "modules" "docker-shim.nix")
+
+  let gh_token = (
+    resolve-clean-secret
+      $settings
+      "SCRUBS_GH_TOKEN"
+      "SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE"
+      "SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT"
+  )
+  let codex_auth_json = (resolve-codex-auth-json $settings)
+  let clean_secret_specs = [
+    {
+      name: "gh"
+      ciphertext_file: "gh-token.enc"
+      value: $gh_token
+    }
+    {
+      name: "codex"
+      ciphertext_file: "codex-auth.json.enc"
+      value: $codex_auth_json
+    }
+  ]
+  let enabled_clean_secrets = ($clean_secret_specs | where {|spec| $spec.value != "" })
+
+  if not ($enabled_clean_secrets | is-empty) {
+    let clean_auth_dir = ($payload_dir | path join "home" ".local" "share" "scrubs" "clean-auth")
+    let seal_key_path = ($clean_auth_dir | path join "seal-key")
+
+    ^openssl rand -base64 32 | save --force $seal_key_path
+    ^chmod 600 $seal_key_path
+
+    for spec in $enabled_clean_secrets {
+      let ciphertext_path = ($clean_auth_dir | path join $spec.ciphertext_file)
+      write-sealed-secret $spec.value $seal_key_path $ciphertext_path
+      ^chmod 600 $ciphertext_path
+    }
+
+    let enabled_names = ($enabled_clean_secrets | get name | str join ", ")
+    print $"Sealed clean auth for: ($enabled_names)"
+  }
 
   if $project_shim.guest_module != "" {
     print $"Applying project shim from ($project_shim.source)"
