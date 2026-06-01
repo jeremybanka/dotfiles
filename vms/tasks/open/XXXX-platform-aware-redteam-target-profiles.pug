@@ -1,0 +1,72 @@
+issue(id="XXXX" status="open")
+  title Teach redteam.js to choose adversarial probes from an informed target profile
+  user-story
+    as-a redteam.js developer building a reusable adversarial auditor
+    i-want the harness to fingerprint the target platform and boundary model before choosing attack probes
+    so-that its findings reflect the real exposure of each system instead of irrelevant platform theater
+  premise.
+    The next red-team harness should act less like a static checklist and more
+    like a burglar who case-studies the house before picking tools. A Windows
+    credential-theft playbook does not tell us much about a Linux sandbox, and
+    a generic Linux probe set still misses important differences between
+    Docker, WSL, bare metal, macOS-hosted VMs, and nested in-guest sandboxes.
+
+    The first implementation should therefore begin with a target profile step
+    that records where attacker code lands, which operating systems and
+    isolation layers are actually in play, what secret stores matter on that
+    platform, and which privilege boundaries are supposed to hold. Probe
+    selection should flow from that profile and the report should explain both
+    why a probe family ran and why a different family was skipped.
+
+    The first concrete target profile should be `scrubs`. Its basic layout is:
+    a trusted Darwin host acting as the thin client, a disposable Lima VM on
+    the `vz` backend, a NixOS guest as the main developer environment, and an
+    additional in-guest clean-versus-dirty split for `mise`-managed tooling.
+    Dirty package-manager and runtime workloads are launched through a scrubs
+    wrapper into `bubblewrap`, with a synthetic home, the project tree bound
+    in, `/tmp` writable, `mise` data and config mounted read-only, curated
+    helper commands under `/bin` and `/usr/bin`, and ambient low-sensitivity
+    facts such as `/proc`, `/sys`, `/etc/hosts`, `/etc/resolv.conf`, and
+    `/etc/localtime`. The primary audit boundary is not "can malware break out
+    of macOS immediately"; it is "can package-borne attacker code running in
+    dirty space reach clean guest credentials, unrelated guest files, or a
+    credible exfiltration path anyway".
+  acceptance-criteria
+    criterion redteam.js records a target profile before platform-specific probing, including host OS, guest or container layers, execution OS, package ecosystems, intended trust boundaries, relevant secret stores, and expected network posture.
+    criterion Probe selection is target-aware: the harness enables, suppresses, and explains attack families based on the recorded profile instead of pretending every target is the same machine.
+    criterion The initial profile set includes a first-class `scrubs` target that captures the Darwin host, Lima plus `vz`, NixOS guest userland, and the in-guest `bubblewrap` dirty-runtime boundary.
+    criterion The `scrubs` profile drives realistic dirty-runtime probes against the assets that matter here, including guest-local `gh`, Codex, SSH, `.env`, `.npmrc`, unrelated home-directory files, helper-command abuse, environment leakage, `/proc` inspection, subprocess pivots, writable-path escape attempts, and outbound exfiltration attempts.
+    criterion The harness report clearly separates confirmed access, failed access, skipped platform families, and cross-boundary hypotheses so developers do not overclaim safety from the wrong passing tests.
+  review-items
+    item(status="open").
+      Implement the control flow as `fingerprint -> map assets -> choose probe
+      families -> run probes -> explain why each family ran or was skipped`.
+      If the target looks like Windows, that should unlock Windows-specific
+      credential and persistence probes; if it looks like a Linux guest inside
+      a macOS VM, that should instead prioritize Linux filesystem, process,
+      credential, and sandbox-boundary probes.
+    item(status="open").
+      For the initial `scrubs` adapter, assume attacker code lands as the
+      unprivileged guest user through npm, pnpm, Bun, Cargo, or adjacent
+      `mise`-resolved tooling inside the dirty wrapper. The first job is to
+      attack the guest clean-versus-dirty split honestly before spending much
+      time on host-only probes that require a separate VM-escape story.
+    item(status="open").
+      Model the current scrubs dirty habitat as having a synthetic `HOME`, a
+      fake dirty `git` identity with no credential helper, the project root
+      mounted writable, `/tmp` writable, read-only `mise` data and config, a
+      curated helper basket including utilities such as `git`, `find`, `env`,
+      `grep`, `sed`, `tar`, `unzip`, and `mise`, plus read-only access to
+      `/proc`, `/sys`, `/etc/hosts`, `/etc/resolv.conf`, and
+      `/etc/localtime`. Those details should shape what the burglar tries.
+    item(status="open").
+      Prioritize realistic package-borne attacker behavior: inspect
+      `process.env`; search for secret-shaped files and directories; read
+      unrelated guest-home material; inspect running processes and `/proc` for
+      leaked arguments or environment; abuse helper commands and subprocess
+      spawning; test whether dirty `git` can still reach auth; and attempt
+      labeled outbound exfiltration to a controlled endpoint.
+    item(status="open").
+      Keep the report honest about platform mismatch. A skipped Windows
+      registry probe or macOS keychain probe should appear as "not applicable
+      to this target profile", not as a passed security check for `scrubs`.

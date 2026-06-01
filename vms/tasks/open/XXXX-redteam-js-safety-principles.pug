@@ -1,0 +1,77 @@
+issue(id="XXXX" status="open")
+  title Codify safety principles for redteam.js as a defensive, reviewable auditor
+  user-story
+    as-a redteam.js maintainer preparing a reusable adversarial auditor
+    i-want an explicit safety-principles document for the project
+    so-that we keep the software effective for authorized security validation without turning it into an unsafe or misleading npm package
+  premise.
+    redteam.js should simulate realistic attacker behavior, but it should not
+    inherit the consent model or distribution posture of malware. The project
+    needs a short principles document that makes that distinction explicit for
+    maintainers, contributors, reviewers, and downstream users.
+
+    The core idea is: realistic attacker behavior, unrealistic consent model.
+    The harness should emulate the kinds of reads, pivots, and exfiltration
+    attempts that package-borne malware would try, while remaining obviously
+    opt-in, reviewable, controlled, and defensive in operation.
+
+    This is especially important if any part of the work ever resembles a
+    public npm package. We want to be good ecosystem citizens: no surprise
+    lifecycle hooks, no hidden network behavior, no turnkey secret theft, and
+    no ambiguity about the fact that the tool is for authorized validation.
+  acceptance-criteria
+    criterion redteam.js has a short principles document or equivalent top-level design note that explains the project's safety posture in plain language.
+    criterion The document states that redteam.js is opt-in and intentional, and that installation alone must not trigger probes, stealthy behavior, or surprise network activity.
+    criterion The document states that dangerous capabilities should be inert by default, with stronger read, persistence, and exfiltration behavior gated behind explicit operator choice.
+    criterion The document prefers proof of reachability over collection of sensitive contents by default, and it explains when deeper validation may be justified under explicit authorization.
+    criterion The document commits to controlled endpoints, local sinks, clear labeling, guardrails, and easy cleanup rather than malware-like collection or third-party exfiltration.
+    criterion The document records a packaging stance that keeps anything too weapon-like out of a casual public npm consumption path, favoring obviously defensive distribution and documentation.
+  review-items
+    item(status="open").
+      Include the high-level principle `realistic attacker behavior,
+      unrealistic consent model` near the top of the document so the project
+      has a clear north star for future design decisions.
+    item(status="open").
+      State that the safe baseline is explicit operator intent: no install-time
+      execution, no hidden lifecycle scripts, no stealth, and no probes that
+      quietly begin on package install or ordinary import.
+    item(status="open").
+      Describe the default operating model as inert-by-default. File reads,
+      persistence checks, outbound exfil tests, and similar sensitive probe
+      families should require explicit flags, target configuration, or a
+      purpose-built harness rather than turning on implicitly.
+    item(status="open").
+      Prefer reporting reachability over collecting secrets. For example, it is
+      usually enough to record that a path existed and was readable, or that a
+      process environment contained interesting variable names, without copying
+      the secret material itself unless the operator deliberately authorizes a
+      deeper validation mode.
+    item(status="open").
+      Require controlled destinations for exfiltration simulation. Use local
+      sinks, controlled test endpoints, or dry-run/report-only paths, and do
+      not ever send findings to unrelated third-party infrastructure.
+    item(status="open").
+      Document guardrails such as target allowlists, path scopes, redaction,
+      rate limits, max file sizes, and hard stops around especially sensitive
+      locations unless the operator has explicitly expanded scope.
+    item(status="open").
+      Make transparency part of the safety story: clear docs, clear runtime
+      output, and report labels such as `simulated exfil`, `readability
+      confirmed`, `not attempted`, and `not applicable`.
+    item(status="open").
+      Keep cleanup first-class. Temporary fixtures, listeners, tokens, and
+      generated artifacts should be ephemeral and easy to remove so the tool
+      does not leave confusing or risky residue behind.
+    item(status="open").
+      Capture an architectural preference for a safe orchestration core plus
+      explicit probe modules. That split should help reviewers understand which
+      parts are policy and reporting versus which parts simulate attacker
+      actions.
+    item(status="open").
+      Note the packaging and distribution posture explicitly. If a feature set
+      starts to resemble a turnkey abuse kit, it likely belongs in a private
+      registry, internal repository, or tightly scoped operator workflow
+      instead of broad public npm distribution.
+    item(status="open").
+      Mention the specific bias for `scrubs`: default to proving what dirty
+      space can reach rather than normalizing the collection of real secrets.
