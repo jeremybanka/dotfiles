@@ -14,8 +14,9 @@ issue(id="0009" status="open")
     This issue is about extracting reusable modules as first-class building
     blocks and naming them so their intent is visible immediately. Reusable
     modules should use names such as `clean-gcloud.nix`,
-    `clean-docker.nix`, or `dirty-postgres.nix`, where the prefix tells the
-    reader which space the module serves.
+    `clean-docker.nix`, `dirty-gcloud-build.nix`, or
+    `dirty-postgres-build.nix`, where the prefix tells the reader which space
+    the module serves.
 
     A clean module is a ready-to-use cleanspace capability: it includes the
     nixpkg intended to run in cleanspace and the configuration required for
