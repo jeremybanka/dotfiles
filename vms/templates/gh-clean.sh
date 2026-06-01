@@ -14,7 +14,7 @@ if [ -n "${GH_TOKEN:-}" ]; then
 fi
 
 case "${1-}:${2-}" in
-  auth:login|auth:logout)
+  auth:login | auth:logout)
     exec "${real_gh}" "$@"
     ;;
 esac
