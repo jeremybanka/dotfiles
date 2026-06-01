@@ -1,6 +1,6 @@
 { ... }:
 {
   imports = [
-    ../../modules/docker-shim.nix
+    ../../modules/clean-docker.nix
   ];
 }
