@@ -442,8 +442,9 @@ def main [
   cp ($vms_dir | path join "flake.nix") ($payload_dir | path join "scrubs" "flake.nix")
   cp ($vms_dir | path join "flake.lock") ($payload_dir | path join "scrubs" "flake.lock")
   cp ($vms_dir | path join "configuration.nix") ($payload_dir | path join "scrubs" "configuration.nix")
-  cp ($vms_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
-  cp ($vms_dir | path join "modules" "clean-docker.nix") ($payload_dir | path join "scrubs" "modules" "clean-docker.nix")
+  for module_path in (ls ($vms_dir | path join "modules") | where type == file | get name | where ($it | str ends-with ".nix")) {
+    cp $module_path ($payload_dir | path join "scrubs" "modules" ($module_path | path basename))
+  }
 
   let gh_token = (resolve-github-token $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
   let codex_auth_json = (resolve-codex-auth-json $settings $selected_clean_auth_profile.suffix)
