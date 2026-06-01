@@ -10,6 +10,52 @@ The intended layering is:
 - `scrubs-base` is your personal CLI home inside that substrate
 - project-specific tweaks can be layered on top later
 
+## Mission
+
+Scrubs is a macOS developer's last line of defense.
+
+Stowaway malware programs in the package ecosystems we use every day, such as
+`npm`, `jsr`, and `cargo`, should not reach our development machines, but they
+want to, and it is safer to assume that the smartest among them eventually
+will. When that happens, the goal is not to pretend the risk never existed.
+The goal is to keep the blast radius small.
+
+Scrubs exists to make that outcome practical: a convenient local developer
+environment, running at native speed, without handing ambient secrets to every
+tool you try. The working hope is simple: if hostile dependency code lands in
+your workflow, it should not get far.
+
+## Security Posture
+
+Scrubs is a boundary-hardening tool, not a perfect isolation story.
+
+Its current strong path is:
+
+- macOS remains the trusted thin client
+- clean-space credentials are host-sourced and sealed at rest in the guest
+- dirty package-manager workloads are pushed through an explicit sandboxed path
+- ordinary developer workflows stay convenient enough to be the default
+
+The current design is intentionally aimed at "stowaway malware in ordinary
+developer tooling should not reach very far," not at "a fully compromised guest
+account or guest root should still be unable to recover secrets."
+
+## Caveats
+
+Scrubs inherits meaningful trust and maintenance assumptions from the guest OS
+and package base it stands on.
+
+The important caveats today are:
+
+- scrubs inherits the security weaknesses of NixOS and the pace of the pinned
+  `nixpkgs` inputs it depends on
+- urgent upstream security fixes may not land on the cadence you would expect
+  from a faster-moving distro or package channel
+- the Nix store is clean space; binaries and libraries you install from it are
+  treated as trusted code in this model
+- the current sealed-secret design is strong against the dirty-runtime
+  boundary, but it is not meant to survive a full clean-guest compromise
+
 ## Why This Shape
 
 We explored two broad approaches:
