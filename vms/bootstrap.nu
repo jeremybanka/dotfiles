@@ -276,6 +276,7 @@ def main [
   }
 
   cp ($repo_root | path join "home" ".gitconfig") ($payload_dir | path join "home" ".gitconfig")
+  cp ($repo_root | path join "home" ".gitignore_global") ($payload_dir | path join "home" ".gitignore_global")
   cp ($repo_root | path join "home" ".config" "mise" "config.toml") ($payload_dir | path join "home" ".config" "mise" "config.toml")
   cp ($vms_dir | path join "templates" "profile") ($payload_dir | path join "home" ".profile")
   cp ($vms_dir | path join "templates" "bash_profile") ($payload_dir | path join "home" ".bash_profile")
