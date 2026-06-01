@@ -426,21 +426,38 @@ should be:
 
 ## Validation Baseline
 
-The default validation pass for scrubs guest changes is intentionally simple:
-prove that a fresh guest still survives a repeat bootstrap without losing
-operator access.
+The default validation pass for scrubs guest changes should now be treated as
+a small regression plan rather than a single idempotence smoke check.
 
-For any new or materially changed guest flow:
+The core questions are:
+
+1. can a fresh guest bootstrap cleanly
+2. can the same guest survive a repeat bootstrap without losing operator access
+3. do clean-space auth paths still work without interactive login ceremony
+4. does dirty space remain unable to discover or invoke the clean auth surface
+5. does ordinary HTTPS Git still work through the scrubs-owned `gh` helper path
+
+For any new or materially changed guest flow, the baseline pass is:
 
 1. create a fresh throwaway guest
 2. confirm `limactl shell <instance>` opens an interactive shell
-3. run `just bootstrap <instance>` again on that same guest
-4. confirm `limactl shell <instance>` still opens an interactive shell
+3. confirm clean-space `gh` and Codex auth are usable without interactive login
+4. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
+5. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
+6. confirm an HTTPS read operation such as `git ls-remote` succeeds
+7. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
+8. run `just bootstrap <instance>` again on that same guest
+9. confirm `limactl shell <instance>` still opens an interactive shell
 
-This does not replace workload-specific validation, but it is the baseline
-guardrail for idempotence. A guest that cannot survive re-bootstrap without
-locking out `limactl shell` is not healthy enough to treat as upgradable in
-place.
+This does not replace workload-specific validation, but it is the default
+guardrail for scrubs changes. A guest that cannot survive re-bootstrap without
+locking out `limactl shell`, or that silently regresses its clean auth or Git
+boundaries, is not healthy enough to treat as upgradable in place.
+
+GitHub-hosted Actions can cover only part of this plan. The real Apple
+Silicon `vz` path should be treated as a local or self-hosted Apple Silicon
+runner concern, because GitHub-hosted macOS arm64 runners do not support the
+nested virtualization story needed for the full scrubs runtime path.
 
 ## Troubleshooting
 
