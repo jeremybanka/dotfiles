@@ -246,8 +246,8 @@ you can point scrubs at a GitHub Keychain item and, optionally, a host Codex
 auth bundle path:
 
 ```sh
-SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE=scrubs-gh-token
-SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT=github.com
+SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__PERSONAL=scrubs-gh-token-personal
+SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__PERSONAL=github.com
 SCRUBS_CODEX_AUTH_JSON_PATH=~/.codex/auth.json
 ```
 
@@ -263,33 +263,90 @@ scrubs also writes the Git credential helper configuration for
 operations flow through the scrubs `gh` wrapper rather than depending on
 `gh auth setup-git`.
 
+If you need multiple host-side clean auth contexts, scrubs now supports a
+selected clean auth profile at bootstrap time. The model is:
+
+- keep the simple single-profile path on the unsuffixed setting names
+- default the selected profile to `personal`
+- optionally pick a different profile with `SCRUBS_CLEAN_AUTH_PROFILE=<name>`
+  or `just bootstrap <instance> <profile>`
+- define profile-specific overrides by appending `__<PROFILE>` to the base
+  setting name, where `<PROFILE>` is the uppercased profile label with
+  non-alphanumeric runs converted to `_`
+- when a profile is selected, scrubs prefers `BASE_KEY__PROFILE` and falls
+  back to `BASE_KEY` if no profile-specific value is configured
+
+For example, a personal/work GitHub split can look like:
+
+```sh
+SCRUBS_CLEAN_AUTH_PROFILE=personal
+SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__PERSONAL=scrubs-gh-token-personal
+SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__PERSONAL=github.com
+SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__WORK=scrubs-gh-token-work
+SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__WORK=github.com
+SCRUBS_CODEX_AUTH_JSON_PATH=~/.codex/auth.json
+```
+
+That keeps one shared Codex bundle on the unsuffixed key while letting GitHub
+switch cleanly between personal and work tokens. The same suffixing model can
+be used for other clean-auth settings later.
+
 The intended host-side flow is:
 
 ```sh
 just scrubs-auth-set-gh
+just scrubs-auth-set-gh work
 codex login
 just scrubs-auth-status
 ```
 
+With no profile argument, `just scrubs-auth-status` reports `personal` and
+`work` by default, then adds any extra GitHub auth profiles it can discover
+from `vms/settings.env`. You can still narrow it to one profile with
+`just scrubs-auth-status work`. For `personal`, the status command also checks
+the legacy `scrubs-gh-token/github.com` Keychain item so older single-token
+setups still show up during migration.
+
 GitHub uses the macOS Keychain entry:
 
-- service `scrubs-gh-token`, account `github.com`
+- service `scrubs-gh-token-personal`, account `github.com` for the default
+  `personal` profile
+- service `scrubs-gh-token-work`, account `github.com` for a `work` profile
 
 Codex uses the host ChatGPT auth bundle at:
 
 - `SCRUBS_CODEX_AUTH_JSON_PATH` if set
 - otherwise `~/.codex/auth.json`
 
-If you want a different GitHub account label, the set recipe accepts an
-override:
+The helper recipes keep the GitHub account label fixed at `github.com`, so the
+only knob you normally need is the profile name. For Codex, make sure the host
+auth bundle exists by logging in on the host first.
+
+For multiple GitHub profiles, the helper recipes derive the service name from
+the profile so the CLI shape matches bootstrap:
 
 ```sh
-just scrubs-auth-set-gh account=my-gh-label
+just scrubs-auth-set-gh personal
+just scrubs-auth-set-gh work
+just scrubs-auth-status
+just scrubs-auth-status work
+just scrubs-auth-delete-gh personal
 ```
 
-Then point `vms/settings.env` at the matching GitHub service/account pair
-before bootstrapping the guest. For Codex, make sure the host auth bundle
-exists by logging in on the host first.
+Bootstrap selection precedence is:
+
+1. `--clean-auth-profile` or `just bootstrap <instance> <profile>` on the
+   current bootstrap command
+2. `SCRUBS_CLEAN_AUTH_PROFILE` from the environment or `vms/settings.env`
+3. the built-in default profile name `personal`
+
+So the common paths are:
+
+```sh
+just bootstrap scrubs-dev
+just bootstrap sec-lab work
+just bootstrap sec-lab work security-testing /absolute/path/to/nixos.qcow2
+```
 
 For rotation or cleanup:
 

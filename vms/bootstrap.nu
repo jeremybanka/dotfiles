@@ -64,23 +64,148 @@ def macos-keychain-secret [service: string, account: string = ""] {
   $result.stdout | str trim
 }
 
-def resolve-clean-secret [
+def macos-keychain-secret-optional [service: string, account: string = ""] {
+  let args = if $account == "" {
+    ["find-generic-password" "-w" "-s" $service]
+  } else {
+    ["find-generic-password" "-w" "-s" $service "-a" $account]
+  }
+  let result = (do { ^security ...$args } | complete)
+
+  if $result.exit_code != 0 {
+    return ""
+  }
+
+  $result.stdout | str trim
+}
+
+def has-setting [settings: record, key: string] {
+  if ($env | columns | any {|column| $column == $key }) {
+    true
+  } else {
+    $settings | columns | any {|column| $column == $key }
+  }
+}
+
+def normalize-clean-auth-profile-suffix [profile_name: string] {
+  let normalized = (
+    $profile_name
+    | str trim
+    | str upcase
+    | str replace --regex --all '[^A-Z0-9]+' "_"
+    | str replace --regex '^_+' ""
+    | str replace --regex '_+$' ""
+  )
+
+  if $normalized == "" {
+    error make {
+      msg: $"Clean auth profile name '($profile_name)' does not contain any letters or numbers."
+    }
+  }
+
+  $normalized
+}
+
+def resolve-clean-auth-profile [settings: record, explicit_profile: string] {
+  let selected_profile = if $explicit_profile == "" {
+    get-setting $settings "SCRUBS_CLEAN_AUTH_PROFILE" "personal"
+  } else {
+    $explicit_profile
+  }
+  let trimmed_profile = ($selected_profile | str trim)
+
+  if $trimmed_profile == "" {
+    return {
+      name: ""
+      suffix: ""
+    }
+  }
+
+  {
+    name: $trimmed_profile
+    suffix: (normalize-clean-auth-profile-suffix $trimmed_profile)
+  }
+}
+
+def get-profiled-setting [
   settings: record
-  value_key: string
-  keychain_service_key: string
-  keychain_account_key: string
+  base_key: string
+  profile_suffix: string
+  default_value: any = null
 ] {
-  let explicit_value = (get-setting $settings $value_key "")
+  if $profile_suffix != "" {
+    let profiled_key = $"($base_key)__($profile_suffix)"
+    if (has-setting $settings $profiled_key) {
+      return (get-setting $settings $profiled_key $default_value)
+    }
+  }
+
+  get-setting $settings $base_key $default_value
+}
+
+def default-github-keychain-service [profile_name: string] {
+  $"scrubs-gh-token-($profile_name)"
+}
+
+def resolve-github-token [settings: record, profile_name: string, profile_suffix: string] {
+  let explicit_value = (get-profiled-setting $settings "SCRUBS_GH_TOKEN" $profile_suffix "")
   if $explicit_value != "" {
     return $explicit_value
   }
 
-  let keychain_service = (get-setting $settings $keychain_service_key "")
+  let profiled_service_key = $"SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__($profile_suffix)"
+  let profiled_account_key = $"SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__($profile_suffix)"
+
+  let has_profiled_service = (has-setting $settings $profiled_service_key)
+  let has_profiled_account = (has-setting $settings $profiled_account_key)
+
+  if $profile_suffix != "" and $has_profiled_service {
+    let profiled_service = (get-setting $settings $profiled_service_key (default-github-keychain-service $profile_name))
+    let profiled_account = (get-setting $settings $profiled_account_key "github.com")
+    return (macos-keychain-secret $profiled_service $profiled_account)
+  }
+
+  if $profile_suffix != "" and $has_profiled_account {
+    let profiled_service = (get-setting $settings $profiled_service_key (default-github-keychain-service $profile_name))
+    let profiled_account = (get-setting $settings $profiled_account_key "github.com")
+    return (macos-keychain-secret $profiled_service $profiled_account)
+  }
+
+  if $profile_name != "" {
+    let conventional_service = (default-github-keychain-service $profile_name)
+    let conventional_token = (macos-keychain-secret-optional $conventional_service "github.com")
+    if $conventional_token != "" {
+      return $conventional_token
+    }
+  }
+
+  let legacy_service = (get-setting $settings "SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE" "")
+  if $legacy_service == "" {
+    return ""
+  }
+
+  let legacy_account = (get-setting $settings "SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT" "github.com")
+  macos-keychain-secret $legacy_service $legacy_account
+}
+
+def resolve-clean-secret [
+  settings: record
+  profile_suffix: string
+  value_key: string
+  keychain_service_key: string
+  keychain_account_key: string
+] {
+  let explicit_value = (get-profiled-setting $settings $value_key $profile_suffix "")
+  if $explicit_value != "" {
+    return $explicit_value
+  }
+
+  let keychain_service = (get-profiled-setting $settings $keychain_service_key $profile_suffix "")
   if $keychain_service == "" {
     return ""
   }
 
-  let keychain_account = (get-setting $settings $keychain_account_key "")
+  let keychain_account = (get-profiled-setting $settings $keychain_account_key $profile_suffix "")
   macos-keychain-secret $keychain_service $keychain_account
 }
 
@@ -110,8 +235,8 @@ def validate-codex-auth-json [auth_json: string] {
   }
 }
 
-def resolve-codex-auth-json [settings: record] {
-  let configured_path = (get-setting $settings "SCRUBS_CODEX_AUTH_JSON_PATH" "")
+def resolve-codex-auth-json [settings: record, profile_suffix: string] {
+  let configured_path = (get-profiled-setting $settings "SCRUBS_CODEX_AUTH_JSON_PATH" $profile_suffix "")
   let candidate_path = if $configured_path == "" {
     ($env.HOME | path join ".codex" "auth.json")
   } else {
@@ -176,6 +301,7 @@ def main [
   instance_name: string
   --source-image(-s): string = ""
   --shim-name: string = ""
+  --clean-auth-profile(-p): string = ""
 ] {
   let repo_root = (repo-root)
   let vms_dir = (vms-dir)
@@ -187,6 +313,7 @@ def main [
   let template_file = ($vms_dir | path join "lima.local.yaml")
   let resolved_shim_name = if $shim_name == "" { $instance_name } else { $shim_name }
   let project_shim = (resolve-project-shim ($vms_dir | path join "projects") $resolved_shim_name)
+  let selected_clean_auth_profile = (resolve-clean-auth-profile $settings $clean_auth_profile)
   let instance_dir = ($env.HOME | path join ".lima" $instance_name)
   let current_user = (^id -un | str trim)
   let current_uid = (^id -u | str trim)
@@ -318,14 +445,8 @@ def main [
   cp ($vms_dir | path join "modules" "base.nix") ($payload_dir | path join "scrubs" "modules" "base.nix")
   cp ($vms_dir | path join "modules" "docker-shim.nix") ($payload_dir | path join "scrubs" "modules" "docker-shim.nix")
 
-  let gh_token = (
-    resolve-clean-secret
-      $settings
-      "SCRUBS_GH_TOKEN"
-      "SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE"
-      "SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT"
-  )
-  let codex_auth_json = (resolve-codex-auth-json $settings)
+  let gh_token = (resolve-github-token $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
+  let codex_auth_json = (resolve-codex-auth-json $settings $selected_clean_auth_profile.suffix)
   let clean_secret_specs = [
     {
       name: "gh"
@@ -339,6 +460,10 @@ def main [
     }
   ]
   let enabled_clean_secrets = ($clean_secret_specs | where {|spec| $spec.value != "" })
+
+  if $selected_clean_auth_profile.name != "" {
+    print $"Selected clean auth profile: ($selected_clean_auth_profile.name)"
+  }
 
   if not ($enabled_clean_secrets | is-empty) {
     let clean_auth_dir = ($payload_dir | path join "home" ".local" "share" "scrubs" "clean-auth")
@@ -354,7 +479,12 @@ def main [
     }
 
     let enabled_names = ($enabled_clean_secrets | get name | str join ", ")
-    print $"Sealed clean auth for: ($enabled_names)"
+    let profile_fragment = if $selected_clean_auth_profile.name == "" {
+      ""
+    } else {
+      " (profile: " + $selected_clean_auth_profile.name + ")"
+    }
+    print $"Sealed clean auth for: ($enabled_names)($profile_fragment)"
   }
 
   if $project_shim.guest_module != "" {
@@ -396,7 +526,7 @@ def main [
       | get portForwards
       | to yaml
       | lines
-      | each {|line| if $line == "" { "" } else { $"  ($line)" } }
+      | each {|line| if $line == "" { "" } else { "  " + $line } }
       | str join "\n"
     )
 
@@ -439,7 +569,7 @@ def main [
       | split row ","
       | each {|entry| $entry | str trim }
       | where {|entry| $entry != "" }
-      | each {|entry| $"  - ($entry)" }
+      | each {|entry| "  - " + $entry }
       | str join "\n"
     )
     $"dns:\n($dns_entries)"
