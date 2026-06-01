@@ -1,0 +1,45 @@
+issue(id="0008" status="open")
+  title Design a same-mount dirty workspace habitat without widening trust
+  user-story
+    as-a scrubs maintainer supporting modern package-manager workflows
+    i-want dirtyspace to present a more natural writable workspace habitat
+    so-that tools such as pnpm can use their normal same-filesystem storage behavior without forcing repo-local clutter or weakening the clean/dirty boundary
+  premise.
+    The current scrubs dirty runtime bind-mounts the project working tree into
+    a synthetic home-based habitat. That boundary is strong and explicit, but
+    it has an ergonomic side effect: some tools appear to treat the project
+    tree as the natural root of their writable filesystem view.
+
+    In practice, pnpm in `wayforge` resolves its store to `./.pnpm-store`
+    rather than a user-level location, even though dirtyspace already provides
+    a fake home. The likely cause is mount topology rather than a simple
+    missing environment variable: the project tree and the fake home are
+    separate bind mounts inside the dirty habitat, so tools that want a
+    same-filesystem store fall back to a store at the root of the project
+    mount.
+
+    pnpm is the motivating case for this task today, not the only tool we
+    expect might care. The intent is to solve the generic habitat problem once
+    and then add other tools to the validation story as they demonstrate the
+    same same-mount storage need.
+
+    The goal is not to introduce pnpm-specific policy into scrubs base. The
+    goal is to see whether scrubs can present a more natural same-mount
+    writable habitat without relaxing the defensive posture around clean
+    credentials, clean binaries, or unrelated writable state.
+  acceptance-criteria
+    criterion Scrubs has a documented design for a same-mount dirty workspace habitat or an explicit decision not to pursue one.
+    criterion The design explains what writable paths would exist inside the habitat, how project files and scratch/user-cache space would relate to each other, and why tools like pnpm would behave more naturally there.
+    criterion The design explicitly evaluates the security tradeoffs relative to the current bind-mounted dirty habitat, including credential visibility, clean binary reachability, and trusted-state contamination risks.
+    criterion If a prototype is pursued, it is validated against at least one real package-manager workflow that currently tends to create repo-local state such as `.pnpm-store`.
+    criterion Any chosen path keeps tool-specific policy out of neutral scrubs base unless a generic habitat design proves insufficient.
+  review-items
+    item(status="open").
+      Decide whether the right primitive is an overlay-backed workspace,
+      another synthetic writable root shape, or a deliberate decision to keep
+      the current topology and solve specific tool issues elsewhere.
+    item(status="open").
+      Red-team the proposed habitat against the current boundary expectations:
+      no clean credential directories, no clean `gh` or `codex`, no widened
+      helper-binary reachability, and no new path for dirty workloads to
+      contaminate state that cleanspace later trusts implicitly.
