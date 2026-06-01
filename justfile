@@ -45,8 +45,8 @@ helix-theme-install-agent:
 helix-watch-config:
     nu ./scripts/watch-helix-config.nu
 
-bootstrap instance_name shim_name="" source_image="./vms/images/scrubs.qcow2":
-    nu ./vms/bootstrap.nu --source-image {{ source_image }} {{ if shim_name != "" { "--shim-name " + shim_name + " " } else { "" } }}{{ instance_name }}
+bootstrap instance_name clean_auth_profile="personal" shim_name="" source_image="./vms/images/scrubs.qcow2":
+    nu ./vms/bootstrap.nu --source-image {{ source_image }} {{ if shim_name != "" { "--shim-name " + shim_name + " " } else { "" } }}--clean-auth-profile {{ clean_auth_profile }} {{ instance_name }}
 
 download-latest-iso channel="nixos-25.11":
     nu ./vms/download-latest-iso.nu {{ channel }}
@@ -63,27 +63,49 @@ seed instance_name="scrubs-seed":
 vm-shell instance_name:
     limactl shell {{ instance_name }}
 
-scrubs-auth-status:
-    @gh_status=missing; \
+scrubs-auth-status profile="":
+    @gh_profiles=(personal work); \
+    if [ -n "{{ profile }}" ]; then \
+        gh_profiles=({{ profile }}); \
+    elif [ -f ./vms/settings.env ]; then \
+        while IFS= read -r discovered_profile; do \
+            gh_profiles+=("$discovered_profile"); \
+        done < <(sed -n 's/^SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__\([A-Z0-9_][A-Z0-9_]*\)=.*/\1/p' ./vms/settings.env | tr '[:upper:]' '[:lower:]' | tr '_' '-'); \
+    fi; \
+    gh_profiles=(${(u)gh_profiles}); \
+    for gh_profile in "${gh_profiles[@]}"; do \
+        gh_status=missing; \
+        legacy_fragment=""; \
+        service="scrubs-gh-token-${gh_profile}"; \
+        security find-generic-password -s "$service" -a github.com > /dev/null 2>&1 && gh_status=present; \
+        if [ "$gh_profile" = personal ] && [ "$gh_status" = missing ]; then \
+            legacy_service="scrubs-gh-token"; \
+            if security find-generic-password -s "$legacy_service" -a github.com > /dev/null 2>&1; then \
+                gh_status=present; \
+                legacy_fragment=" (legacy service $legacy_service/github.com)"; \
+            fi; \
+        fi; \
+        echo "GitHub Keychain item ($service/github.com): $gh_status$legacy_fragment"; \
+    done; \
     codex_status=missing; \
     codex_path="${SCRUBS_CODEX_AUTH_JSON_PATH:-$HOME/.codex/auth.json}"; \
-    security find-generic-password -s scrubs-gh-token -a github.com > /dev/null 2>&1 && gh_status=present; \
     if [ -s "$codex_path" ] && grep -Eq '"auth_mode"[[:space:]]*:[[:space:]]*"chatgpt"' "$codex_path"; then codex_status=present; fi; \
-    echo "GitHub Keychain item (scrubs-gh-token/github.com): $gh_status"; \
     echo "Codex auth bundle ($codex_path): $codex_status"
 
-scrubs-auth-set-gh account="github.com":
-    @read -s "?GitHub token for {{ account }}: " token; \
+scrubs-auth-set-gh profile="personal":
+    @read -s "?GitHub token: " token; \
+    service="scrubs-gh-token-{{ profile }}"; \
     echo; \
-    security add-generic-password -U -s scrubs-gh-token -a {{ account }} -w "$token"; \
-    echo "Stored GitHub token in macOS Keychain as scrubs-gh-token/{{ account }}"
+    security add-generic-password -U -s "$service" -a github.com -w "$token"; \
+    echo "Stored GitHub token in macOS Keychain as $service/github.com"
 
 scrubs-auth-set-codex:
     @echo "Codex clean auth is sourced from the host ChatGPT login bundle, not an API key."; \
     echo "Run 'codex login' on the host, then re-run 'just scrubs-auth-status'."
 
-scrubs-auth-delete-gh account="github.com":
-    @security delete-generic-password -s scrubs-gh-token -a {{ account }} || true
+scrubs-auth-delete-gh profile="personal":
+    @service="scrubs-gh-token-{{ profile }}"; \
+    security delete-generic-password -s "$service" -a github.com || true
 
 scrubs-auth-delete-codex:
     @echo "Codex clean auth is sourced from the host ChatGPT login bundle."; \

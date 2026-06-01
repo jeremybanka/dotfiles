@@ -1,4 +1,4 @@
-issue(id="0011" status="open")
+issue(id="0011" status="review")
   title Support selectable clean auth profiles at bootstrap time
   user-story
     as-a scrubs user working across personal and organization contexts
@@ -28,15 +28,19 @@ issue(id="0011" status="open")
     criterion The configuration model is understandable for users who want at least personal and work profiles, including how host-side secrets are named and how a guest chooses between them.
     criterion The design does not regress the default simple path for users who only need one clean auth profile.
   review-items
+    item(status="covered").
+      Profile selection now supports an explicit bootstrap argument and a
+      settings fallback. `just bootstrap <instance> <profile>` selects the
+      profile for the current guest, while `SCRUBS_CLEAN_AUTH_PROFILE`
+      remains available as the default-setting path. The built-in default
+      profile name is `personal`.
+    item(status="covered").
+      Host-side GitHub secret naming now follows a profile-first convention.
+      The operator helpers store tokens in macOS Keychain services such as
+      `scrubs-gh-token-personal` and `scrubs-gh-token-work`, and bootstrap
+      resolves those conventional names first while still tolerating the
+      legacy single-token `scrubs-gh-token` path for compatibility.
     item(status="open").
-      Decide whether profile selection should be driven by an explicit bootstrap
-      argument, a named shim-level default, a settings variable, or some
-      combination of those inputs.
-    item(status="open").
-      Decide how host-side secret naming should work for multiple GitHub token
-      profiles, including whether the naming scheme should be GitHub-specific
-      or part of a more general clean-auth profile abstraction.
-    item(status="open").
-      Decide how broadly the feature should generalize beyond GitHub, especially
-      for other clean-side auth domains that may also want distinct personal,
-      work, or environment-specific profiles.
+      Decide how broadly the profile model should generalize beyond GitHub,
+      especially for other clean-side auth domains that may also want
+      distinct personal, work, or environment-specific profiles.
