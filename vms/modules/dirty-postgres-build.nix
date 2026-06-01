@@ -6,7 +6,6 @@ let
     zlib
     openssl
     e2fsprogs
-    icu
     util-linux
   ];
   buildEnv = {
@@ -23,11 +22,6 @@ in
     gcc
     gnumake
     perl
-    pkg-config
-    python3
-    (writeShellScriptBin "python" ''
-      exec ${python3}/bin/python3 "$@"
-    '')
   ]
   ++ buildDeps;
 
