@@ -1,2 +1,5 @@
 - In scrubs project shims, do not inspect `config.users.users` in order to infer the primary user while also defining `users.users`; that causes infinite recursion during Nix module evaluation and breaks bootstrap.
 - When running commands in scrubs VMs, prefer `limactl shell <instance>` as the default access path.
+- Scrubs uses a clean/dirty boundary: clean space is the Nix store plus clean guest configuration and credentials, while dirty space is the `mise`-managed tool world launched through the scrubs sandbox. Do not assume dirty tools can see or invoke arbitrary Nix-store binaries just because they exist in the guest.
+- When a tool is meant to run in dirty space, prefer keeping its runtime dependencies in the same dirty `mise` world or explicitly modeling narrowly allowed helpers; do not route around the boundary by leaning on ambient clean-space executables.
+- For deeper background on why dirty execution must stay unable to discover or invoke clean credential surfaces, read `vms/tasks/review/0003-hardening-clean-credential-storage.pug`.
