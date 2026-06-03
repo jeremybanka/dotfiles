@@ -46,4 +46,3 @@ jobs:
         with:
           configurationFile: renovate.json
           token: ${{ steps.app-token.outputs.token }}
-
