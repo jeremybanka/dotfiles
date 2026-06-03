@@ -6,7 +6,7 @@ let
 in
 {
   imports = [
-    ./modules/base.nix
+    ./modules/clean-base.nix
   ]
   ++ (if builtins.pathExists projectShimModule then [ projectShimModule ] else [ ])
   ++ (if builtins.pathExists runtimeHardwareModule then [ runtimeHardwareModule ] else [ ])

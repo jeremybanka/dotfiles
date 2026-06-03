@@ -42,16 +42,19 @@ issue(id="0009" status="review")
     criterion The resulting module layout and examples make it clear that reusable modules must not refer to particular projects, and that project-specific behavior belongs in the project's `guest.nix`.
     criterion At least one example composition shows a project `guest.nix` consuming reusable clean and/or dirty modules without moving project policy into the shared modules themselves.
   review-items
-    item(status="open").
-      Decide which existing guest customizations should graduate into reusable
-      `clean-*` or `dirty-*` modules first, and which ones should remain in
-      project `guest.nix` because they encode project-specific policy.
-    item(status="open").
-      Decide whether modules that only add a package and no configuration
-      should be prohibited outright or merely discouraged in documentation and
-      review.
-    item(status="open").
-      Make sure the naming scheme continues to optimize for boundary
-      readability and that dirty modules are consistently described as
-      cleanspace build-tooling for dirtyspace outputs, not as generic dirty
-      app bundles.
+    item(status="covered").
+      The first promotions now look settled: `clean-docker`,
+      `dirty-gcloud-build`, `dirty-postgres-build`, `clean-postgres`, and
+      `clean-base` are shared modules, while project-specific concerns such as
+      `systemd-ts` Docker-state ACLs, Wayforge's relaxed local Postgres auth,
+      and the `security-testing` profile remain in project `guest.nix` files.
+    item(status="covered").
+      The guidance on package-only modules is now intentionally firm: if a
+      tool only adds a package and needs no accompanying configuration, it
+      should stay a package choice at the project level rather than becoming a
+      shared module.
+    item(status="covered").
+      The naming scheme has held up under real extraction work: shared modules
+      now use `clean-*` and `dirty-*-build` names that foreground trust
+      boundary and role, and dirty modules continue to mean cleanspace build
+      support for dirtyspace outputs rather than generic dirty app bundles.

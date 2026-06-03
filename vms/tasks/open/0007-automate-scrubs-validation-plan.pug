@@ -22,12 +22,19 @@ issue(id="0007" status="open")
     Actions immediately." The goal is to encode the known-good strategies into
     local-first, self-hostable test scripts with clear outputs, so the plan is
     rigorous before it is fully automated.
+
+    We also now have several `try-*` project guests that act as lightweight
+    validation fixtures for individual modules and compositions. This task
+    should decide whether the canonical validation path reuses those guests as
+    long-lived probes, replaces them with a more formal harness, or does some
+    mixture of both.
   acceptance-criteria
     criterion Scrubs has one or more canonical scripts or commands that encode the documented validation baseline rather than leaving it as README-only operator prose.
     criterion The scripted plan covers repeat bootstrap survivability, clean-space auth smoke, dirty-space visibility smoke, and the HTTPS Git helper path.
     criterion The scripted plan is documented with clear assumptions about required host secrets, disposable guest names, and which checks are expected to be non-destructive.
     criterion The work explicitly distinguishes checks that can run on ordinary GitHub-hosted CI from checks that require local or self-hosted Apple Silicon `vz` capacity.
     criterion At least one maintainer-oriented path can run the scripted validation plan locally end to end and produce an understandable pass/fail result.
+    criterion The validation design explains the role of `try-*` guests, including whether they remain as canonical fixtures for module-level smoke coverage or are superseded by a more formal test harness.
   review-items
     item(status="open").
       Decide whether the canonical test artifact should be a single orchestration
