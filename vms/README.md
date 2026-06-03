@@ -507,7 +507,7 @@ longer needed.
 
 Keep for now:
 
-- `services.cloud-init.enable = true` in [modules/base.nix](/Users/jem/dotfiles/vms/modules/base.nix)
+- `services.cloud-init.enable = true` in [modules/clean-base.nix](/Users/jem/dotfiles/vms/modules/clean-base.nix)
 - `services.envfs.enable` plus the `/bin/bash` fallback in [seed/base.nix](/Users/jem/dotfiles/vms/seed/base.nix)
 - `user.shell = "/bin/sh"` in [lima.yaml](/Users/jem/dotfiles/vms/lima.yaml)
 - the `mode: boot` unlock provision in [lima.yaml](/Users/jem/dotfiles/vms/lima.yaml)

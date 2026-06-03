@@ -6,7 +6,6 @@ let
     zlib
     openssl
     e2fsprogs
-    icu
     util-linux
   ];
   buildEnv = {
@@ -23,15 +22,8 @@ in
     gcc
     gnumake
     perl
-    pkg-config
-    python3
   ]
-  ++ buildDeps
-  ++ [
-    (writeShellScriptBin "python" ''
-      exec ${python3}/bin/python3 "$@"
-    '')
-  ];
+  ++ buildDeps;
 
   environment.variables = buildEnv;
   environment.sessionVariables = buildEnv;

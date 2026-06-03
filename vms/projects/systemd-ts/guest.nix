@@ -6,7 +6,7 @@ let
 in
 {
   imports = [
-    ../../modules/docker-shim.nix
+    ../../modules/clean-docker.nix
   ];
 
   environment.systemPackages = with pkgs; [

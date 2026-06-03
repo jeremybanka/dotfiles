@@ -1,0 +1,60 @@
+issue(id="0009" status="closed")
+  title Extract reusable clean/dirty modules with boundary-explicit naming
+  user-story
+    as-a scrubs maintainer extracting reusable guest behavior
+    i-want guest extensions split into clearly named clean and dirty modules with a sharp boundary between reusable capability and project policy
+    so-that we can reuse tooling confidently, review trust-boundary intent quickly, and keep project-specific concerns inside project guest files rather than inside shared modules
+  premise.
+    Scrubs currently has guest-extension points that can carry reusable logic,
+    but the shape is still too close to ad hoc shims. That makes it too easy
+    for a file to mix together trust-boundary meaning, host-specific bootstrap
+    concerns, and project-local policy without making those categories obvious
+    to the next reader.
+
+    This issue is about extracting reusable modules as first-class building
+    blocks and naming them so their intent is visible immediately. Reusable
+    modules should use names such as `clean-gcloud.nix`,
+    `clean-docker.nix`, `dirty-gcloud-build.nix`, or
+    `dirty-postgres-build.nix`, where the prefix tells the reader which space
+    the module serves.
+
+    A clean module is a ready-to-use cleanspace capability: it includes the
+    nixpkg intended to run in cleanspace and the configuration required for
+    that tool. If a tool does not need accompanying configuration, it does not
+    need a dedicated module and can remain just a package choice at the project
+    level.
+
+    A dirty module is not a dirty runtime application bundle. It is a reusable
+    module that installs the cleanspace foundations required to build software
+    that will live in dirtyspace. Its job is to provide build-time support,
+    not to smuggle project policy or project-owned runtime concerns into shared
+    scrubs base.
+
+    Reusable modules should stay neutral and should not refer to specific
+    projects. Any project-specific wiring, enablement, or policy belongs in
+    the relevant project `guest.nix` file, which can compose the reusable
+    clean and dirty modules it needs.
+  acceptance-criteria
+    criterion Scrubs has a documented reusable-module model that distinguishes shared clean modules, shared dirty modules, and project-specific `guest.nix` concerns.
+    criterion Reusable modules use boundary-explicit names such as `clean-...` and `dirty-...`, so the filename and intent immediately communicate which space the module serves.
+    criterion The definition of a clean module is documented: it packages a cleanspace tool together with any configuration needed to use that tool in cleanspace, and modules are not introduced for tools that need no configuration.
+    criterion The definition of a dirty module is documented: it provides the cleanspace foundations needed to build software that will live in dirtyspace, rather than bundling project-specific dirty runtime behavior.
+    criterion The resulting module layout and examples make it clear that reusable modules must not refer to particular projects, and that project-specific behavior belongs in the project's `guest.nix`.
+    criterion At least one example composition shows a project `guest.nix` consuming reusable clean and/or dirty modules without moving project policy into the shared modules themselves.
+  review-items
+    item(status="covered").
+      The first promotions now look settled: `clean-docker`,
+      `dirty-gcloud-build`, `dirty-postgres-build`, `clean-postgres`, and
+      `clean-base` are shared modules, while project-specific concerns such as
+      `systemd-ts` Docker-state ACLs, Wayforge's relaxed local Postgres auth,
+      and the `security-testing` profile remain in project `guest.nix` files.
+    item(status="covered").
+      The guidance on package-only modules is now intentionally firm: if a
+      tool only adds a package and needs no accompanying configuration, it
+      should stay a package choice at the project level rather than becoming a
+      shared module.
+    item(status="covered").
+      The naming scheme has held up under real extraction work: shared modules
+      now use `clean-*` and `dirty-*-build` names that foreground trust
+      boundary and role, and dirty modules continue to mean cleanspace build
+      support for dirtyspace outputs rather than generic dirty app bundles.
