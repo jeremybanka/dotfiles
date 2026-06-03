@@ -241,13 +241,15 @@ cp ./vms/settings.env.example ./vms/settings.env
 
 Then edit `vms/settings.env` to point at your generic NixOS image.
 
-If you want bootstrap to pre-provision clean-space auth for `gh` or `codex`,
-you can point scrubs at a GitHub Keychain item and, optionally, a host Codex
-auth bundle path:
+If you want bootstrap to pre-provision clean-space auth for `gh`, `codex`, or
+guest-side Tailscale, you can point scrubs at host-side secret sources:
 
 ```sh
 SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__PERSONAL=scrubs-gh-token-personal
 SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__PERSONAL=github.com
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__PERSONAL=scrubs-tailscale-oauth-secret-personal
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__PERSONAL=tailscale
+SCRUBS_TAILSCALE_TAGS=tag:scrubs
 SCRUBS_CODEX_AUTH_JSON_PATH=~/.codex/auth.json
 ```
 
@@ -255,9 +257,15 @@ For GitHub, a direct `SCRUBS_GH_TOKEN` value is also supported, but the
 intended strong path is host-password-manager sourcing. For Codex, the strong
 path is the host ChatGPT login bundle from `~/.codex/auth.json` or an explicit
 `SCRUBS_CODEX_AUTH_JSON_PATH`; scrubs does not use API-key auth for Codex in
-the guest path. When configured, bootstrap seals guest-local auth artifacts
-and installs clean wrappers that materialize those credentials only for the
-`gh` or `codex` process being launched. When sealed GitHub auth is present,
+the guest path. For Tailscale, the intended host input is an OAuth client
+secret with the `auth_keys` scope stored in the macOS Keychain under the
+selected clean auth profile. When
+configured, bootstrap seals guest-local auth artifacts and installs the clean
+runtime needed to use them. `gh` and `codex` materialize their credentials on
+demand for the target process. Tailscale materializes its OAuth client secret
+into `/run` long enough for the NixOS `tailscaled-autoconnect` path to bring
+the guest up as a tagged node, then clears the plaintext secret from `/run`.
+When sealed GitHub auth is present,
 scrubs also writes the Git credential helper configuration for
 `https://github.com` and `https://gist.github.com` so ordinary HTTPS Git
 operations flow through the scrubs `gh` wrapper rather than depending on
@@ -282,29 +290,38 @@ For example, a personal/work GitHub split can look like:
 SCRUBS_CLEAN_AUTH_PROFILE=personal
 SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__PERSONAL=scrubs-gh-token-personal
 SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__PERSONAL=github.com
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__PERSONAL=scrubs-tailscale-oauth-secret-personal
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__PERSONAL=tailscale
 SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__WORK=scrubs-gh-token-work
 SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__WORK=github.com
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__WORK=scrubs-tailscale-oauth-secret-work
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__WORK=tailscale
+SCRUBS_TAILSCALE_TAGS=tag:scrubs
+SCRUBS_TAILSCALE_PREAUTHORIZED=true
+SCRUBS_TAILSCALE_EPHEMERAL=false
 SCRUBS_CODEX_AUTH_JSON_PATH=~/.codex/auth.json
 ```
 
 That keeps one shared Codex bundle on the unsuffixed key while letting GitHub
-switch cleanly between personal and work tokens. The same suffixing model can
-be used for other clean-auth settings later.
+and Tailscale switch cleanly between personal and work secrets. The same
+suffixing model can be used for other clean-auth settings later.
 
 The intended host-side flow is:
 
 ```sh
 just scrubs-auth-set-gh
 just scrubs-auth-set-gh work
+just scrubs-auth-set-tailscale
 codex login
 just scrubs-auth-status
 ```
 
 With no profile argument, `just scrubs-auth-status` reports `personal` and
-`work` by default, then adds any extra GitHub auth profiles it can discover
-from `vms/settings.env`. You can still narrow it to one profile with
-`just scrubs-auth-status work`. For `personal`, the status command also checks
-the legacy `scrubs-gh-token/github.com` Keychain item so older single-token
+`work` by default, then adds any extra GitHub or Tailscale auth profiles it
+can discover from `vms/settings.env`. You can still narrow it to one profile
+with `just scrubs-auth-status work`. For `personal`, the status command also
+checks the legacy `scrubs-gh-token/github.com` and
+`scrubs-tailscale-auth-key/tailscale` Keychain items so older single-secret
 setups still show up during migration.
 
 GitHub uses the macOS Keychain entry:
@@ -313,14 +330,23 @@ GitHub uses the macOS Keychain entry:
   `personal` profile
 - service `scrubs-gh-token-work`, account `github.com` for a `work` profile
 
+Tailscale uses the macOS Keychain entry:
+
+- service `scrubs-tailscale-oauth-secret-personal`, account `tailscale` for the
+  default `personal` profile
+- service `scrubs-tailscale-oauth-secret-work`, account `tailscale` for a `work`
+  profile
+
 Codex uses the host ChatGPT auth bundle at:
 
 - `SCRUBS_CODEX_AUTH_JSON_PATH` if set
 - otherwise `~/.codex/auth.json`
 
 The helper recipes keep the GitHub account label fixed at `github.com`, so the
-only knob you normally need is the profile name. For Codex, make sure the host
-auth bundle exists by logging in on the host first.
+only knob you normally need is the profile name. The Tailscale helper recipes
+keep the account label fixed at `tailscale`; use an OAuth client secret with
+the `auth_keys` scope and a server tag such as `tag:scrubs`. For Codex, make
+sure the host auth bundle exists by logging in on the host first.
 
 For multiple GitHub profiles, the helper recipes derive the service name from
 the profile so the CLI shape matches bootstrap:
@@ -328,9 +354,12 @@ the profile so the CLI shape matches bootstrap:
 ```sh
 just scrubs-auth-set-gh personal
 just scrubs-auth-set-gh work
+just scrubs-auth-set-tailscale personal
+just scrubs-auth-set-tailscale work
 just scrubs-auth-status
 just scrubs-auth-status work
 just scrubs-auth-delete-gh personal
+just scrubs-auth-delete-tailscale personal
 ```
 
 Bootstrap selection precedence is:
@@ -352,12 +381,74 @@ For rotation or cleanup:
 
 ```sh
 just scrubs-auth-delete-gh
+just scrubs-auth-delete-tailscale
 just scrubs-auth-delete-codex
 ```
 
 `just scrubs-auth-delete-codex` is advisory and reminds you to run
 `codex logout` on the host, because the host-side ChatGPT login bundle is the
 source of truth.
+
+## Direct Mobile Access
+
+If a Tailscale OAuth client secret is configured for the selected clean auth
+profile,
+bootstrap now enables guest-side Tailscale from NixOS on every guest. The
+recommended path is to create an OAuth client with the `auth_keys` scope and a
+guest tag such as `tag:scrubs`, then store that OAuth client secret on the
+host with `just scrubs-auth-set-tailscale`. The guest keeps its existing
+Lima-local SSH path for host workflows, but it also joins your tailnet
+automatically on first boot as a tagged node and enables Tailscale SSH.
+
+The node name is derived from the Lima instance name, so a guest bootstrapped
+as `wayforge` will register a Tailscale hostname derived from `wayforge`.
+Scrubs also sets `--accept-dns=false` on the guest Tailscale client so the
+tailnet does not silently replace the guest's existing DNS defaults. By
+default, scrubs requests `preauthorized=true` and `ephemeral=false`; if your
+tailnet policy wants different behavior, override
+`SCRUBS_TAILSCALE_PREAUTHORIZED` or `SCRUBS_TAILSCALE_EPHEMERAL`.
+
+The intended setup flow is:
+
+1. create or choose a guest tag such as `tag:scrubs` in your tailnet policy
+2. create a Tailscale OAuth client with the `auth_keys` scope for that tag
+3. store the OAuth client secret on the host with `just scrubs-auth-set-tailscale`
+4. bootstrap or re-bootstrap the guest with `just bootstrap <instance>`
+5. confirm the guest joined the tailnet with `limactl shell <instance> -- tailscale status`
+6. connect from your phone over Tailscale SSH using the guest's tailnet name
+
+Some mobile SSH clients do not accept Tailscale SSH's no-auth flow directly.
+When that happens, use the username suffix `+password` and enter any password.
+That compatibility path does not require enabling a real guest password.
+
+A minimal policy shape for tagged scrubs guests looks like:
+
+```json
+{
+  "tagOwners": {
+    "tag:scrubs": ["you@example.com"]
+  },
+  "grants": [
+    {
+      "src": ["user:you@example.com"],
+      "dst": ["tag:scrubs"],
+      "ip": ["*"]
+    }
+  ],
+  "ssh": [
+    {
+      "action": "accept",
+      "src": ["user:you@example.com"],
+      "dst": ["tag:scrubs"],
+      "users": ["jem"]
+    }
+  ]
+}
+```
+
+Prefer explicit host usernames such as `jem` on tagged guests instead of
+`autogroup:nonroot`, because Tailscale SSH treats `autogroup:nonroot` broadly
+once the destination is no longer `autogroup:self`.
 
 The default local convention for active base images is:
 
@@ -457,6 +548,8 @@ After bootstrap finishes:
 - `limactl shell my-project`
 - or `just vm-shell my-project`
 - or SSH using the pattern from [`ssh_config.example`](./ssh_config.example)
+- or, when Tailscale auth is configured, Tailscale SSH to the guest's tailnet
+  hostname from another device
 
 The guest keeps a POSIX login shell for compatibility with Lima and bootstrap
 tools. `nu` is still installed; start it manually after login when you want it.
@@ -545,12 +638,13 @@ For any new or materially changed guest flow, the baseline pass is:
 1. create a fresh throwaway guest
 2. confirm `limactl shell <instance>` opens an interactive shell
 3. confirm clean-space `gh` and Codex auth are usable without interactive login
-4. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
-5. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
-6. confirm an HTTPS read operation such as `git ls-remote` succeeds
-7. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
-8. run `just bootstrap <instance>` again on that same guest
-9. confirm `limactl shell <instance>` still opens an interactive shell
+4. when Tailscale auth is configured, confirm `tailscale status` reports the guest as running and `tailscale set --ssh` state is active
+5. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
+6. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
+7. confirm an HTTPS read operation such as `git ls-remote` succeeds
+8. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
+9. run `just bootstrap <instance>` again on that same guest
+10. confirm `limactl shell <instance>` still opens an interactive shell
 
 This does not replace workload-specific validation, but it is the default
 guardrail for scrubs changes. A guest that cannot survive re-bootstrap without
