@@ -1,0 +1,60 @@
+issue(id="0012" status="open")
+  title Support Rust toolchains across clean bootstrap and dirty runtime
+  user-story
+    as-a scrubs maintainer supporting Rust-shaped project workflows
+    i-want Rust toolchains to fit the clean/dirty scrubs model without ad hoc home leaks
+    so-that clean `mise` bootstrap can install Rust tooling while dirty Rust workflows still run inside the intended boundary
+  premise.
+    Scrubs currently treats `mise` as a kind of bridge between clean space and
+    dirty space. That model already works reasonably well for tools that
+    install as self-contained binaries, but a fresh `puggers` guest showed two
+    Rust-specific failures that make the boundary story incomplete.
+
+    First, `mise install` for a repo that declares both `rust` and a
+    `cargo:`-installed tool failed in a fresh guest because clean-side bootstrap
+    lacked a C toolchain. Re-running the same install from `nix shell
+    nixpkgs#gcc --command mise install` succeeded, which suggests that clean
+    `mise` bootstrap legitimately needs access to at least some native build
+    support for Rust-adjacent tool installation.
+
+    Second, that successful bootstrap did not make ordinary dirty Rust commands
+    work. Clean `mise` resolves `cargo` and `rustc` to rustup-managed proxies
+    under `~/.cargo/bin`, and dirtyspace currently replaces the real home with
+    a synthetic one. The result is that `cargo test` in the dirty runtime fails
+    before compilation because bubblewrap cannot exec `/home/<user>/.cargo/bin/cargo`.
+
+    The likely long-term fit is not "bind the real clean home into dirtyspace."
+    The likely fit is a scrubs-owned Rust bridge model: clean bootstrap may
+    materialize Rust toolchain state into explicit scrubs-managed locations,
+    dirtyspace may consume the minimum read-only runtime surface it needs from
+    that state, and writable Cargo caches or registries may need a separate
+    dirty-visible home of their own. Once cargo actually runs in dirtyspace, we
+    should also expect a follow-on policy decision about native build helpers
+    such as `cc`, because many Rust workflows will eventually need one.
+  acceptance-criteria
+    criterion Scrubs has a documented Rust support model that explains the roles of clean `mise`, rustup-managed toolchains, Cargo state, and dirty runtime execution without relying on implicit access to the real clean home.
+    criterion A fresh guest can bootstrap a representative Rust repo whose `mise.toml` includes `rust` plus at least one `cargo:`-installed tool, without requiring manual operator surgery beyond the intended scrubs path.
+    criterion Dirty Rust commands such as `cargo test` can execute through the scrubs launcher without depending on `~/.cargo/bin` or other paths that disappear when dirtyspace swaps in a synthetic home.
+    criterion The chosen design makes an explicit decision about where Rustup and Cargo homes live, which parts are clean-owned versus dirty-visible, and which portions are read-only versus writable.
+    criterion The design does not solve Rust support by broadly projecting the real clean `~/.cargo` or `~/.rustup` trees into dirtyspace.
+    criterion If dirty Rust workflows require native build helpers such as `cc`, `c++`, `ar`, or `pkg-config`, scrubs defines whether that capability belongs in a reusable dirty Rust support path, a per-project shim, or some other explicit mechanism rather than relying on ambient leakage.
+    criterion At least one validation path demonstrates both sides of the model: clean bootstrap can install the Rust toolchain and representative Cargo-installed tooling, and dirty runtime can execute a representative Rust workflow without reaching unrelated clean-space state.
+  review-items
+    item(status="open").
+      Decide whether scrubs should relocate `RUSTUP_HOME` and `CARGO_HOME`
+      into scrubs-managed paths, resolve through rustup to real toolchain
+      binaries before entering bubblewrap, or pursue some hybrid bridge model.
+    item(status="open").
+      Decide whether clean `mise` should gain a minimal always-on native build
+      toolchain for Rust bootstrap, or whether that support should be modeled
+      as an explicit clean capability that only some guests enable.
+    item(status="open").
+      Validate what writable Cargo state dirtyspace actually needs for ordinary
+      workflows, including registry caches, git checkouts, incremental build
+      artifacts, and whether any of that state can safely live outside the
+      project worktree.
+    item(status="open").
+      Confirm that the final Rust path still preserves the core scrubs
+      boundary: no dirty access to sealed clean auth, no arbitrary clean
+      helper-binary reachability, and no accidental dependence on the real
+      clean home layout.
