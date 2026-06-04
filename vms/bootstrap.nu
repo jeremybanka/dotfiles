@@ -147,6 +147,14 @@ def default-github-keychain-service [profile_name: string] {
   $"scrubs-gh-token-($profile_name)"
 }
 
+def default-tailscale-oauth-keychain-service [profile_name: string] {
+  if $profile_name == "" {
+    "scrubs-tailscale-oauth-secret"
+  } else {
+    $"scrubs-tailscale-oauth-secret-($profile_name)"
+  }
+}
+
 def resolve-github-token [settings: record, profile_name: string, profile_suffix: string] {
   let explicit_value = (get-profiled-setting $settings "SCRUBS_GH_TOKEN" $profile_suffix "")
   if $explicit_value != "" {
@@ -186,6 +194,68 @@ def resolve-github-token [settings: record, profile_name: string, profile_suffix
 
   let legacy_account = (get-setting $settings "SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT" "github.com")
   macos-keychain-secret $legacy_service $legacy_account
+}
+
+def resolve-tailscale-oauth-secret [settings: record, profile_name: string, profile_suffix: string] {
+  let explicit_value = (get-profiled-setting $settings "SCRUBS_TAILSCALE_OAUTH_SECRET" $profile_suffix "")
+  if $explicit_value != "" {
+    return $explicit_value
+  }
+
+  let profiled_service_key = $"SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__($profile_suffix)"
+  let profiled_account_key = $"SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__($profile_suffix)"
+
+  let has_profiled_service = (has-setting $settings $profiled_service_key)
+  let has_profiled_account = (has-setting $settings $profiled_account_key)
+
+  if $profile_suffix != "" and ($has_profiled_service or $has_profiled_account) {
+    let profiled_service = (get-setting $settings $profiled_service_key (default-tailscale-oauth-keychain-service $profile_name))
+    let profiled_account = (get-setting $settings $profiled_account_key "tailscale")
+    return (macos-keychain-secret $profiled_service $profiled_account)
+  }
+
+  if $profile_name != "" {
+    let conventional_service = (default-tailscale-oauth-keychain-service $profile_name)
+    let conventional_secret = (macos-keychain-secret-optional $conventional_service "tailscale")
+    if $conventional_secret != "" {
+      return $conventional_secret
+    }
+  }
+
+  let default_service = (get-setting $settings "SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE" "scrubs-tailscale-oauth-secret")
+  let default_account = (get-setting $settings "SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT" "tailscale")
+  let default_secret = (macos-keychain-secret-optional $default_service $default_account)
+  if $default_secret != "" {
+    return $default_secret
+  }
+
+  let legacy_explicit_value = (get-profiled-setting $settings "SCRUBS_TAILSCALE_AUTH_KEY" $profile_suffix "")
+  if $legacy_explicit_value != "" {
+    return $legacy_explicit_value
+  }
+
+  let legacy_profiled_service_key = $"SCRUBS_TAILSCALE_AUTH_KEYCHAIN_SERVICE__($profile_suffix)"
+  let legacy_profiled_account_key = $"SCRUBS_TAILSCALE_AUTH_KEYCHAIN_ACCOUNT__($profile_suffix)"
+  let has_legacy_profiled_service = (has-setting $settings $legacy_profiled_service_key)
+  let has_legacy_profiled_account = (has-setting $settings $legacy_profiled_account_key)
+
+  if $profile_suffix != "" and ($has_legacy_profiled_service or $has_legacy_profiled_account) {
+    let legacy_service = (get-setting $settings $legacy_profiled_service_key "scrubs-tailscale-auth-key")
+    let legacy_account = (get-setting $settings $legacy_profiled_account_key "tailscale")
+    return (macos-keychain-secret $legacy_service $legacy_account)
+  }
+
+  if $profile_name != "" {
+    let legacy_conventional_service = $"scrubs-tailscale-auth-key-($profile_name)"
+    let legacy_conventional_secret = (macos-keychain-secret-optional $legacy_conventional_service "tailscale")
+    if $legacy_conventional_secret != "" {
+      return $legacy_conventional_secret
+    }
+  }
+
+  let legacy_default_service = (get-setting $settings "SCRUBS_TAILSCALE_AUTH_KEYCHAIN_SERVICE" "scrubs-tailscale-auth-key")
+  let legacy_default_account = (get-setting $settings "SCRUBS_TAILSCALE_AUTH_KEYCHAIN_ACCOUNT" "tailscale")
+  macos-keychain-secret-optional $legacy_default_service $legacy_default_account
 }
 
 def resolve-clean-secret [
@@ -250,6 +320,54 @@ def resolve-codex-auth-json [settings: record, profile_suffix: string] {
   let auth_json = (open --raw $candidate_path)
   validate-codex-auth-json $auth_json
   $auth_json
+}
+
+def normalize-tailscale-hostname [instance_name: string] {
+  let normalized = (
+    $instance_name
+    | str trim
+    | str downcase
+    | str replace --regex --all '[^a-z0-9-]+' "-"
+    | str replace --regex '^-+' ""
+    | str replace --regex '-+$' ""
+  )
+
+  if $normalized == "" {
+    error make {
+      msg: $"Instance name '($instance_name)' cannot be converted into a Tailscale hostname."
+    }
+  }
+
+  if (($normalized | str length) > 63) {
+    error make {
+      msg: $"Tailscale hostname '($normalized)' derived from instance name '($instance_name)' is longer than 63 characters."
+    }
+  }
+
+  $normalized
+}
+
+def resolve-tailscale-tags [settings: record, profile_suffix: string] {
+  let tags = (get-profiled-setting $settings "SCRUBS_TAILSCALE_TAGS" $profile_suffix "tag:scrubs")
+  let trimmed = ($tags | str trim)
+  if $trimmed == "" {
+    error make {
+      msg: "SCRUBS_TAILSCALE_TAGS cannot be empty when Tailscale OAuth bootstrap is enabled."
+    }
+  }
+  $trimmed
+}
+
+def resolve-tailscale-preauthorized [settings: record, profile_suffix: string] {
+  let configured = (get-profiled-setting $settings "SCRUBS_TAILSCALE_PREAUTHORIZED" $profile_suffix "true")
+  let normalized = ($configured | into string | str trim | str downcase)
+  $normalized in ["1", "true", "yes", "on"]
+}
+
+def resolve-tailscale-ephemeral [settings: record, profile_suffix: string] {
+  let configured = (get-profiled-setting $settings "SCRUBS_TAILSCALE_EPHEMERAL" $profile_suffix "false")
+  let normalized = ($configured | into string | str trim | str downcase)
+  $normalized in ["1", "true", "yes", "on"]
 }
 
 def write-sealed-secret [secret_value: string, key_path: string, ciphertext_path: string] {
@@ -448,6 +566,10 @@ def main [
 
   let gh_token = (resolve-github-token $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
   let codex_auth_json = (resolve-codex-auth-json $settings $selected_clean_auth_profile.suffix)
+  let tailscale_oauth_secret = (resolve-tailscale-oauth-secret $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
+  let tailscale_tags = if $tailscale_oauth_secret == "" { "" } else { resolve-tailscale-tags $settings $selected_clean_auth_profile.suffix }
+  let tailscale_preauthorized = if $tailscale_oauth_secret == "" { false } else { resolve-tailscale-preauthorized $settings $selected_clean_auth_profile.suffix }
+  let tailscale_ephemeral = if $tailscale_oauth_secret == "" { false } else { resolve-tailscale-ephemeral $settings $selected_clean_auth_profile.suffix }
   let clean_secret_specs = [
     {
       name: "gh"
@@ -458,6 +580,11 @@ def main [
       name: "codex"
       ciphertext_file: "codex-auth.json.enc"
       value: $codex_auth_json
+    }
+    {
+      name: "tailscale"
+      ciphertext_file: "tailscale-oauth-secret.enc"
+      value: $tailscale_oauth_secret
     }
   ]
   let enabled_clean_secrets = ($clean_secret_specs | where {|spec| $spec.value != "" })
@@ -499,6 +626,92 @@ def main [
   ];
 }
 " | save --force ($payload_dir | path join "scrubs" "modules" "project-shim.nix")
+  }
+
+  if $tailscale_oauth_secret != "" {
+    let tailscale_hostname = (normalize-tailscale-hostname $instance_name)
+    let clean_auth_dir = $"/home/($guest_user)/.local/share/scrubs/clean-auth"
+    let tailscale_ciphertext_path = $clean_auth_dir + "/tailscale-oauth-secret.enc"
+    let tailscale_seal_key_path = $clean_auth_dir + "/seal-key"
+    $"
+{ lib, pkgs, ... }:
+let
+  scrubsTailscaleRuntimeDir = \"/run/scrubs-clean-auth\";
+  scrubsTailscaleRuntimeKey = scrubsTailscaleRuntimeDir + \"/tailscale-oauth-secret\";
+in
+{
+  services.tailscale = {
+    enable = true;
+    authKeyFile = scrubsTailscaleRuntimeKey;
+    authKeyParameters = {
+      ephemeral = (if $tailscale_ephemeral { "true" } else { "false" });
+      preauthorized = (if $tailscale_preauthorized { "true" } else { "false" });
+    };
+    extraUpFlags = [
+      \"--accept-dns=false\"
+      \"--hostname=($tailscale_hostname)\"
+      \"--advertise-tags=($tailscale_tags)\"
+      \"--ssh\"
+    ];
+  };
+
+  systemd.tmpfiles.rules = [
+    \"d /run/scrubs-clean-auth 0700 root root -\"
+  ];
+
+  systemd.services.scrubs-materialize-tailscale-auth = {
+    description = \"Materialize the sealed Tailscale OAuth secret for scrubs\";
+    before = [ \"tailscaled-autoconnect.service\" ];
+    requiredBy = [ \"tailscaled-autoconnect.service\" ];
+    serviceConfig = {
+      Type = \"oneshot\";
+      RemainAfterExit = true;
+      UMask = \"0077\";
+    };
+    script = ''
+      runtime_dir=${lib.escapeShellArg scrubsTailscaleRuntimeDir}
+      runtime_key=${lib.escapeShellArg scrubsTailscaleRuntimeKey}
+      seal_key=${lib.escapeShellArg \"($tailscale_seal_key_path)\"}
+      ciphertext=${lib.escapeShellArg \"($tailscale_ciphertext_path)\"}
+
+      ${pkgs.coreutils}/bin/install -d -m 700 \"$runtime_dir\"
+      ${pkgs.openssl}/bin/openssl enc -d -aes-256-cbc -pbkdf2 -pass \"file:$seal_key\" -in \"$ciphertext\" -out \"$runtime_key\"
+      ${pkgs.coreutils}/bin/chmod 600 \"$runtime_key\"
+    '';
+  };
+
+  # tailscaled-autoconnect can race systemd-resolved during early boot on Lima.
+  systemd.services.tailscaled-autoconnect = {
+    after = [
+      \"network-online.target\"
+      \"systemd-resolved.service\"
+      \"nss-lookup.target\"
+    ];
+    wants = [
+      \"network-online.target\"
+      \"systemd-resolved.service\"
+      \"nss-lookup.target\"
+    ];
+    serviceConfig = {
+      Restart = \"on-failure\";
+      RestartSec = \"5s\";
+    };
+  };
+
+  systemd.services.scrubs-clear-tailscale-auth = {
+    description = \"Remove the materialized Tailscale OAuth secret after autoconnect\";
+    after = [ \"tailscaled-autoconnect.service\" ];
+    requires = [ \"tailscaled-autoconnect.service\" ];
+    wantedBy = [ \"multi-user.target\" ];
+    serviceConfig = {
+      Type = \"oneshot\";
+    };
+    script = ''
+      ${pkgs.coreutils}/bin/rm -f ${lib.escapeShellArg scrubsTailscaleRuntimeKey}
+    '';
+  };
+}
+" | save --force ($payload_dir | path join "scrubs" "modules" "tailscale-config.nix")
   }
 
   let extra_lima_config = if $project_shim.lima_config == "" {
