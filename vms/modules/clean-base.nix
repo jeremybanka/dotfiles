@@ -78,21 +78,25 @@ in
   users.mutableUsers = false;
 
   environment.systemPackages = with pkgs; [
+    binutils
     bubblewrap
     carapace
     codex
     curl
     delta
     fd
+    gcc
     git
     gh
     gnupg
+    gnumake
     helix
     jq
     lazygit
     unstablePkgs.mise
     nushell
     openssl
+    pkg-config
     ripgrep
     tokei
     tmux
