@@ -91,7 +91,7 @@ should end up looking like this:
     "tag:scrubs": ["autogroup:admin"]
   },
   "grants": [
-    {"src": ["*"], "dst": ["*"], "ip": ["*"]}
+    { "src": ["*"], "dst": ["*"], "ip": ["*"] }
   ],
   "ssh": [
     {
