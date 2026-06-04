@@ -1,0 +1,52 @@
+issue(id="0013" status="closed")
+  title Enable direct mobile access to scrubs guests via Tailscale SSH
+  user-story
+    as-a scrubs user programming remotely from my phone
+    i-want scrubs guests to be directly reachable over Tailscale with a phone-friendly SSH path
+    so-that I can connect to a guest itself rather than depending on host-local Lima forwarding or a desktop intermediary
+  premise.
+    This now ships as a scrubs base capability when a Tailscale OAuth client
+    secret is configured for the selected clean auth profile. Bootstrap seals
+    that secret into clean guest auth, materializes it only long enough for
+    the guest's NixOS-managed `tailscaled-autoconnect` path to enroll, and
+    enables Tailscale SSH without enabling a real guest password.
+
+    The guest keeps its existing Lima-local SSH path for host workflows while
+    also joining the tailnet as a tagged node whose hostname is derived from
+    the instance name. The chosen model is explicit: Tailscale support lives
+    in clean Nix guest configuration, not in dirty `mise` space, and it keeps
+    the clean/dirty boundary intact.
+
+    Validation completed on June 3-4, 2026. A real `wayforge` guest enrolled
+    successfully, was reachable directly from a phone over Tailscale SSH, and
+    kept existing local scrubs flows intact. Along the way, the implementation
+    also fixed a Lima boot-order race by making `tailscaled-autoconnect` wait
+    for network and resolver readiness and restart on failure.
+  acceptance-criteria
+    criterion Scrubs has a documented, supported path to make a guest directly reachable from a phone over a tailnet rather than only through host-local `127.0.0.1` Lima forwarding.
+    criterion The preferred remote auth path is Tailscale SSH, and the design does not require enabling real guest password authentication as the normal mobile-access path.
+    criterion Guest-side Tailscale installation, state, and launch behavior live in clean guest configuration rather than the dirty `mise` runtime or other ambient dirty-space tooling.
+    criterion At least one representative guest such as `wayforge` can be enrolled and reached directly from a phone-oriented workflow, with a concrete validation path for both direct SSH use and the intended Codex/ChatGPT mobile SSH-host flow if that client supports it.
+    criterion Existing local scrubs workflows remain intact, including bootstrap, `limactl shell <instance>`, host-local SSH access, and the current clean-auth model for `gh` and Codex.
+    criterion The resulting documentation explains the operator flow end to end: how a guest joins the tailnet, how its remote identity is discovered or named, how mobile access is initiated, and which client constraints still require compatibility checks.
+    criterion The work explicitly documents the threat-model tradeoff of giving a guest first-class network identity and states what remains intentionally disallowed or unchanged.
+  review-items
+    item(status="covered").
+      Tailscale support now lives in scrubs base as a clean-side guest
+      capability that activates when the selected clean auth profile provides a
+      Tailscale OAuth client secret. Project shims do not need to own the
+      feature.
+    item(status="covered").
+      Enrollment now happens during bootstrap through a host-provided
+      Tailscale OAuth client secret with `auth_keys` scope, tagged guest
+      registration, `preauthorized=true` by default, and `ephemeral=false` by
+      default.
+    item(status="covered").
+      The phone-oriented path was validated on a real guest. Tailscale SSH
+      worked directly from the phone, and the documentation now captures the
+      client-compatibility `username+password` fallback for clients that insist
+      on password-style auth prompts.
+    item(status="covered").
+      Guest hostnames remain instance-derived for now. A guest bootstrapped as
+      `wayforge` registers a tailnet hostname derived from `wayforge`, which
+      is now documented as the supported naming convention.

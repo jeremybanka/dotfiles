@@ -417,6 +417,11 @@ The intended setup flow is:
 5. confirm the guest joined the tailnet with `limactl shell <instance> -- tailscale status`
 6. connect from your phone over Tailscale SSH using the guest's tailnet name
 
+For the exact click-by-click walkthrough, including the current Tailscale UI
+labels (`Description`, `Keys -> Auth Keys -> Write`) and the common
+troubleshooting path for a guest that initially shows `Logged out.`, use
+[tailscale-direct-guest-access.md](/Users/jem/dotfiles/vms/docs/tailscale-direct-guest-access.md).
+
 Some mobile SSH clients do not accept Tailscale SSH's no-auth flow directly.
 When that happens, use the username suffix `+password` and enter any password.
 That compatibility path does not require enabling a real guest password.

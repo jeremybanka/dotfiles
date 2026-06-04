@@ -680,6 +680,24 @@ in
     '';
   };
 
+  # tailscaled-autoconnect can race systemd-resolved during early boot on Lima.
+  systemd.services.tailscaled-autoconnect = {
+    after = [
+      \"network-online.target\"
+      \"systemd-resolved.service\"
+      \"nss-lookup.target\"
+    ];
+    wants = [
+      \"network-online.target\"
+      \"systemd-resolved.service\"
+      \"nss-lookup.target\"
+    ];
+    serviceConfig = {
+      Restart = \"on-failure\";
+      RestartSec = \"5s\";
+    };
+  };
+
   systemd.services.scrubs-clear-tailscale-auth = {
     description = \"Remove the materialized Tailscale OAuth secret after autoconnect\";
     after = [ \"tailscaled-autoconnect.service\" ];
