@@ -182,11 +182,8 @@ done
 
 declare -a extra_dirty_wrapper_specs=()
 if [[ "${rust_tooling_active}" == "1" ]]; then
-  for shim_name in cc gcc c++ g++ ld ar ranlib make pkg-config; do
-    resolved_shim_target="$(resolve_host_command_path "${shim_name}" 2> /dev/null || true)"
-    [[ -n "${resolved_shim_target}" ]] || continue
-    extra_dirty_wrapper_specs+=("${shim_name}=${resolved_shim_target}")
-  done
+  resolved_shim_target="$(resolve_host_command_path "cc" 2> /dev/null || true)"
+  [[ -n "${resolved_shim_target}" ]] && extra_dirty_wrapper_specs+=("cc=${resolved_shim_target}")
 fi
 
 declare -a runtime_wrapper_specs=(

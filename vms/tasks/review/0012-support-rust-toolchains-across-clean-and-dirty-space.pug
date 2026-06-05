@@ -60,23 +60,32 @@ issue(id="0012" status="review")
       `mise install` followed by plain repo-shell `cargo test`, and the
       original `puggers` repro completed `gh repo clone puggers`, plain
       `mise install`, and plain `cargo test` successfully in a fresh guest.
-    item(status="open").
-      Decide whether the clean-side native build toolchain that now supports
-      Rust bootstrap should remain an always-on part of `clean-base`, or
-      whether scrubs should eventually model that as a narrower clean
-      capability.
-    item(status="open").
-      Review the Rust-triggered dirty helper basket. Today Rust activation
-      exposes `cc`, `gcc`, `c++`, `g++`, `ld`, `ar`, `ranlib`, `make`, and
-      `pkg-config` in dirtyspace; confirm that this set is justified and trim
-      it if a smaller basket proves sufficient.
+    item(status="covered").
+      Fresh `puggers` guests now cover a minimization pass for the clean-side
+      bootstrap toolchain. `mise install` plus dirty `cargo test` still passed
+      after trimming `clean-base` down from `gcc`, `binutils`, `gnumake`, and
+      `pkg-config` to just `gcc`, which still provides clean-side `cc`, `gcc`,
+      and `ld` on `PATH` without exposing `make` or `pkg-config` as ambient
+      clean commands.
+    item(status="covered").
+      Fresh `puggers` guests now cover a minimization pass for the Rust dirty
+      helper basket. An empty basket failed in dirty `cargo test` with
+      `linker 'cc' not found`, while a `cc`-only basket restored full
+      end-to-end success for plain `mise install` and plain `cargo test`.
+      For the motivating repo, the justified dirty Rust helper surface is now
+      `cc` rather than the earlier broader basket.
     item(status="open").
       Validate what writable Cargo state dirtyspace actually needs over time,
       including registry caches, git checkouts, and incremental artifacts, and
       confirm that the fake-home `CARGO_HOME` shape remains a good long-term
       fit.
-    item(status="open").
-      Confirm with an explicit boundary probe that the final Rust path still
-      preserves the core scrubs guarantee: no dirty access to sealed clean
-      auth, no accidental dependence on the real clean home, and no broader
-      clean helper reachability than intended.
+    item(status="covered").
+      An explicit dirty-Rust probe now exists on `redteam`. A throwaway Rust
+      repo executed both `build.rs` and test-time probing under ordinary
+      scrubs `cargo`, recorded its observations in
+      `~/rust-boundary-probe/probe-results.txt`, and summarized them in
+      `~/SCRUBS_RUST_BOUNDARY_NOTES.md`. The probe confirmed that dirty Rust
+      execution did not inherit `GH_TOKEN` or `CODEX_HOME`, could not see
+      `~/.codex`, `~/.ssh`, or the clean-auth surface, could read the
+      intended Rust bridge paths under `~/.local/share/mise`, and could not
+      write back into those read-only bridge paths.
