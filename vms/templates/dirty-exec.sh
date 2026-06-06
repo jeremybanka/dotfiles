@@ -6,6 +6,29 @@ die() {
   exit 1
 }
 
+resolve_host_command_path() {
+  local command_name="$1"
+  local resolved
+
+  if [[ -x "/run/current-system/sw/bin/${command_name}" ]]; then
+    resolved="/run/current-system/sw/bin/${command_name}"
+  else
+    resolved="$(command -v "${command_name}" 2> /dev/null || true)"
+  fi
+
+  [[ -n "${resolved}" ]] || return 1
+  readlink -f "${resolved}"
+}
+
+resolve_mise_target() {
+  local command_name="$1"
+
+  env \
+    RUSTUP_HOME="${scrubs_rustup_home}" \
+    CARGO_HOME="${scrubs_rust_bootstrap_cargo_home}" \
+    "${MISE_BIN}" which "${command_name}" 2> /dev/null || true
+}
+
 write_exec_wrapper() {
   local target_path="$1"
   local wrapper_path="$2"
@@ -32,6 +55,7 @@ build_runtime_cache() {
   rm -rf "${cache_tmp_dir}"
   mkdir -p \
     "${cache_home}/.config" \
+    "${cache_home}/.cargo" \
     "${cache_home}/.local/bin" \
     "${cache_home}/.local/share" \
     "${cache_home}/.local/share/scrubs" \
@@ -40,7 +64,7 @@ build_runtime_cache() {
 
   write_exec_wrapper /usr/bin/mise "${cache_home_bin}/mise"
 
-  for spec in "${active_tool_specs[@]}"; do
+  for spec in "${runtime_wrapper_specs[@]}"; do
     shim_name="${spec%%=*}"
     resolved_shim_target="${spec#*=}"
     write_exec_wrapper "${resolved_shim_target}" "${cache_home_bin}/${shim_name}"
@@ -101,9 +125,6 @@ SANDBOX_DEFINITION="${SCRUBS_DIR}/sandbox-definition.sh"
 # shellcheck source=/dev/null
 source "${SANDBOX_DEFINITION}"
 
-resolved_target="$("${MISE_BIN}" which "${command_name}" 2> /dev/null || true)"
-[[ -n "${resolved_target}" ]] || die "${command_name} is not configured in mise for this directory"
-
 current_user="$(id -un)"
 helper_root="${HOME}/.local/share/scrubs/helper-root"
 working_dir="$(pwd -P)"
@@ -112,6 +133,8 @@ mise_root="${HOME}/.local/share/mise"
 mise_shims="${mise_root}/shims"
 mise_config_dir="${HOME}/.config/mise"
 mise_state_dir="${HOME}/.local/state/mise"
+scrubs_rustup_home="${mise_root}/rustup-home"
+scrubs_rust_bootstrap_cargo_home="${mise_root}/rust-cargo-home"
 runtime_cache_root="/tmp/scrubs-dirty-runtime-cache/${current_user}"
 helper_closure_cache_root="/tmp/scrubs-helper-closure-cache/${current_user}"
 node_modules_bin="${project_root}/node_modules/.bin"
@@ -119,8 +142,11 @@ ssl_cert_file="/etc/ssl/certs/ca-bundle.crt"
 nix_ld="/run/current-system/sw/share/nix-ld/lib/ld.so"
 nix_ld_library_path="/run/current-system/sw/share/nix-ld/lib"
 guest_loader=""
-runtime_cache_version="3"
+runtime_cache_version="4"
 helper_closure_cache_version="2"
+
+resolved_target="$(resolve_mise_target "${command_name}")"
+[[ -n "${resolved_target}" ]] || die "${command_name} is not configured in mise for this directory"
 
 for candidate_loader in /lib/ld-linux-aarch64.so.1 /lib64/ld-linux-x86-64.so.2; do
   if [[ -e "${candidate_loader}" ]]; then
@@ -139,11 +165,34 @@ if [[ -d "${mise_shims}" ]]; then
   while IFS= read -r shim_path; do
     shim_name="$(basename "${shim_path}")"
     [[ "${shim_name}" == "mise" ]] && continue
-    resolved_shim_target="$("${MISE_BIN}" which "${shim_name}" 2> /dev/null || true)"
+    resolved_shim_target="$(resolve_mise_target "${shim_name}")"
     [[ -n "${resolved_shim_target}" ]] || continue
     active_tool_specs+=("${shim_name}=${resolved_shim_target}")
   done < <(find "${mise_shims}" -maxdepth 1 -type l | sort)
 fi
+
+rust_tooling_active=0
+for spec in "${active_tool_specs[@]}"; do
+  resolved_shim_target="${spec#*=}"
+  if [[ "${resolved_shim_target}" == "${scrubs_rust_bootstrap_cargo_home}/"* ]]; then
+    rust_tooling_active=1
+    break
+  fi
+done
+
+declare -a extra_dirty_wrapper_specs=()
+if [[ "${rust_tooling_active}" == "1" ]]; then
+  for shim_name in cc gcc c++ g++ ld ar ranlib make pkg-config; do
+    resolved_shim_target="$(resolve_host_command_path "${shim_name}" 2> /dev/null || true)"
+    [[ -n "${resolved_shim_target}" ]] || continue
+    extra_dirty_wrapper_specs+=("${shim_name}=${resolved_shim_target}")
+  done
+fi
+
+declare -a runtime_wrapper_specs=(
+  "${active_tool_specs[@]}"
+  "${extra_dirty_wrapper_specs[@]}"
+)
 
 mkdir -p "${runtime_cache_root}" "${helper_closure_cache_root}" /tmp/mise-cache
 chmod 700 "${runtime_cache_root}" "${helper_closure_cache_root}"
@@ -152,7 +201,7 @@ runtime_cache_key="$(
   printf '%s\n' \
     "${runtime_cache_version}" \
     "${project_root}" \
-    "${active_tool_specs[@]}" \
+    "${runtime_wrapper_specs[@]}" \
     | cksum \
     | awk '{print $1 "-" $2}'
 )"
@@ -217,6 +266,10 @@ if [[ -d "${helper_root}" ]]; then
     collect_helper_input_if_present "${helper_entry}"
   done < <(find "${helper_root}" -mindepth 1 \( -type f -o -type l \) | sort)
 fi
+
+for spec in "${extra_dirty_wrapper_specs[@]}"; do
+  collect_helper_input_if_present "${spec#*=}"
+done
 
 collect_helper_input_if_present "${guest_loader}"
 collect_helper_input_if_present "${nix_ld}"
@@ -326,6 +379,8 @@ exec "${BWRAP_BIN}" \
   --setenv MISE_CONFIG_DIR "/home/${current_user}/.config/mise" \
   --setenv MISE_CACHE_DIR /tmp/mise-cache \
   --setenv MISE_STATE_DIR "/home/${current_user}/.local/state/mise" \
+  --setenv RUSTUP_HOME "/home/${current_user}/.local/share/mise/rustup-home" \
+  --setenv CARGO_HOME "/home/${current_user}/.cargo" \
   --setenv NIX_LD "${resolved_nix_ld}" \
   --setenv NIX_LD_LIBRARY_PATH "${resolved_nix_ld_library_path}" \
   --setenv SSL_CERT_FILE "${ssl_cert_file}" \
