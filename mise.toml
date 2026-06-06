@@ -1,7 +1,8 @@
 [tools]
+"github:terror/just-lsp" = "0.4.5"
+delta = "0.19.2"
 dprint = "0.54.0"
 just = "1.51.0"
+ripgrep = "15.1.0"
 shfmt = "3.13.1"
 taplo = "0.10.0"
-"github:terror/just-lsp" = "0.4.5"
-ripgrep = "15.1.0"
