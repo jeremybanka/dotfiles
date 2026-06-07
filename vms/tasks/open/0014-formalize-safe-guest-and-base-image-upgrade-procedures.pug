@@ -1,0 +1,44 @@
+issue(id="0014" status="open")
+  title Formalize safe guest and base-image upgrade procedures
+  user-story
+    as-a scrubs maintainer applying NixOS, kernel, or scrubs-module updates
+    i-want one standard upgrade procedure for running guests and reusable base images
+    so-that routine updates become consistent, documented, and low-risk instead of depending on memory or ad hoc judgment
+  premise.
+    Scrubs currently has the core mechanics needed to roll forward guest
+    systems: the `vms` flake pins guest inputs, bootstrap can apply the current
+    configuration inside an existing guest, and `just refresh-base-image` can
+    rebuild the reusable qcow2 artifact from the latest scrubs state.
+
+    What is still missing is a formal maintainer-facing pattern that explains
+    when to use each path, how to verify success, and how to avoid surprises
+    around staged-but-not-running kernels, stale base images, or long-lived
+    guests drifting away from the current intended system shape.
+
+    The goal of this task is not "make upgrades automatic at all costs." The
+    goal is to define a standard, documented, conservative procedure for
+    routine scrubs system updates that can be repeated safely. That procedure
+    should cover both in-place guest updates and base-image refreshes, and it
+    should include validation and recovery guidance strong enough that the
+    default operator experience feels boring rather than risky.
+  acceptance-criteria
+    criterion Scrubs has a documented upgrade model that clearly distinguishes at least three cases: patching a long-lived guest in place, refreshing the reusable base image artifact, and recreating project guests from a refreshed base image.
+    criterion The documented procedure explains how flake input bumps, scrubs module changes, `nixos-rebuild` inside guests, guest restarts, and `just refresh-base-image` relate to one another.
+    criterion The standard upgrade path defines explicit validation steps for both configured state and running state, including checks for the active kernel or generation after any required reboot.
+    criterion The standard upgrade path includes a conservative recovery story, such as when to keep the previous base image, when to stage changes into a disposable maintenance guest first, and how to avoid turning one failed update into fleet-wide guest breakage.
+    criterion At least one maintainer-oriented command sequence or helper flow exists that encodes the recommended upgrade procedure rather than leaving it entirely as README prose.
+    criterion The final guidance makes clear which update paths are intended to be routine and low-risk, and which still require exceptional care or manual judgment.
+  review-items
+    item(status="open").
+      Decide whether the recommended routine path should primarily be "refresh
+      the base image, validate it, then recreate guests" or whether some class
+      of changes should treat in-place guest upgrades as the normal default.
+    item(status="open").
+      Decide how much rollback support should be formalized for base images and
+      long-lived guests, including naming/versioning conventions for retained
+      qcow2 artifacts and whether scrubs should encourage A/B-style image
+      promotion.
+    item(status="open").
+      Decide whether the upgrade procedure should integrate directly with the
+      canonical validation work in task `0007`, or whether it needs its own
+      lighter-weight maintainer smoke checks for routine patch rollouts.
