@@ -1,0 +1,40 @@
+issue(id="0015" status="open")
+  title Preserve Codex chat state across guest bootstrap
+  user-story
+    as-a scrubs guest operator using Codex for ongoing work inside a guest
+    i-want my guest-local Codex chats to survive re-bootstrap and routine guest refreshes
+    so-that bootstrap stays safe to use as maintenance workflow instead of wiping active conversational context
+  premise.
+    Scrubs currently provisions Codex through the clean-space wrapper model used
+    for sealed ChatGPT auth. That model is the right default for credentials,
+    but it also means Codex runs with a synthetic `CODEX_HOME` assembled at
+    launch time rather than simply using the guest's persisted `~/.codex`
+    directory as-is.
+
+    In practice, guest operators are seeing Codex chat history disappear after
+    a guest is bootstrapped again. Whether the root cause is the current
+    tmpfs-backed runtime home, bootstrap-time file replacement, or another
+    interaction between wrapper state and durable guest config, the operator
+    experience is wrong: bootstrap should be a survivable maintenance action,
+    not something that silently drops ongoing Codex context.
+
+    The goal of this task is not to abandon the sealed-auth model or move back
+    to plaintext guest auth. The goal is to separate durable, non-secret Codex
+    state such as chats and other local working context from ephemeral auth
+    material, then make sure the standard bootstrap path preserves that durable
+    state on the same guest.
+  acceptance-criteria
+    criterion A guest that already contains Codex chat history can complete `just bootstrap <instance>` and still show that prior chat state afterward.
+    criterion The chosen storage model clearly distinguishes durable guest-local Codex state from ephemeral or sealed auth material, and documents which paths belong to each class.
+    criterion The fix preserves the current security posture: bootstrap still sources Codex auth from the sealed ChatGPT bundle path rather than persisting plaintext auth into the guest's normal durable Codex state.
+    criterion Repeat-bootstrap validation explicitly includes a Codex continuity smoke test in addition to the existing auth and shell survivability expectations.
+    criterion If the current wrapper layout changes, the final design explains how existing guests migrate without forcing operators to manually copy hidden Codex state around after every bootstrap.
+  review-items
+    item(status="open").
+      Decide whether Codex should keep using a synthetic runtime `CODEX_HOME`
+      with selective links into durable guest state, or whether only the auth
+      artifact should be overlaid while the primary home stays persistent.
+    item(status="open").
+      Confirm which Codex paths are actually safe to persist across bootstrap
+      and which, if any, should remain ephemeral to avoid credential leakage or
+      wrapper-state confusion.
