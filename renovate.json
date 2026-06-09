@@ -56,7 +56,9 @@
       "groupName": "scrubs nix inputs",
       "groupSlug": "scrubs-nix-inputs",
       "postUpgradeTasks": {
-        "commands": ["nix flake lock --update-input nixpkgs --update-input nixpkgs-unstable"],
+        "commands": [
+          "nix flake lock --update-input nixpkgs --update-input nixpkgs-unstable"
+        ],
         "fileFilters": ["vms/flake.lock"],
         "workingDirTemplate": "vms",
         "executionMode": "update",
