@@ -638,18 +638,41 @@ The core questions are:
 4. does dirty space remain unable to discover or invoke the clean auth surface
 5. does ordinary HTTPS Git still work through the scrubs-owned `gh` helper path
 
+The intended operator process for future feature work is:
+
+1. treat the standard test guest as disposable and local-first
+2. prefer the existing Lima-local access paths such as `limactl shell <instance>`
+   and the host-local SSH bootstrap path during ordinary regression testing
+3. do not provision guest-side Tailscale as part of the default testing
+   procedure unless Tailscale behavior is itself part of what is being tested
+4. when a feature does need Tailscale coverage, treat that as an explicit
+   additional validation track rather than the baseline every feature must run
+
+This keeps short-lived test guests from accumulating stale tailnet nodes and
+helps preserve a clear distinction between the ordinary scrubs regression path
+and tests that intentionally exercise direct tailnet enrollment.
+
 For any new or materially changed guest flow, the baseline pass is:
 
 1. create a fresh throwaway guest
 2. confirm `limactl shell <instance>` opens an interactive shell
 3. confirm clean-space `gh` and Codex auth are usable without interactive login
-4. when Tailscale auth is configured, confirm `tailscale status` reports the guest as running and `tailscale set --ssh` state is active
-5. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
-6. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
-7. confirm an HTTPS read operation such as `git ls-remote` succeeds
-8. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
-9. run `just bootstrap <instance>` again on that same guest
-10. confirm `limactl shell <instance>` still opens an interactive shell
+4. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
+5. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
+6. confirm an HTTPS read operation such as `git ls-remote` succeeds
+7. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
+8. run `just bootstrap <instance>` again on that same guest
+9. confirm `limactl shell <instance>` still opens an interactive shell
+
+Add the following only when the specific feature or regression under test
+depends on guest-side Tailscale:
+
+1. bootstrap the guest through the explicit Tailscale-enabled path for that test
+2. confirm `tailscale status` reports the guest as running
+3. confirm `tailscale set --ssh` state is active if Tailscale SSH is part of
+   the intended behavior
+4. clean up the tailnet node afterward if the test intentionally created a
+   disposable enrolled guest
 
 This does not replace workload-specific validation, but it is the default
 guardrail for scrubs changes. A guest that cannot survive re-bootstrap without
