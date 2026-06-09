@@ -1,4 +1,4 @@
-issue(id="0016" status="open")
+issue(id="0016" status="review")
   title Support ephemeral bootstrap without Tailscale enrollment
   user-story
     as-a scrubs operator booting disposable guests for testing or feature work
@@ -29,11 +29,15 @@ issue(id="0016" status="open")
     criterion The operator-facing invocation is documented with examples for common disposable workflows such as testing bootstrap or validating a feature in a short-lived instance.
     criterion Validation for the new path includes confirming that a disposable guest still bootstraps successfully and remains reachable through the existing local scrubs access path without appearing as a new tailnet node.
   review-items
-    item(status="open").
-      Decide whether the operator control should be a dedicated bootstrap flag,
-      a separate clean-auth or lifecycle profile concept, or a project-shim
-      level default for known disposable workflows.
-    item(status="open").
-      Decide whether the ephemeral path should also influence related defaults,
-      such as naming, cleanup commands, or other guest services that only make
-      sense for longer-lived instances.
+    item(status="covered").
+      The operator control now uses an explicit bootstrap-time mode on the
+      existing command surface. `just bootstrap` accepts a final
+      `tailscale_mode` argument, defaults it to `tailscale-enabled`, and
+      supports `tailscale-disabled` for disposable test guests without
+      introducing a separate lifecycle profile or project-shim-only mechanism.
+    item(status="covered").
+      For now, the ephemeral path stays narrowly scoped to Tailscale
+      enrollment only. Additional disposable-guest behaviors such as naming,
+      cleanup commands, or suppression of other long-lived-only services can
+      be introduced later as separate explicit options if real operator need
+      emerges, rather than bundling multiple behaviors into this mode today.

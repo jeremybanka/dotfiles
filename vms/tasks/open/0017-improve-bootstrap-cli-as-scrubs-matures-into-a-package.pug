@@ -1,0 +1,43 @@
+issue(id="0017" status="open")
+  title Improve bootstrap CLI as scrubs matures into a package
+  user-story
+    as-a scrubs operator and maintainer using a growing set of bootstrap controls
+    i-want a more intentional command-line interface for scrubs operations
+    so-that new options can be added without making bootstrap usage awkward, fragile, or hard to discover
+  premise.
+    Scrubs currently exposes its main guest lifecycle entry points through a
+    `just` recipe plus a Nushell bootstrap script. That shape has worked well
+    while the surface area stayed small, but recent work such as selectable
+    clean-auth profiles, project shims, source-image overrides, and explicit
+    Tailscale bootstrap modes shows the command interface is beginning to grow
+    in both importance and complexity.
+
+    We do not need to redesign that interface immediately, and we do not need
+    to prematurely bundle unrelated behaviors into broad lifecycle modes just
+    because more than one option exists. The immediate product decision is to
+    keep adding narrowly scoped controls when they solve concrete operator
+    pain. The follow-on concern is package maturity: scrubs should eventually
+    present a clearer, more ergonomic CLI story than "keep extending one
+    bootstrap recipe forever."
+
+    The goal of this task is to explore what a more durable scrubs command
+    surface should look like as the tool grows up into an actual package. That
+    may include subcommands, named flags, stronger help output, clearer
+    defaults, or a higher-level wrapper around the current Nushell scripts, but
+    it should stay grounded in real operator workflows rather than abstract CLI
+    polish.
+  acceptance-criteria
+    criterion Scrubs has a documented assessment of the current bootstrap and guest-lifecycle command surface, including where positional arguments, optional controls, and discoverability are starting to strain.
+    criterion The design work evaluates at least two plausible future CLI directions, such as continuing to evolve the current `just` plus Nushell shape versus introducing a more package-like command wrapper with subcommands or named flags.
+    criterion The proposed direction explains how existing operator workflows such as bootstrap, validation, project shims, and clean-auth profile selection would map onto the future interface.
+    criterion The design explicitly distinguishes near-term ergonomic improvements from larger packaging or distribution changes, so maintainers can improve the CLI incrementally without blocking on a full rewrite.
+    criterion The final recommendation includes a migration strategy that avoids surprising existing scrubs operators and explains whether backward-compatible aliases or transitional wrappers are needed.
+  review-items
+    item(status="open").
+      Decide whether the long-term primary surface should remain `just`, shift
+      toward a dedicated scrubs command, or intentionally support both with
+      different audiences in mind.
+    item(status="open").
+      Decide how aggressively scrubs should move away from positional
+      bootstrap arguments toward named flags or subcommands as the option set
+      grows.
