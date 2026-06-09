@@ -6,7 +6,6 @@ let
     zlib
     openssl
     e2fsprogs
-    icu
     util-linux
   ];
   buildEnv = {
