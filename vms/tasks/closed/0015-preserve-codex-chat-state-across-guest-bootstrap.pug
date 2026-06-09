@@ -1,4 +1,4 @@
-issue(id="0015" status="open")
+issue(id="0015" status="closed")
   title Preserve Codex chat state across guest bootstrap
   user-story
     as-a scrubs guest operator using Codex for ongoing work inside a guest
@@ -19,10 +19,24 @@ issue(id="0015" status="open")
     not something that silently drops ongoing Codex context.
 
     The goal of this task is not to abandon the sealed-auth model or move back
-    to plaintext guest auth. The goal is to separate durable, non-secret Codex
-    state such as chats and other local working context from ephemeral auth
-    material, then make sure the standard bootstrap path preserves that durable
-    state on the same guest.
+    to plaintext guest auth. The implemented fix instead separates durable,
+    non-secret Codex state such as chats and local working context from
+    ephemeral auth material, then preserves that durable state across the
+    standard bootstrap path on the same guest.
+
+    This is now settled. Scrubs no longer launches Codex against a synthetic
+    tmpfs-backed `CODEX_HOME` that swallows chat state. The guest's durable
+    `~/.codex` directory remains the real home, the sealed ChatGPT auth bundle
+    is materialized only into tmpfs and linked in as `~/.codex/auth.json`, and
+    the wrapper migrates forward legacy tmpfs-backed Codex state on first
+    launch so existing guests do not need manual repair.
+
+    Validation completed on June 9, 2026. A disposable guest using the updated
+    scrubs wrapper preserved Codex session files across `just bootstrap
+    <instance>`, and a second disposable guest using the unstable-packaged
+    `codex-cli 0.137.0` build successfully resumed the same saved Codex
+    conversation after re-bootstrap and recalled a pre-bootstrap marker from
+    that conversation.
   acceptance-criteria
     criterion A guest that already contains Codex chat history can complete `just bootstrap <instance>` and still show that prior chat state afterward.
     criterion The chosen storage model clearly distinguishes durable guest-local Codex state from ephemeral or sealed auth material, and documents which paths belong to each class.
@@ -30,11 +44,14 @@ issue(id="0015" status="open")
     criterion Repeat-bootstrap validation explicitly includes a Codex continuity smoke test in addition to the existing auth and shell survivability expectations.
     criterion If the current wrapper layout changes, the final design explains how existing guests migrate without forcing operators to manually copy hidden Codex state around after every bootstrap.
   review-items
-    item(status="open").
-      Decide whether Codex should keep using a synthetic runtime `CODEX_HOME`
-      with selective links into durable guest state, or whether only the auth
-      artifact should be overlaid while the primary home stays persistent.
-    item(status="open").
-      Confirm which Codex paths are actually safe to persist across bootstrap
-      and which, if any, should remain ephemeral to avoid credential leakage or
-      wrapper-state confusion.
+    item(status="covered").
+      The chosen model is now explicit: only the sealed auth artifact is
+      overlaid ephemerally, while the primary guest Codex home stays
+      persistent. Scrubs no longer depends on a synthetic runtime `CODEX_HOME`
+      for ordinary guest-local Codex state.
+    item(status="covered").
+      The durable versus ephemeral path split is now documented and validated.
+      Guest-local `~/.codex` state such as sessions, history, and local SQLite
+      files persists across bootstrap, while `~/.codex/auth.json` remains a
+      tmpfs-backed symlink to the runtime ChatGPT auth bundle so credentials do
+      not become part of durable guest state.
