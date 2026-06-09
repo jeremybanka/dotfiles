@@ -1,0 +1,39 @@
+issue(id="0016" status="open")
+  title Support ephemeral bootstrap without Tailscale enrollment
+  user-story
+    as-a scrubs operator booting disposable guests for testing or feature work
+    i-want an explicit way to bootstrap an instance without enrolling it in Tailscale
+    so-that short-lived guests do not accumulate stale tailnet nodes that I have to clean up afterward
+  premise.
+    Scrubs currently treats guest-side Tailscale enrollment as the default when
+    a Tailscale OAuth client secret is configured for the selected clean auth
+    profile. That is a good default for long-lived personal guests, but it is
+    the wrong behavior for disposable instances created only to validate a
+    change, reproduce a bug, or test bootstrap behavior.
+
+    Today those ephemeral guests inherit the normal sealed Tailscale bootstrap
+    path, register into the tailnet, and then leave cleanup work behind when
+    the guest is deleted. The operator pain is not guest reachability during
+    testing; Lima-local access through `limactl shell <instance>` and the
+    existing host-local SSH path are already enough for many short-lived flows.
+
+    The goal of this task is to add an intentional "ephemeral testing" path to
+    scrubs bootstrap that suppresses guest-side Tailscale enrollment without
+    weakening the current default for ordinary long-lived guests. That path
+    should be explicit, easy to invoke, and documented clearly enough that
+    operators do not need to remember ad hoc cleanup work after test runs.
+  acceptance-criteria
+    criterion Scrubs exposes an explicit bootstrap-time control for disposable guests that prevents Tailscale enrollment even when a host Tailscale OAuth secret is otherwise configured.
+    criterion The default bootstrap behavior for ordinary guests remains unchanged: if Tailscale auth is configured and the operator does not opt out, the guest still enrolls as it does today.
+    criterion The ephemeral opt-out path avoids installing or enabling the guest-side Tailscale autoconnect flow for that bootstrap, rather than merely registering and expecting later cleanup.
+    criterion The operator-facing invocation is documented with examples for common disposable workflows such as testing bootstrap or validating a feature in a short-lived instance.
+    criterion Validation for the new path includes confirming that a disposable guest still bootstraps successfully and remains reachable through the existing local scrubs access path without appearing as a new tailnet node.
+  review-items
+    item(status="open").
+      Decide whether the operator control should be a dedicated bootstrap flag,
+      a separate clean-auth or lifecycle profile concept, or a project-shim
+      level default for known disposable workflows.
+    item(status="open").
+      Decide whether the ephemeral path should also influence related defaults,
+      such as naming, cleanup commands, or other guest services that only make
+      sense for longer-lived instances.
