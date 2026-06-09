@@ -57,6 +57,9 @@ export-seed-image instance_name output_path:
 refresh-base-image source_image="./vms/images/scrubs.qcow2" output_path="./vms/images/scrubs.qcow2" instance_name="scrubs-refresh":
     nu ./vms/refresh-base-image.nu --source-image {{ source_image }} --output-path "{{ output_path }}" --instance-name {{ instance_name }}
 
+audit-instances:
+    nu ./vms/audit-instances.nu
+
 seed instance_name="scrubs-seed":
     nu ./vms/seed.nu {{ instance_name }}
 

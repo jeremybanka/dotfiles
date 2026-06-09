@@ -1,4 +1,4 @@
-issue(id="0014" status="review")
+issue(id="0014" status="closed")
   title Formalize safe guest and base-image upgrade procedures
   user-story
     as-a scrubs maintainer applying NixOS, kernel, or scrubs-module updates
@@ -21,6 +21,12 @@ issue(id="0014" status="review")
     should cover both in-place guest updates and base-image refreshes, and it
     should include validation and recovery guidance strong enough that the
     default operator experience feels boring rather than risky.
+
+    This is now effectively settled. The operative answer is to keep guest
+    updates explicit and artifact-driven: use automated NixOS updates where
+    they help maintain the intended base state, then re-bootstrap or recreate
+    guests from the new flake when the refreshed image should become the new
+    default.
   acceptance-criteria
     criterion Scrubs has a documented upgrade model that clearly distinguishes at least three cases: patching a long-lived guest in place, refreshing the reusable base image artifact, and recreating project guests from a refreshed base image.
     criterion The documented procedure explains how flake input bumps, scrubs module changes, `nixos-rebuild` inside guests, guest restarts, and `just refresh-base-image` relate to one another.
@@ -46,6 +52,4 @@ issue(id="0014" status="review")
     item(status="covered").
       The task's validation concern is effectively satisfied by the README's
       existing regression baseline and patch model rather than a separate
-      upgrade-specific framework. Given the now-simpler operational answer,
-      the remaining follow-up is just optional doc polish if we want the
-      automated-NixOS-update plus re-bootstrap story stated even more directly.
+      upgrade-specific framework.
