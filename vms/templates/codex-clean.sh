@@ -15,24 +15,38 @@ fi
 
 . "${lib_path}"
 
+copy_legacy_runtime_codex_home() {
+  legacy_codex_home="$1"
+  durable_codex_home="$2"
+
+  if [ ! -d "${legacy_codex_home}" ] || [ "${legacy_codex_home}" = "${durable_codex_home}" ]; then
+    return 0
+  fi
+
+  # Migrate prior tmpfs-backed chat/session state forward, but keep auth ephemeral.
+  if ! (cd "${legacy_codex_home}" && tar -cf - --exclude=./auth.json .) \
+    | (cd "${durable_codex_home}" && tar -xf -); then
+    echo "scrubs codex wrapper: failed to migrate legacy runtime Codex state" >&2
+    return 1
+  fi
+}
+
 ciphertext_path="$(scrubs_clean_secret_path codex-auth.json.enc)"
 if ! scrubs_has_clean_secret "${ciphertext_path}"; then
   exec "${real_codex}" "$@"
 fi
 
 runtime_auth_dir="$(scrubs_runtime_auth_dir)"
-runtime_codex_home="${runtime_auth_dir}/codex-home"
-runtime_auth_json="${runtime_codex_home}/auth.json"
-guest_codex_config_dir="${HOME}/.codex"
-guest_codex_config="${guest_codex_config_dir}/config.toml"
+runtime_auth_json="${runtime_auth_dir}/codex-auth.json"
+legacy_runtime_codex_home="${runtime_auth_dir}/codex-home"
+guest_codex_home="${HOME}/.codex"
+guest_auth_json="${guest_codex_home}/auth.json"
 
 umask 077
-mkdir -p "${runtime_codex_home}"
-chmod 700 "${runtime_codex_home}"
+mkdir -p "${guest_codex_home}"
+chmod 700 "${guest_codex_home}"
 
-if [ -f "${guest_codex_config}" ]; then
-  ln -snf "${guest_codex_config}" "${runtime_codex_home}/config.toml"
-fi
+copy_legacy_runtime_codex_home "${legacy_runtime_codex_home}" "${guest_codex_home}"
 
 if ! scrubs_materialize_runtime_secret "${ciphertext_path}" "${runtime_auth_json}"; then
   echo "scrubs codex wrapper: failed to materialize the sealed auth bundle" >&2
@@ -44,4 +58,6 @@ if ! grep -Eq '"auth_mode"[[:space:]]*:[[:space:]]*"chatgpt"' "${runtime_auth_js
   exit 1
 fi
 
-CODEX_HOME="${runtime_codex_home}" exec "${real_codex}" "$@"
+ln -snf "${runtime_auth_json}" "${guest_auth_json}"
+
+exec "${real_codex}" "$@"
