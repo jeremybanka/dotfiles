@@ -9,7 +9,3 @@ portForwards:
   - guestPort: 5555
     hostPort: 5555
     proto: tcp
-  # atom.io.fyi
-  - guestPort: 4321
-    hostPort: 4321
-    proto: tcp
