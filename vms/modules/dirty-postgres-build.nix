@@ -22,6 +22,7 @@ in
     gcc
     gnumake
     perl
+    pkg-config
   ]
   ++ buildDeps;
 
