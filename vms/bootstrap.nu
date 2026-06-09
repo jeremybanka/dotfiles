@@ -370,6 +370,18 @@ def resolve-tailscale-ephemeral [settings: record, profile_suffix: string] {
   $normalized in ["1", "true", "yes", "on"]
 }
 
+def resolve-tailscale-bootstrap-mode [tailscale_mode: string] {
+  let normalized = ($tailscale_mode | str trim | str downcase)
+
+  if $normalized not-in ["tailscale-enabled", "tailscale-disabled"] {
+    error make {
+      msg: $"Unsupported Tailscale bootstrap mode '($tailscale_mode)'. Use tailscale-enabled or tailscale-disabled."
+    }
+  }
+
+  $normalized
+}
+
 def write-sealed-secret [secret_value: string, key_path: string, ciphertext_path: string] {
   let plaintext_path = $"($ciphertext_path).plain"
 
@@ -420,6 +432,7 @@ def main [
   --source-image(-s): string = ""
   --shim-name: string = ""
   --clean-auth-profile(-p): string = ""
+  tailscale_mode: string = "tailscale-enabled"
 ] {
   let repo_root = (repo-root)
   let vms_dir = (vms-dir)
@@ -432,6 +445,7 @@ def main [
   let resolved_shim_name = if $shim_name == "" { $instance_name } else { $shim_name }
   let project_shim = (resolve-project-shim ($vms_dir | path join "projects") $resolved_shim_name)
   let selected_clean_auth_profile = (resolve-clean-auth-profile $settings $clean_auth_profile)
+  let resolved_tailscale_mode = (resolve-tailscale-bootstrap-mode $tailscale_mode)
   let instance_dir = ($env.HOME | path join ".lima" $instance_name)
   let current_user = (^id -un | str trim)
   let current_uid = (^id -u | str trim)
@@ -566,7 +580,12 @@ def main [
 
   let gh_token = (resolve-github-token $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
   let codex_auth_json = (resolve-codex-auth-json $settings $selected_clean_auth_profile.suffix)
-  let tailscale_oauth_secret = (resolve-tailscale-oauth-secret $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
+  let tailscale_enabled = ($resolved_tailscale_mode == "tailscale-enabled")
+  let tailscale_oauth_secret = if $tailscale_enabled {
+    (resolve-tailscale-oauth-secret $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
+  } else {
+    ""
+  }
   let tailscale_tags = if $tailscale_oauth_secret == "" { "" } else { resolve-tailscale-tags $settings $selected_clean_auth_profile.suffix }
   let tailscale_preauthorized = if $tailscale_oauth_secret == "" { false } else { resolve-tailscale-preauthorized $settings $selected_clean_auth_profile.suffix }
   let tailscale_ephemeral = if $tailscale_oauth_secret == "" { false } else { resolve-tailscale-ephemeral $settings $selected_clean_auth_profile.suffix }
@@ -591,6 +610,10 @@ def main [
 
   if $selected_clean_auth_profile.name != "" {
     print $"Selected clean auth profile: ($selected_clean_auth_profile.name)"
+  }
+
+  if not $tailscale_enabled {
+    print "Tailscale bootstrap mode: disabled"
   }
 
   if not ($enabled_clean_secrets | is-empty) {

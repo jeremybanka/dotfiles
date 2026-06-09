@@ -278,6 +278,9 @@ selected clean auth profile at bootstrap time. The model is:
 - default the selected profile to `personal`
 - optionally pick a different profile with `SCRUBS_CLEAN_AUTH_PROFILE=<name>`
   or `just bootstrap <instance> <profile>`
+- leave Tailscale enabled by default, or append `tailscale-disabled` as the
+  final bootstrap argument for disposable test guests that should stay off the
+  tailnet
 - define profile-specific overrides by appending `__<PROFILE>` to the base
   setting name, where `<PROFILE>` is the uppercased profile label with
   non-alphanumeric runs converted to `_`
@@ -375,6 +378,7 @@ So the common paths are:
 just bootstrap scrubs-dev
 just bootstrap sec-lab work
 just bootstrap sec-lab work security-testing /absolute/path/to/nixos.qcow2
+just bootstrap sec-lab work security-testing /absolute/path/to/nixos.qcow2 tailscale-disabled
 ```
 
 For rotation or cleanup:
@@ -407,6 +411,9 @@ tailnet does not silently replace the guest's existing DNS defaults. By
 default, scrubs requests `preauthorized=true` and `ephemeral=false`; if your
 tailnet policy wants different behavior, override
 `SCRUBS_TAILSCALE_PREAUTHORIZED` or `SCRUBS_TAILSCALE_EPHEMERAL`.
+If you are bootstrapping a disposable test guest and do not want tailnet
+enrollment at all, append `tailscale-disabled` as the final `just bootstrap`
+argument for that run.
 
 The intended setup flow is:
 
@@ -771,6 +778,13 @@ Or explicitly by shim name if you want a different instance name:
 
 ```sh
 just bootstrap sec-lab shim_name=security-testing source_image=/absolute/path/to/nixos.qcow2
+```
+
+To keep a disposable test guest off Tailscale while still using the standard
+bootstrap flow, append `tailscale-disabled` as the last argument:
+
+```sh
+just bootstrap sec-lab work security-testing /absolute/path/to/nixos.qcow2 tailscale-disabled
 ```
 
 Inside the guest:

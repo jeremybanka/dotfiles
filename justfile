@@ -45,8 +45,8 @@ helix-theme-install-agent:
 helix-watch-config:
     nu ./scripts/watch-helix-config.nu
 
-bootstrap instance_name clean_auth_profile="personal" shim_name="" source_image="./vms/images/scrubs.qcow2":
-    nu ./vms/bootstrap.nu --source-image {{ source_image }} {{ if shim_name != "" { "--shim-name " + shim_name + " " } else { "" } }}--clean-auth-profile {{ clean_auth_profile }} {{ instance_name }}
+bootstrap instance_name clean_auth_profile="personal" shim_name="" source_image="./vms/images/scrubs.qcow2" tailscale_mode="tailscale-enabled":
+    nu ./vms/bootstrap.nu --source-image {{ source_image }} {{ if shim_name != "" { "--shim-name " + shim_name + " " } else { "" } }}--clean-auth-profile {{ clean_auth_profile }} {{ instance_name }} {{ tailscale_mode }}
 
 download-latest-iso channel="nixos-25.11":
     nu ./vms/download-latest-iso.nu {{ channel }}
