@@ -35,7 +35,9 @@ issue(id="0016" status="review")
       `tailscale_mode` argument, defaults it to `tailscale-enabled`, and
       supports `tailscale-disabled` for disposable test guests without
       introducing a separate lifecycle profile or project-shim-only mechanism.
-    item(status="open").
-      Decide whether the ephemeral path should also influence related defaults,
-      such as naming, cleanup commands, or other guest services that only make
-      sense for longer-lived instances.
+    item(status="covered").
+      For now, the ephemeral path stays narrowly scoped to Tailscale
+      enrollment only. Additional disposable-guest behaviors such as naming,
+      cleanup commands, or suppression of other long-lived-only services can
+      be introduced later as separate explicit options if real operator need
+      emerges, rather than bundling multiple behaviors into this mode today.
