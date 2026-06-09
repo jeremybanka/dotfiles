@@ -27,7 +27,8 @@
         "\"(?<depName>nixpkgs(?:-unstable)?)\":\\s*\\{\\s*\"locked\":\\s*\\{[\\s\\S]*?\"rev\":\\s*\"(?<currentDigest>[a-f0-9]{40})\"[\\s\\S]*?\\}\\s*,\\s*\"original\":\\s*\\{[\\s\\S]*?\"ref\":\\s*\"(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "git-refs",
-      "packageNameTemplate": "https://github.com/NixOS/nixpkgs"
+      "packageNameTemplate": "https://github.com/NixOS/nixpkgs",
+      "versioningTemplate": "exact"
     },
     {
       "customType": "regex",
@@ -52,8 +53,10 @@
     {
       "matchManagers": ["custom.regex"],
       "matchDepNames": ["nixpkgs", "nixpkgs-unstable"],
+      "groupName": "scrubs nix inputs",
+      "groupSlug": "scrubs-nix-inputs",
       "postUpgradeTasks": {
-        "commands": ["nix flake lock --update-input {{depName}}"],
+        "commands": ["nix flake lock --update-input nixpkgs --update-input nixpkgs-unstable"],
         "fileFilters": ["vms/flake.lock"],
         "workingDirTemplate": "vms",
         "executionMode": "update",
