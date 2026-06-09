@@ -22,6 +22,15 @@
     },
     {
       "customType": "regex",
+      "managerFilePatterns": ["/^vms\\/flake\\.lock$/"],
+      "matchStrings": [
+        "\"(?<depName>nixpkgs(?:-unstable)?)\":\\s*\\{\\s*\"locked\":\\s*\\{[\\s\\S]*?\"rev\":\\s*\"(?<currentDigest>[a-f0-9]{40})\"[\\s\\S]*?\\}\\s*,\\s*\"original\":\\s*\\{[\\s\\S]*?\"ref\":\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "git-refs",
+      "packageNameTemplate": "https://github.com/NixOS/nixpkgs"
+    },
+    {
+      "customType": "regex",
       "managerFilePatterns": ["/^\\.github\\/workflows\\/integration\\.yml$/"],
       "matchStrings": [
         "uses: jdx\\/mise-action@\\S+(?:\\s+#.*)?\\s+      with:\\s+        version: (?<currentValue>\\S+)"
@@ -39,6 +48,19 @@
     {
       "matchDepNames": ["jdx/mise"],
       "dependencyDashboardApproval": true
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["nixpkgs", "nixpkgs-unstable"],
+      "postUpgradeTasks": {
+        "commands": ["nix flake lock --update-input {{depName}}"],
+        "fileFilters": ["vms/flake.lock"],
+        "workingDirTemplate": "vms",
+        "executionMode": "update",
+        "installTools": {
+          "nix": {}
+        }
+      }
     }
   ]
 }
