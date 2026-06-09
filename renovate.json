@@ -55,13 +55,15 @@
       "matchDepNames": ["nixpkgs", "nixpkgs-unstable"],
       "groupName": "scrubs nix inputs",
       "groupSlug": "scrubs-nix-inputs",
+      "minimumReleaseAge": null,
+      "separateMajorMinor": false,
       "postUpgradeTasks": {
         "commands": [
-          "nix flake lock --update-input nixpkgs --update-input nixpkgs-unstable"
+          "nix --extra-experimental-features nix-command --extra-experimental-features flakes flake update nixpkgs nixpkgs-unstable"
         ],
         "fileFilters": ["vms/flake.lock"],
         "workingDirTemplate": "vms",
-        "executionMode": "update",
+        "executionMode": "branch",
         "installTools": {
           "nix": {}
         }
