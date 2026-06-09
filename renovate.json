@@ -4,12 +4,22 @@
     "config:recommended"
   ],
   "nix": {
-    "enabled": true
+    "enabled": false
   },
   "minimumReleaseAge": "1 day",
   "branchConcurrentLimit": 10,
   "prHourlyLimit": 10,
   "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^vms\\/flake\\.nix$/"],
+      "matchStrings": [
+        "(?<depName>nixpkgs(?:-unstable)?)\\.url\\s*=\\s*\"github:NixOS\\/nixpkgs\\/(?<currentValue>[^\"]+)\";"
+      ],
+      "datasourceTemplate": "git-refs",
+      "packageNameTemplate": "https://github.com/NixOS/nixpkgs",
+      "versioningTemplate": "nixpkgs"
+    },
     {
       "customType": "regex",
       "managerFilePatterns": ["/^\\.github\\/workflows\\/integration\\.yml$/"],
