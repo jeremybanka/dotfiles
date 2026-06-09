@@ -1,4 +1,4 @@
-issue(id="0014" status="open")
+issue(id="0014" status="review")
   title Formalize safe guest and base-image upgrade procedures
   user-story
     as-a scrubs maintainer applying NixOS, kernel, or scrubs-module updates
@@ -29,16 +29,23 @@ issue(id="0014" status="open")
     criterion At least one maintainer-oriented command sequence or helper flow exists that encodes the recommended upgrade procedure rather than leaving it entirely as README prose.
     criterion The final guidance makes clear which update paths are intended to be routine and low-risk, and which still require exceptional care or manual judgment.
   review-items
-    item(status="open").
-      Decide whether the recommended routine path should primarily be "refresh
-      the base image, validate it, then recreate guests" or whether some class
-      of changes should treat in-place guest upgrades as the normal default.
-    item(status="open").
-      Decide how much rollback support should be formalized for base images and
-      long-lived guests, including naming/versioning conventions for retained
-      qcow2 artifacts and whether scrubs should encourage A/B-style image
-      promotion.
-    item(status="open").
-      Decide whether the upgrade procedure should integrate directly with the
-      canonical validation work in task `0007`, or whether it needs its own
-      lighter-weight maintainer smoke checks for routine patch rollouts.
+    item(status="covered").
+      The default upgrade model is now explicit in the operator docs. The
+      current routine path is: refresh or rebuild the base image when the new
+      flake should become the new default, validate it, and then recreate
+      project guests from that image. In-place `nixos-rebuild` remains
+      available for long-lived guests that intentionally need patching without
+      replacement, but it is no longer treated as the main fleet-wide answer.
+    item(status="covered").
+      A heavyweight rollback or A/B image-promotion system is not currently
+      justified. The documented retention model already keeps rollback boring:
+      preserve prior qcow2 artifacts by name, validate before replacing the
+      working image, and mirror important base images outside the repo. That
+      gives maintainers a conservative recovery story without adding more
+      machinery.
+    item(status="covered").
+      The task's validation concern is effectively satisfied by the README's
+      existing regression baseline and patch model rather than a separate
+      upgrade-specific framework. Given the now-simpler operational answer,
+      the remaining follow-up is just optional doc polish if we want the
+      automated-NixOS-update plus re-bootstrap story stated even more directly.
