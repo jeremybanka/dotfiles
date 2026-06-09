@@ -43,7 +43,7 @@ jobs:
         env:
           LOG_LEVEL: debug
           RENOVATE_ALLOW_PLUGINS: true
-          RENOVATE_ALLOWED_COMMANDS: '["^nix --extra-experimental-features nix-command --extra-experimental-features flakes flake update nixpkgs nixpkgs-unstable$"]'
+          RENOVATE_ALLOWED_COMMANDS: '["^nix flake lock(?: --update-input (nixpkgs|nixpkgs-unstable)){1,2}$","^nix --extra-experimental-features nix-command --extra-experimental-features flakes flake update nixpkgs nixpkgs-unstable$"]'
           RENOVATE_REPOSITORIES: jeremybanka/dotfiles
         with:
           configurationFile: renovate.json
