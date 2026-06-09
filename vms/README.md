@@ -393,6 +393,23 @@ just scrubs-auth-delete-codex
 `codex logout` on the host, because the host-side ChatGPT login bundle is the
 source of truth.
 
+Within the guest, scrubs now treats Codex state in two classes:
+
+- durable guest-local Codex state lives in `~/.codex/`, including chat and
+  session history such as `history.jsonl`, `session_index.jsonl`, `sessions/`,
+  and the local SQLite state files
+- ephemeral clean auth lives only in the tmpfs runtime file materialized by the
+  scrubs wrapper, with `~/.codex/auth.json` maintained as a symlink to that
+  runtime file while Codex is launched through the clean wrapper
+
+This preserves guest-local conversation state across `just bootstrap
+<instance>` while keeping the ChatGPT auth bundle out of the durable guest
+Codex home. Existing guests using the older tmpfs-backed `CODEX_HOME` layout
+are migrated automatically the next time the scrubs `codex` wrapper launches:
+the wrapper copies forward non-secret state from the legacy runtime home into
+the durable `~/.codex` directory and continues to source auth from the sealed
+runtime path.
+
 ## Direct Mobile Access
 
 If a Tailscale OAuth client secret is configured for the selected clean auth
@@ -664,12 +681,17 @@ For any new or materially changed guest flow, the baseline pass is:
 1. create a fresh throwaway guest
 2. confirm `limactl shell <instance>` opens an interactive shell
 3. confirm clean-space `gh` and Codex auth are usable without interactive login
-4. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
-5. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
-6. confirm an HTTPS read operation such as `git ls-remote` succeeds
-7. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
-8. run `just bootstrap <instance>` again on that same guest
-9. confirm `limactl shell <instance>` still opens an interactive shell
+4. create a simple Codex continuity marker, for example with `codex exec`, and
+   confirm the resulting guest-local session or history artifact appears under
+   `~/.codex`
+5. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
+6. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
+7. confirm an HTTPS read operation such as `git ls-remote` succeeds
+8. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
+9. run `just bootstrap <instance>` again on that same guest
+10. confirm `limactl shell <instance>` still opens an interactive shell
+11. confirm the prior Codex continuity marker is still present in the durable
+    `~/.codex` state after re-bootstrap
 
 Add the following only when the specific feature or regression under test
 depends on guest-side Tailscale:
