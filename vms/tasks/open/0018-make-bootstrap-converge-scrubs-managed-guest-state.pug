@@ -1,0 +1,42 @@
+issue(id="0018" status="open")
+  title Make bootstrap converge scrubs-managed guest state
+  user-story
+    as-a scrubs operator re-bootstrapping long-lived guests
+    i-want bootstrap to remove retired scrubs-managed artifacts instead of only layering new files on top
+    so-that existing guests converge toward the same declared state as fresh guests and do not accumulate stale compatibility surfaces
+  premise.
+    Recent scrubs migration work deliberately removed legacy installer
+    artifacts from the payload for fresh guests. A re-bootstrap of the real
+    `systemd-ts` canary guest showed that the guest still completed bootstrap
+    successfully, but retained a stale `~/.local/libexec/scrubs/install-dirty-tools.sh`
+    file from an older generation because `guest-apply.sh` currently copies
+    payload files additively rather than converging managed directories.
+
+    That behavior is survivable, but it is the wrong long-term model for
+    scrubs-owned state. If a path is declared and managed by scrubs, bootstrap
+    should be able to remove artifacts that are no longer part of the desired
+    guest shape. Otherwise long-lived guests become pets, stale compatibility
+    files linger indefinitely, and fresh-guest validation stops telling the
+    full truth about upgraded guests.
+
+    At the same time, scrubs should not blindly delete everything under a
+    guest home directory. The intended model is an explicit preservation
+    policy: keep a small allowlist of durable operator state such as project
+    working trees and Codex chat/session state on a best-effort basis, while
+    applying an iron-fist convergence policy to scrubs-managed subtrees like
+    `~/.local/libexec/scrubs` and other directories scrubs claims as declared
+    configuration.
+  acceptance-criteria
+    criterion Scrubs documents which guest-home paths are treated as exact managed state, which are preserved by explicit allowlist, and which remain out of scope.
+    criterion Re-bootstrapping an existing guest removes retired scrubs-managed payload files such as deleted helper scripts from exact managed directories.
+    criterion Fresh guests and upgraded guests converge on the same scrubs-managed file set for directories claimed as exact state.
+    criterion The convergence policy preserves explicitly allowed durable operator state such as project working trees and Codex chat/session history during repeat bootstrap.
+    criterion Validation includes at least one re-bootstrap of an existing long-lived canary guest in addition to disposable-guest testing, so migration behavior is exercised directly.
+  review-items
+    item(status="open").
+      Decide which guest-home paths scrubs should treat as exact managed
+      subtrees versus explicitly preserved operator state.
+    item(status="open").
+      Decide whether the safest implementation shape is exact directory sync
+      for a few owned paths, a generated manifest of managed files, or some
+      combination of those approaches.

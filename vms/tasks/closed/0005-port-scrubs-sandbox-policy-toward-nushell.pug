@@ -1,4 +1,4 @@
-issue(id="0005" status="open")
+issue(id="0005" status="closed")
   title Refactor scrubs sandbox policy toward Nushell and declarative artifacts
   user-story
     as-a scrubs maintainer evolving the dirty-runtime system
@@ -44,7 +44,9 @@ issue(id="0005" status="open")
       rendering now share a Nu module, `guest-apply.sh` and the `mise` refresh
       path now invoke the Nu installer directly, and `dirty-exec.sh` remains
       shell for now.
-    item(status="open").
+    item(status="completed").
       Keep `guest-apply.sh` and the seed installer under explicit scrutiny
-      before attempting any Nushell migration there; they likely remain better
-      served by POSIX shell for the foreseeable future.
+      before attempting any Nushell migration there. Current decision:
+      `guest-apply.sh`, the seed installer, and `dirty-exec.sh` remain better
+      served by POSIX shell for the foreseeable future, while guest-state
+      convergence follow-up work moved to task `0018`.
