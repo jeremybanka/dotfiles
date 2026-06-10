@@ -247,8 +247,8 @@ guest-side Tailscale, you can point scrubs at host-side secret sources:
 ```sh
 SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__PERSONAL=scrubs-gh-token-personal
 SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__PERSONAL=github.com
-SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__PERSONAL=scrubs-tailscale-oauth-secret-personal
-SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__PERSONAL=tailscale
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE=scrubs-tailscale-oauth-secret
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT=tailscale
 SCRUBS_TAILSCALE_TAGS=tag:scrubs
 SCRUBS_CODEX_AUTH_JSON_PATH=~/.codex/auth.json
 ```
@@ -258,8 +258,8 @@ intended strong path is host-password-manager sourcing. For Codex, the strong
 path is the host ChatGPT login bundle from `~/.codex/auth.json` or an explicit
 `SCRUBS_CODEX_AUTH_JSON_PATH`; scrubs does not use API-key auth for Codex in
 the guest path. For Tailscale, the intended host input is an OAuth client
-secret with the `auth_keys` scope stored in the macOS Keychain under the
-selected clean auth profile. When
+secret with the `auth_keys` scope stored in the macOS Keychain as one global
+scrubs secret. When
 configured, bootstrap seals guest-local auth artifacts and installs the clean
 runtime needed to use them. `gh` and `codex` materialize their credentials on
 demand for the target process. Tailscale materializes its OAuth client secret
@@ -282,10 +282,10 @@ selected clean auth profile at bootstrap time. The model is:
   final bootstrap argument for disposable test guests that should stay off the
   tailnet
 - define profile-specific overrides by appending `__<PROFILE>` to the base
-  setting name, where `<PROFILE>` is the uppercased profile label with
-  non-alphanumeric runs converted to `_`
-- when a profile is selected, scrubs prefers `BASE_KEY__PROFILE` and falls
-  back to `BASE_KEY` if no profile-specific value is configured
+  setting name for settings that actually vary by profile, where `<PROFILE>` is
+  the uppercased profile label with non-alphanumeric runs converted to `_`
+- keep Tailscale global across profiles on the unsuffixed settings and Keychain
+  service
 
 For example, a personal/work GitHub split can look like:
 
@@ -293,21 +293,20 @@ For example, a personal/work GitHub split can look like:
 SCRUBS_CLEAN_AUTH_PROFILE=personal
 SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__PERSONAL=scrubs-gh-token-personal
 SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__PERSONAL=github.com
-SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__PERSONAL=scrubs-tailscale-oauth-secret-personal
-SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__PERSONAL=tailscale
 SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__WORK=scrubs-gh-token-work
 SCRUBS_GH_TOKEN_KEYCHAIN_ACCOUNT__WORK=github.com
-SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__WORK=scrubs-tailscale-oauth-secret-work
-SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__WORK=tailscale
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE=scrubs-tailscale-oauth-secret
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT=tailscale
 SCRUBS_TAILSCALE_TAGS=tag:scrubs
 SCRUBS_TAILSCALE_PREAUTHORIZED=true
 SCRUBS_TAILSCALE_EPHEMERAL=false
 SCRUBS_CODEX_AUTH_JSON_PATH=~/.codex/auth.json
 ```
 
-That keeps one shared Codex bundle on the unsuffixed key while letting GitHub
-and Tailscale switch cleanly between personal and work secrets. The same
-suffixing model can be used for other clean-auth settings later.
+That keeps one shared Tailscale secret and one shared Codex bundle on the
+unsuffixed keys while letting GitHub switch cleanly between personal and work
+tokens. The same suffixing model can be used for other truly profile-specific
+clean-auth settings later.
 
 The intended host-side flow is:
 
@@ -320,12 +319,11 @@ just scrubs-auth-status
 ```
 
 With no profile argument, `just scrubs-auth-status` reports `personal` and
-`work` by default, then adds any extra GitHub or Tailscale auth profiles it
-can discover from `vms/settings.env`. You can still narrow it to one profile
-with `just scrubs-auth-status work`. For `personal`, the status command also
-checks the legacy `scrubs-gh-token/github.com` and
-`scrubs-tailscale-auth-key/tailscale` Keychain items so older single-secret
-setups still show up during migration.
+`work` by default, then adds any extra GitHub auth profiles it can discover
+from `vms/settings.env`. You can still narrow it to one profile with
+`just scrubs-auth-status work`. The status command reports one global
+Tailscale secret line and also checks the legacy `scrubs-tailscale-auth-key`
+entry plus older `personal`-scoped Tailscale entries during migration.
 
 GitHub uses the macOS Keychain entry:
 
@@ -335,10 +333,7 @@ GitHub uses the macOS Keychain entry:
 
 Tailscale uses the macOS Keychain entry:
 
-- service `scrubs-tailscale-oauth-secret-personal`, account `tailscale` for the
-  default `personal` profile
-- service `scrubs-tailscale-oauth-secret-work`, account `tailscale` for a `work`
-  profile
+- service `scrubs-tailscale-oauth-secret`, account `tailscale`
 
 Codex uses the host ChatGPT auth bundle at:
 
@@ -347,9 +342,10 @@ Codex uses the host ChatGPT auth bundle at:
 
 The helper recipes keep the GitHub account label fixed at `github.com`, so the
 only knob you normally need is the profile name. The Tailscale helper recipes
-keep the account label fixed at `tailscale`; use an OAuth client secret with
-the `auth_keys` scope and a server tag such as `tag:scrubs`. For Codex, make
-sure the host auth bundle exists by logging in on the host first.
+keep the account label fixed at `tailscale` and use one shared host secret;
+use an OAuth client secret with the `auth_keys` scope and a server tag such as
+`tag:scrubs`. For Codex, make sure the host auth bundle exists by logging in
+on the host first.
 
 For multiple GitHub profiles, the helper recipes derive the service name from
 the profile so the CLI shape matches bootstrap:
@@ -357,12 +353,11 @@ the profile so the CLI shape matches bootstrap:
 ```sh
 just scrubs-auth-set-gh personal
 just scrubs-auth-set-gh work
-just scrubs-auth-set-tailscale personal
-just scrubs-auth-set-tailscale work
+just scrubs-auth-set-tailscale
 just scrubs-auth-status
 just scrubs-auth-status work
 just scrubs-auth-delete-gh personal
-just scrubs-auth-delete-tailscale personal
+just scrubs-auth-delete-tailscale
 ```
 
 Bootstrap selection precedence is:

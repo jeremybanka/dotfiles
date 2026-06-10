@@ -151,7 +151,7 @@ From the repo root:
 
 ```sh
 cd /Users/jem/dotfiles
-just scrubs-auth-set-tailscale personal
+just scrubs-auth-set-tailscale
 ```
 
 Paste the OAuth client secret when prompted.
@@ -159,7 +159,7 @@ Paste the OAuth client secret when prompted.
 Then verify scrubs can see it:
 
 ```sh
-just scrubs-auth-status personal
+just scrubs-auth-status
 ```
 
 You want the Tailscale line to say `present`.
@@ -169,8 +169,8 @@ You want the Tailscale line to say `present`.
 Make sure [settings.env](/Users/jem/dotfiles/vms/settings.env) contains:
 
 ```sh
-SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__PERSONAL=scrubs-tailscale-oauth-secret-personal
-SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__PERSONAL=tailscale
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE=scrubs-tailscale-oauth-secret
+SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT=tailscale
 SCRUBS_TAILSCALE_TAGS=tag:scrubs
 SCRUBS_TAILSCALE_PREAUTHORIZED=true
 SCRUBS_TAILSCALE_EPHEMERAL=false
@@ -280,7 +280,7 @@ the guest can stay logged out even though the secret was stored correctly.
 Fix the credential, store the new secret again with:
 
 ```sh
-just scrubs-auth-set-tailscale personal
+just scrubs-auth-set-tailscale
 ```
 
 then re-run:

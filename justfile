@@ -74,17 +74,10 @@ scrubs-auth-status profile="":
         while IFS= read -r discovered_profile; do \
             clean_profiles+=("$discovered_profile"); \
         done < <(sed -n 's/^SCRUBS_GH_TOKEN_KEYCHAIN_SERVICE__\([A-Z0-9_][A-Z0-9_]*\)=.*/\1/p' ./vms/settings.env | tr '[:upper:]' '[:lower:]' | tr '_' '-'); \
-        while IFS= read -r discovered_profile; do \
-            clean_profiles+=("$discovered_profile"); \
-        done < <(sed -n 's/^SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__\([A-Z0-9_][A-Z0-9_]*\)=.*/\1/p' ./vms/settings.env | tr '[:upper:]' '[:lower:]' | tr '_' '-'); \
-        while IFS= read -r discovered_profile; do \
-            clean_profiles+=("$discovered_profile"); \
-        done < <(sed -n 's/^SCRUBS_TAILSCALE_AUTH_KEYCHAIN_SERVICE__\([A-Z0-9_][A-Z0-9_]*\)=.*/\1/p' ./vms/settings.env | tr '[:upper:]' '[:lower:]' | tr '_' '-'); \
     fi; \
     clean_profiles=(${(u)clean_profiles}); \
     for clean_profile in "${clean_profiles[@]}"; do \
         gh_status=missing; \
-        tailscale_status=missing; \
         legacy_fragment=""; \
         service="scrubs-gh-token-${clean_profile}"; \
         security find-generic-password -s "$service" -a github.com > /dev/null 2>&1 && gh_status=present; \
@@ -96,24 +89,26 @@ scrubs-auth-status profile="":
             fi; \
         fi; \
         echo "GitHub Keychain item ($service/github.com): $gh_status$legacy_fragment"; \
-        tailscale_service="scrubs-tailscale-oauth-secret-${clean_profile}"; \
-        security find-generic-password -s "$tailscale_service" -a tailscale > /dev/null 2>&1 && tailscale_status=present; \
-        if [ "$clean_profile" = personal ] && [ "$tailscale_status" = missing ]; then \
-            legacy_tailscale_service="scrubs-tailscale-auth-key"; \
-            default_tailscale_service="scrubs-tailscale-oauth-secret"; \
-            if security find-generic-password -s "$default_tailscale_service" -a tailscale > /dev/null 2>&1; then \
-                tailscale_status=present; \
-                echo "Tailscale OAuth secret ($tailscale_service/tailscale): $tailscale_status (default service $default_tailscale_service/tailscale)"; \
-            elif security find-generic-password -s "$legacy_tailscale_service" -a tailscale > /dev/null 2>&1; then \
-                tailscale_status=present; \
-                echo "Tailscale OAuth secret ($tailscale_service/tailscale): $tailscale_status (legacy auth-key service $legacy_tailscale_service/tailscale)"; \
-            else \
-                echo "Tailscale OAuth secret ($tailscale_service/tailscale): $tailscale_status"; \
-            fi; \
-        else \
-            echo "Tailscale OAuth secret ($tailscale_service/tailscale): $tailscale_status"; \
-        fi; \
     done; \
+    tailscale_status=missing; \
+    tailscale_fragment=""; \
+    tailscale_service="scrubs-tailscale-oauth-secret"; \
+    legacy_tailscale_service="scrubs-tailscale-auth-key"; \
+    deprecated_personal_tailscale_service="scrubs-tailscale-oauth-secret-personal"; \
+    deprecated_personal_legacy_tailscale_service="scrubs-tailscale-auth-key-personal"; \
+    if security find-generic-password -s "$tailscale_service" -a tailscale > /dev/null 2>&1; then \
+        tailscale_status=present; \
+    elif security find-generic-password -s "$deprecated_personal_tailscale_service" -a tailscale > /dev/null 2>&1; then \
+        tailscale_status=present; \
+        tailscale_fragment=" (deprecated profile-scoped service $deprecated_personal_tailscale_service/tailscale)"; \
+    elif security find-generic-password -s "$legacy_tailscale_service" -a tailscale > /dev/null 2>&1; then \
+        tailscale_status=present; \
+        tailscale_fragment=" (legacy auth-key service $legacy_tailscale_service/tailscale)"; \
+    elif security find-generic-password -s "$deprecated_personal_legacy_tailscale_service" -a tailscale > /dev/null 2>&1; then \
+        tailscale_status=present; \
+        tailscale_fragment=" (deprecated profile-scoped legacy auth-key service $deprecated_personal_legacy_tailscale_service/tailscale)"; \
+    fi; \
+    echo "Tailscale OAuth secret ($tailscale_service/tailscale): $tailscale_status$tailscale_fragment"; \
     codex_status=missing; \
     codex_path="${SCRUBS_CODEX_AUTH_JSON_PATH:-$HOME/.codex/auth.json}"; \
     if [ -s "$codex_path" ] && grep -Eq '"auth_mode"[[:space:]]*:[[:space:]]*"chatgpt"' "$codex_path"; then codex_status=present; fi; \
@@ -126,9 +121,9 @@ scrubs-auth-set-gh profile="personal":
     security add-generic-password -U -s "$service" -a github.com -w "$token"; \
     echo "Stored GitHub token in macOS Keychain as $service/github.com"
 
-scrubs-auth-set-tailscale profile="personal":
+scrubs-auth-set-tailscale profile="":
     @read -s "?Tailscale OAuth client secret: " key; \
-    service="scrubs-tailscale-oauth-secret-{{ profile }}"; \
+    service="scrubs-tailscale-oauth-secret"; \
     echo; \
     security add-generic-password -U -s "$service" -a tailscale -w "$key"; \
     echo "Stored Tailscale OAuth client secret in macOS Keychain as $service/tailscale"
@@ -141,9 +136,15 @@ scrubs-auth-delete-gh profile="personal":
     @service="scrubs-gh-token-{{ profile }}"; \
     security delete-generic-password -s "$service" -a github.com || true
 
-scrubs-auth-delete-tailscale profile="personal":
-    @service="scrubs-tailscale-oauth-secret-{{ profile }}"; \
-    security delete-generic-password -s "$service" -a tailscale || true
+scrubs-auth-delete-tailscale profile="":
+    @service="scrubs-tailscale-oauth-secret"; \
+    deprecated_personal_service="scrubs-tailscale-oauth-secret-personal"; \
+    legacy_service="scrubs-tailscale-auth-key"; \
+    deprecated_personal_legacy_service="scrubs-tailscale-auth-key-personal"; \
+    security delete-generic-password -s "$service" -a tailscale || true; \
+    security delete-generic-password -s "$deprecated_personal_service" -a tailscale || true; \
+    security delete-generic-password -s "$legacy_service" -a tailscale || true; \
+    security delete-generic-password -s "$deprecated_personal_legacy_service" -a tailscale || true
 
 scrubs-auth-delete-codex:
     @echo "Codex clean auth is sourced from the host ChatGPT login bundle."; \
