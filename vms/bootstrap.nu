@@ -553,8 +553,6 @@ def main [
   cp ($vms_dir | path join "templates" "profile") ($payload_dir | path join "home" ".profile")
   cp ($vms_dir | path join "templates" "bash_profile") ($payload_dir | path join "home" ".bash_profile")
   cp ($vms_dir | path join "templates" "bashrc") ($payload_dir | path join "home" ".bashrc")
-  cp ($vms_dir | path join "templates" "install-dirty-tools.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools.sh")
-  cp ($vms_dir | path join "templates" "install-dirty-tools-legacy.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools-legacy.sh")
   cp ($vms_dir | path join "templates" "install-dirty-tools.nu") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools.nu")
   cp ($vms_dir | path join "templates" "sandbox-policy-lib.nu") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-policy-lib.nu")
   cp ($vms_dir | path join "templates" "dirty-exec.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "dirty-exec.sh")

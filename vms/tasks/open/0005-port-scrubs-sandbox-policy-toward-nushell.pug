@@ -41,8 +41,9 @@ issue(id="0005" status="open")
       Identify whether `install-dirty-tools.sh` should migrate before
       `dirty-exec.sh`, since the policy layer likely offers better leverage
       than a full launcher rewrite. Current direction: the installer and policy
-      rendering now share a Nu module, while `dirty-exec.sh` remains shell for
-      now.
+      rendering now share a Nu module, `guest-apply.sh` and the `mise` refresh
+      path now invoke the Nu installer directly, and `dirty-exec.sh` remains
+      shell for now.
     item(status="open").
       Keep `guest-apply.sh` and the seed installer under explicit scrutiny
       before attempting any Nushell migration there; they likely remain better
