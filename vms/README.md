@@ -775,9 +775,8 @@ shim-name override:
 - scrubs renders that `.nuon` policy into `sandbox-definition.sh` inside the
   guest so the current shell launcher can keep consuming a stable generated
   artifact
-- legacy `sandbox-definition.sh` overrides still work for project shims that
-  have not been ported yet; those can continue sourcing the base artifact at
-  `~/.local/libexec/scrubs/sandbox-default-definition.sh`
+- legacy `sandbox-definition.sh` shim overrides are no longer supported; port
+  any remaining policy customizations into `sandbox-policy.nuon`
 
 This keeps project-specific accommodations in version control without baking
 them into the reusable base image.

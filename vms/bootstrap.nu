@@ -418,12 +418,17 @@ def resolve-project-shim [projects_dir: string, shim_name: string] {
     let sandbox_policy = ($shim_dir | path join "sandbox-policy.nuon")
     let sandbox_definition = ($shim_dir | path join "sandbox-definition.sh")
 
+    if ($sandbox_definition | path exists) {
+      error make {
+        msg: $"Legacy sandbox override ($sandbox_definition) is no longer supported. Port this shim to sandbox-policy.nuon."
+      }
+    }
+
     {
       source: $shim_dir
       guest_module: (if ($guest_module | path exists) { $guest_module } else { "" })
       lima_config: (if ($lima_config | path exists) { $lima_config } else { "" })
       sandbox_policy: (if ($sandbox_policy | path exists) { $sandbox_policy } else { "" })
-      sandbox_definition: (if ($sandbox_definition | path exists) { $sandbox_definition } else { "" })
     }
   } else {
     {
@@ -431,7 +436,6 @@ def resolve-project-shim [projects_dir: string, shim_name: string] {
       guest_module: ""
       lima_config: ""
       sandbox_policy: ""
-      sandbox_definition: ""
     }
   }
 }
@@ -566,18 +570,8 @@ def main [
   } else {
     $project_shim.sandbox_policy
   }
-  let sandbox_policy_mode = if $project_shim.sandbox_policy != "" or $project_shim.sandbox_definition == "" {
-    "nuon"
-  } else {
-    "legacy-shell"
-  }
   cp $sandbox_policy_source ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-policy.nuon")
-  if $sandbox_policy_mode == "nuon" {
-    render-sandbox-definition (load-sandbox-policy $sandbox_policy_source) | save --force ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-definition.sh")
-  } else {
-    cp $project_shim.sandbox_definition ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-definition.sh")
-  }
-  $sandbox_policy_mode | save --force ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-policy-mode")
+  render-sandbox-definition (load-sandbox-policy $sandbox_policy_source) | save --force ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-definition.sh")
 
   for file_name in [
     "carapace-init.nu"

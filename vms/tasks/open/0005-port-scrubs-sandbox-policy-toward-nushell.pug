@@ -33,7 +33,10 @@ issue(id="0005" status="open")
       generated shell artifacts, a plain data file format, or some combination
       of those approaches. Current direction: `sandbox-policy.nuon` is the
       source artifact, and scrubs renders guest-local shell definitions from it
-      for the existing launcher and fallback paths.
+      for the existing launcher and fallback paths. Project shims now override
+      policy through `sandbox-policy.nuon` only, and legacy
+      `sandbox-definition.sh` shim overrides have been removed after disposable
+      non-Tailscale guest bootstrap and re-bootstrap validation.
     item(status="completed").
       Identify whether `install-dirty-tools.sh` should migrate before
       `dirty-exec.sh`, since the policy layer likely offers better leverage
