@@ -769,11 +769,15 @@ shim-name override:
 - `guest.nix` is copied into the guest payload as `modules/project-shim.nix`
 - optional `lima.yaml` currently supports a `portForwards` list that gets
   appended to the generated Lima `portForwards` list for that VM only
-- optional `sandbox-definition.sh` replaces the guest's dirty-space sandbox
-  definition; it can source the base artifact at
-  `~/.local/libexec/scrubs/sandbox-default-definition.sh` and then adjust the
-  declared helper commands, mounted system facts, or other guest-wide sandbox
-  settings
+- optional `sandbox-policy.nuon` is now the preferred dirty-space sandbox
+  override; it replaces the guest-wide policy artifact for helper commands,
+  copied files, mounted system facts, writable directories, and proc handling
+- scrubs renders that `.nuon` policy into `sandbox-definition.sh` inside the
+  guest so the current shell launcher can keep consuming a stable generated
+  artifact
+- legacy `sandbox-definition.sh` overrides still work for project shims that
+  have not been ported yet; those can continue sourcing the base artifact at
+  `~/.local/libexec/scrubs/sandbox-default-definition.sh`
 
 This keeps project-specific accommodations in version control without baking
 them into the reusable base image.

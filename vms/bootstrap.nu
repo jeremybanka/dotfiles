@@ -414,12 +414,14 @@ def resolve-project-shim [projects_dir: string, shim_name: string] {
   if ($shim_dir | path exists) {
     let guest_module = ($shim_dir | path join "guest.nix")
     let lima_config = ($shim_dir | path join "lima.yaml")
+    let sandbox_policy = ($shim_dir | path join "sandbox-policy.nuon")
     let sandbox_definition = ($shim_dir | path join "sandbox-definition.sh")
 
     {
       source: $shim_dir
       guest_module: (if ($guest_module | path exists) { $guest_module } else { "" })
       lima_config: (if ($lima_config | path exists) { $lima_config } else { "" })
+      sandbox_policy: (if ($sandbox_policy | path exists) { $sandbox_policy } else { "" })
       sandbox_definition: (if ($sandbox_definition | path exists) { $sandbox_definition } else { "" })
     }
   } else {
@@ -427,9 +429,68 @@ def resolve-project-shim [projects_dir: string, shim_name: string] {
       source: ""
       guest_module: ""
       lima_config: ""
+      sandbox_policy: ""
       sandbox_definition: ""
     }
   }
+}
+
+def normalize-sandbox-policy [policy: record] {
+  {
+    primary_shell: ($policy.primary_shell | into string)
+    helper_commands: ($policy.helper_commands | each {|value| $value | into string })
+    helper_copy_files: ($policy.helper_copy_files | each {|value| $value | into string })
+    helper_link_files: ($policy.helper_link_files | each {|value| $value | into string })
+    dir_paths: ($policy.dir_paths | each {|value| $value | into string })
+    ro_bind_paths: ($policy.ro_bind_paths | each {|value| $value | into string })
+    enable_proc: ($policy.enable_proc | into bool)
+  }
+}
+
+def load-sandbox-policy [path: string] {
+  normalize-sandbox-policy (open $path)
+}
+
+def shell-quote [value: string] {
+  let escaped = ($value | str replace --all "'" "'\"'\"'")
+  "'" + $escaped + "'"
+}
+
+def render-shell-list [values: list<string>] {
+  if ($values | is-empty) {
+    "(\n)"
+  } else {
+    let lines = ($values | each {|value| "  " + (shell-quote $value) } | str join "\n")
+    "(\n" + $lines + "\n)"
+  }
+}
+
+def render-sandbox-definition [policy: record] {
+  let helper_commands = (render-shell-list $policy.helper_commands)
+  let helper_copy_files = (render-shell-list $policy.helper_copy_files)
+  let helper_link_files = (render-shell-list $policy.helper_link_files)
+  let dir_paths = (render-shell-list $policy.dir_paths)
+  let ro_bind_paths = (render-shell-list $policy.ro_bind_paths)
+  let enable_proc = if $policy.enable_proc { "1" } else { "0" }
+
+  [
+    "#!/bin/bash"
+    ""
+    $"SCRUBS_PRIMARY_SHELL=(shell-quote $policy.primary_shell)"
+    ""
+    $"SCRUBS_HELPER_COMMANDS=($helper_commands)"
+    ""
+    $"SCRUBS_HELPER_COPY_FILES=($helper_copy_files)"
+    ""
+    $"SCRUBS_HELPER_LINK_FILES=($helper_link_files)"
+    ""
+    $"SCRUBS_DIR_PATHS=($dir_paths)"
+    ""
+    $"SCRUBS_RO_BIND_PATHS=($ro_bind_paths)"
+    ""
+    $"SCRUBS_ENABLE_PROC=($enable_proc)"
+    ""
+  ] | str join "\n"
 }
 
 def main [
@@ -546,18 +607,33 @@ def main [
   cp ($vms_dir | path join "templates" "bash_profile") ($payload_dir | path join "home" ".bash_profile")
   cp ($vms_dir | path join "templates" "bashrc") ($payload_dir | path join "home" ".bashrc")
   cp ($vms_dir | path join "templates" "install-dirty-tools.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools.sh")
+  cp ($vms_dir | path join "templates" "install-dirty-tools-legacy.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools-legacy.sh")
+  cp ($vms_dir | path join "templates" "install-dirty-tools.nu") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "install-dirty-tools.nu")
   cp ($vms_dir | path join "templates" "dirty-exec.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "dirty-exec.sh")
   cp ($vms_dir | path join "templates" "mise-wrapper.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "mise-wrapper.sh")
   cp ($vms_dir | path join "templates" "clean-auth-lib.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "clean-auth-lib.sh")
   cp ($vms_dir | path join "templates" "gh-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "gh-clean.sh")
   cp ($vms_dir | path join "templates" "codex-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "codex-clean.sh")
-  cp ($vms_dir | path join "templates" "sandbox-default-definition.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-default-definition.sh")
-  let sandbox_definition_source = if $project_shim.sandbox_definition == "" {
-    ($vms_dir | path join "templates" "sandbox-definition.sh")
+  let default_sandbox_policy = ($vms_dir | path join "templates" "sandbox-default-policy.nuon")
+  cp $default_sandbox_policy ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-default-policy.nuon")
+  render-sandbox-definition (load-sandbox-policy $default_sandbox_policy) | save --force ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-default-definition.sh")
+  let sandbox_policy_source = if $project_shim.sandbox_policy == "" {
+    $default_sandbox_policy
   } else {
-    $project_shim.sandbox_definition
+    $project_shim.sandbox_policy
   }
-  cp $sandbox_definition_source ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-definition.sh")
+  let sandbox_policy_mode = if $project_shim.sandbox_policy != "" or $project_shim.sandbox_definition == "" {
+    "nuon"
+  } else {
+    "legacy-shell"
+  }
+  cp $sandbox_policy_source ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-policy.nuon")
+  if $sandbox_policy_mode == "nuon" {
+    render-sandbox-definition (load-sandbox-policy $sandbox_policy_source) | save --force ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-definition.sh")
+  } else {
+    cp $project_shim.sandbox_definition ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-definition.sh")
+  }
+  $sandbox_policy_mode | save --force ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-policy-mode")
 
   for file_name in [
     "carapace-init.nu"
