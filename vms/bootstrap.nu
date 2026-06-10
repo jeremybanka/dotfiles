@@ -196,30 +196,15 @@ def resolve-github-token [settings: record, profile_name: string, profile_suffix
   macos-keychain-secret $legacy_service $legacy_account
 }
 
-def resolve-tailscale-oauth-secret [settings: record, profile_name: string, profile_suffix: string] {
-  let explicit_value = (get-profiled-setting $settings "SCRUBS_TAILSCALE_OAUTH_SECRET" $profile_suffix "")
+def resolve-tailscale-oauth-secret [settings: record] {
+  let explicit_value = (get-setting $settings "SCRUBS_TAILSCALE_OAUTH_SECRET" "")
   if $explicit_value != "" {
     return $explicit_value
   }
 
-  let profiled_service_key = $"SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__($profile_suffix)"
-  let profiled_account_key = $"SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__($profile_suffix)"
-
-  let has_profiled_service = (has-setting $settings $profiled_service_key)
-  let has_profiled_account = (has-setting $settings $profiled_account_key)
-
-  if $profile_suffix != "" and ($has_profiled_service or $has_profiled_account) {
-    let profiled_service = (get-setting $settings $profiled_service_key (default-tailscale-oauth-keychain-service $profile_name))
-    let profiled_account = (get-setting $settings $profiled_account_key "tailscale")
-    return (macos-keychain-secret $profiled_service $profiled_account)
-  }
-
-  if $profile_name != "" {
-    let conventional_service = (default-tailscale-oauth-keychain-service $profile_name)
-    let conventional_secret = (macos-keychain-secret-optional $conventional_service "tailscale")
-    if $conventional_secret != "" {
-      return $conventional_secret
-    }
+  let deprecated_explicit_value = (get-setting $settings "SCRUBS_TAILSCALE_OAUTH_SECRET__PERSONAL" "")
+  if $deprecated_explicit_value != "" {
+    return $deprecated_explicit_value
   }
 
   let default_service = (get-setting $settings "SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE" "scrubs-tailscale-oauth-secret")
@@ -229,33 +214,53 @@ def resolve-tailscale-oauth-secret [settings: record, profile_name: string, prof
     return $default_secret
   }
 
-  let legacy_explicit_value = (get-profiled-setting $settings "SCRUBS_TAILSCALE_AUTH_KEY" $profile_suffix "")
+  # Accept the old profile-scoped Tailscale settings as a migration path, but
+  # keep Tailscale itself on a single global auth source.
+  let deprecated_profiled_service_key = "SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_SERVICE__PERSONAL"
+  let deprecated_profiled_account_key = "SCRUBS_TAILSCALE_OAUTH_SECRET_KEYCHAIN_ACCOUNT__PERSONAL"
+  if (has-setting $settings $deprecated_profiled_service_key) or (has-setting $settings $deprecated_profiled_account_key) {
+    let deprecated_service = (get-setting $settings $deprecated_profiled_service_key "scrubs-tailscale-oauth-secret-personal")
+    let deprecated_account = (get-setting $settings $deprecated_profiled_account_key "tailscale")
+    let deprecated_secret = (macos-keychain-secret-optional $deprecated_service $deprecated_account)
+    if $deprecated_secret != "" {
+      return $deprecated_secret
+    }
+  }
+
+  let deprecated_conventional_secret = (macos-keychain-secret-optional "scrubs-tailscale-oauth-secret-personal" "tailscale")
+  if $deprecated_conventional_secret != "" {
+    return $deprecated_conventional_secret
+  }
+
+  let legacy_explicit_value = (get-setting $settings "SCRUBS_TAILSCALE_AUTH_KEY" "")
   if $legacy_explicit_value != "" {
     return $legacy_explicit_value
   }
 
-  let legacy_profiled_service_key = $"SCRUBS_TAILSCALE_AUTH_KEYCHAIN_SERVICE__($profile_suffix)"
-  let legacy_profiled_account_key = $"SCRUBS_TAILSCALE_AUTH_KEYCHAIN_ACCOUNT__($profile_suffix)"
-  let has_legacy_profiled_service = (has-setting $settings $legacy_profiled_service_key)
-  let has_legacy_profiled_account = (has-setting $settings $legacy_profiled_account_key)
-
-  if $profile_suffix != "" and ($has_legacy_profiled_service or $has_legacy_profiled_account) {
-    let legacy_service = (get-setting $settings $legacy_profiled_service_key "scrubs-tailscale-auth-key")
-    let legacy_account = (get-setting $settings $legacy_profiled_account_key "tailscale")
-    return (macos-keychain-secret $legacy_service $legacy_account)
-  }
-
-  if $profile_name != "" {
-    let legacy_conventional_service = $"scrubs-tailscale-auth-key-($profile_name)"
-    let legacy_conventional_secret = (macos-keychain-secret-optional $legacy_conventional_service "tailscale")
-    if $legacy_conventional_secret != "" {
-      return $legacy_conventional_secret
-    }
+  let deprecated_legacy_explicit_value = (get-setting $settings "SCRUBS_TAILSCALE_AUTH_KEY__PERSONAL" "")
+  if $deprecated_legacy_explicit_value != "" {
+    return $deprecated_legacy_explicit_value
   }
 
   let legacy_default_service = (get-setting $settings "SCRUBS_TAILSCALE_AUTH_KEYCHAIN_SERVICE" "scrubs-tailscale-auth-key")
   let legacy_default_account = (get-setting $settings "SCRUBS_TAILSCALE_AUTH_KEYCHAIN_ACCOUNT" "tailscale")
-  macos-keychain-secret-optional $legacy_default_service $legacy_default_account
+  let legacy_default_secret = (macos-keychain-secret-optional $legacy_default_service $legacy_default_account)
+  if $legacy_default_secret != "" {
+    return $legacy_default_secret
+  }
+
+  let deprecated_legacy_profiled_service_key = "SCRUBS_TAILSCALE_AUTH_KEYCHAIN_SERVICE__PERSONAL"
+  let deprecated_legacy_profiled_account_key = "SCRUBS_TAILSCALE_AUTH_KEYCHAIN_ACCOUNT__PERSONAL"
+  if (has-setting $settings $deprecated_legacy_profiled_service_key) or (has-setting $settings $deprecated_legacy_profiled_account_key) {
+    let deprecated_legacy_service = (get-setting $settings $deprecated_legacy_profiled_service_key "scrubs-tailscale-auth-key-personal")
+    let deprecated_legacy_account = (get-setting $settings $deprecated_legacy_profiled_account_key "tailscale")
+    let deprecated_legacy_secret = (macos-keychain-secret-optional $deprecated_legacy_service $deprecated_legacy_account)
+    if $deprecated_legacy_secret != "" {
+      return $deprecated_legacy_secret
+    }
+  }
+
+  macos-keychain-secret-optional "scrubs-tailscale-auth-key-personal" "tailscale"
 }
 
 def resolve-clean-secret [
@@ -347,8 +352,8 @@ def normalize-tailscale-hostname [instance_name: string] {
   $normalized
 }
 
-def resolve-tailscale-tags [settings: record, profile_suffix: string] {
-  let tags = (get-profiled-setting $settings "SCRUBS_TAILSCALE_TAGS" $profile_suffix "tag:scrubs")
+def resolve-tailscale-tags [settings: record] {
+  let tags = (get-setting $settings "SCRUBS_TAILSCALE_TAGS" "tag:scrubs")
   let trimmed = ($tags | str trim)
   if $trimmed == "" {
     error make {
@@ -358,14 +363,14 @@ def resolve-tailscale-tags [settings: record, profile_suffix: string] {
   $trimmed
 }
 
-def resolve-tailscale-preauthorized [settings: record, profile_suffix: string] {
-  let configured = (get-profiled-setting $settings "SCRUBS_TAILSCALE_PREAUTHORIZED" $profile_suffix "true")
+def resolve-tailscale-preauthorized [settings: record] {
+  let configured = (get-setting $settings "SCRUBS_TAILSCALE_PREAUTHORIZED" "true")
   let normalized = ($configured | into string | str trim | str downcase)
   $normalized in ["1", "true", "yes", "on"]
 }
 
-def resolve-tailscale-ephemeral [settings: record, profile_suffix: string] {
-  let configured = (get-profiled-setting $settings "SCRUBS_TAILSCALE_EPHEMERAL" $profile_suffix "false")
+def resolve-tailscale-ephemeral [settings: record] {
+  let configured = (get-setting $settings "SCRUBS_TAILSCALE_EPHEMERAL" "false")
   let normalized = ($configured | into string | str trim | str downcase)
   $normalized in ["1", "true", "yes", "on"]
 }
@@ -582,13 +587,13 @@ def main [
   let codex_auth_json = (resolve-codex-auth-json $settings $selected_clean_auth_profile.suffix)
   let tailscale_enabled = ($resolved_tailscale_mode == "tailscale-enabled")
   let tailscale_oauth_secret = if $tailscale_enabled {
-    (resolve-tailscale-oauth-secret $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
+    (resolve-tailscale-oauth-secret $settings)
   } else {
     ""
   }
-  let tailscale_tags = if $tailscale_oauth_secret == "" { "" } else { resolve-tailscale-tags $settings $selected_clean_auth_profile.suffix }
-  let tailscale_preauthorized = if $tailscale_oauth_secret == "" { false } else { resolve-tailscale-preauthorized $settings $selected_clean_auth_profile.suffix }
-  let tailscale_ephemeral = if $tailscale_oauth_secret == "" { false } else { resolve-tailscale-ephemeral $settings $selected_clean_auth_profile.suffix }
+  let tailscale_tags = if $tailscale_oauth_secret == "" { "" } else { resolve-tailscale-tags $settings }
+  let tailscale_preauthorized = if $tailscale_oauth_secret == "" { false } else { resolve-tailscale-preauthorized $settings }
+  let tailscale_ephemeral = if $tailscale_oauth_secret == "" { false } else { resolve-tailscale-ephemeral $settings }
   let clean_secret_specs = [
     {
       name: "gh"
