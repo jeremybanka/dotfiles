@@ -868,11 +868,6 @@ in
     error make { msg: "Guest did not become reachable over SSH in time." }
   }
 
-  let bootstrap_marker = "/var/lib/scrubs/bootstrap-complete"
-  let already_bootstrapped = (
-    (do { ^ssh ...$ssh_args (remote-shell-command $"test -f \"($bootstrap_marker)\"") } | complete).exit_code == 0
-  )
-
   let bootstrap_home = $"/home/($bootstrap_user)"
   let bootstrap_dir = $"/home/($bootstrap_user)/scrubs-bootstrap"
 
@@ -884,31 +879,29 @@ in
   print "Applying scrubs base configuration inside the guest"
   ^ssh ...$ssh_args (remote-shell-command $"sh \"($bootstrap_dir)/guest-apply.sh\"")
 
-  if $already_bootstrapped {
-    print "Restarting the guest to activate the staged scrubs generation"
-    ^limactl stop $instance_name
-    print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
-    try {
-      ^limactl start --timeout $start_timeout $instance_name
-    } catch {
-      print --stderr $"limactl start did not fully complete within ($start_timeout)."
-      print --stderr "Continuing because scrubs only requires direct SSH reachability after the restart."
-    }
+  print "Restarting the guest to activate the staged scrubs generation"
+  ^limactl stop $instance_name
+  print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
+  try {
+    ^limactl start --timeout $start_timeout $instance_name
+  } catch {
+    print --stderr $"limactl start did not fully complete within ($start_timeout)."
+    print --stderr "Continuing because scrubs only requires direct SSH reachability after the restart."
+  }
 
-    print "Waiting for SSH access to the restarted guest"
-    $ready = false
-    for _ in 0..59 {
-      let ssh_result = (do { ^ssh ...$ssh_args true } | complete)
-      if $ssh_result.exit_code == 0 {
-        $ready = true
-        break
-      }
-      sleep 2sec
+  print "Waiting for SSH access to the restarted guest"
+  $ready = false
+  for _ in 0..59 {
+    let ssh_result = (do { ^ssh ...$ssh_args true } | complete)
+    if $ssh_result.exit_code == 0 {
+      $ready = true
+      break
     }
+    sleep 2sec
+  }
 
-    if not $ready {
-      error make { msg: "Guest did not become reachable over SSH after the restart." }
-    }
+  if not $ready {
+    error make { msg: "Guest did not become reachable over SSH after the restart." }
   }
 
   print ""

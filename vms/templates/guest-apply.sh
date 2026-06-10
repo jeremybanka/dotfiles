@@ -83,31 +83,10 @@ if ! sudo -n true > /dev/null 2>&1; then
   exit 1
 fi
 
-if sudo test -f "$bootstrap_marker"; then
-  if sudo nixos-rebuild boot --flake "$payload/scrubs#scrubs-base"; then
-    exit 0
-  else
-    exit "$?"
-  fi
-fi
-
-if sudo nixos-rebuild switch --flake "$payload/scrubs#scrubs-base"; then
+if sudo nixos-rebuild boot --flake "$payload/scrubs#scrubs-base"; then
   sudo install -d -m 755 "$(dirname "$bootstrap_marker")"
   sudo touch "$bootstrap_marker"
   exit 0
 else
-  status=$?
+  exit "$?"
 fi
-
-if [ "$status" -eq 4 ] && sudo systemctl is-failed --quiet cloud-final.service; then
-  if sudo journalctl -u cloud-final.service -b --no-pager -n 120 | grep -Fq "Runparts: 1 failures"; then
-    echo "cloud-final failed while introducing cloud-init into an older running guest." >&2
-    echo "The new system is active; treating this one-time migration failure as non-fatal." >&2
-    sudo install -d -m 755 "$(dirname "$bootstrap_marker")"
-    sudo touch "$bootstrap_marker"
-    sudo systemctl reset-failed cloud-final.service || true
-    exit 0
-  fi
-fi
-
-exit "$status"
