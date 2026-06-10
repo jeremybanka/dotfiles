@@ -28,14 +28,18 @@ issue(id="0005" status="open")
     criterion Any migration path preserves the current working dirty-runtime behavior, including proxy-shim generation, helper-root assembly, and repeat bootstrap survivability.
     criterion The work explicitly avoids rewriting bootstrap-critical scripts into Nushell unless the new contract is shown to be at least as reliable in early-boot and recovery scenarios.
   review-items
-    item(status="open").
+    item(status="completed").
       Decide whether the best intermediate form is Nushell-authored data,
       generated shell artifacts, a plain data file format, or some combination
-      of those approaches.
-    item(status="open").
+      of those approaches. Current direction: `sandbox-policy.nuon` is the
+      source artifact, and scrubs renders guest-local shell definitions from it
+      for the existing launcher and fallback paths.
+    item(status="completed").
       Identify whether `install-dirty-tools.sh` should migrate before
       `dirty-exec.sh`, since the policy layer likely offers better leverage
-      than a full launcher rewrite.
+      than a full launcher rewrite. Current direction: the installer and policy
+      rendering now share a Nu module, while `dirty-exec.sh` remains shell for
+      now.
     item(status="open").
       Keep `guest-apply.sh` and the seed installer under explicit scrutiny
       before attempting any Nushell migration there; they likely remain better

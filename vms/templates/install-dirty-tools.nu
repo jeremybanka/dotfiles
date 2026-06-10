@@ -1,62 +1,6 @@
 #!/usr/bin/env nu
 
-def sh-quote [value: string] {
-  let escaped = ($value | str replace --all "'" "'\"'\"'")
-  "'" + $escaped + "'"
-}
-
-def shell-array [values: list<string>] {
-  if ($values | is-empty) {
-    "(\n)"
-  } else {
-    let lines = ($values | each {|value| "  " + (sh-quote $value) } | str join "\n")
-    "(\n" + $lines + "\n)"
-  }
-}
-
-def normalize-policy [policy: record] {
-  {
-    primary_shell: ($policy.primary_shell | into string)
-    helper_commands: ($policy.helper_commands | each {|value| $value | into string })
-    helper_copy_files: ($policy.helper_copy_files | each {|value| $value | into string })
-    helper_link_files: ($policy.helper_link_files | each {|value| $value | into string })
-    dir_paths: ($policy.dir_paths | each {|value| $value | into string })
-    ro_bind_paths: ($policy.ro_bind_paths | each {|value| $value | into string })
-    enable_proc: ($policy.enable_proc | into bool)
-  }
-}
-
-def load-policy [path: string] {
-  normalize-policy (open $path)
-}
-
-def render-shell-policy [policy: record] {
-  let helper_commands = (shell-array $policy.helper_commands)
-  let helper_copy_files = (shell-array $policy.helper_copy_files)
-  let helper_link_files = (shell-array $policy.helper_link_files)
-  let dir_paths = (shell-array $policy.dir_paths)
-  let ro_bind_paths = (shell-array $policy.ro_bind_paths)
-  let enable_proc = if $policy.enable_proc { "1" } else { "0" }
-
-  [
-    "#!/bin/bash"
-    ""
-    $"SCRUBS_PRIMARY_SHELL=(sh-quote $policy.primary_shell)"
-    ""
-    $"SCRUBS_HELPER_COMMANDS=($helper_commands)"
-    ""
-    $"SCRUBS_HELPER_COPY_FILES=($helper_copy_files)"
-    ""
-    $"SCRUBS_HELPER_LINK_FILES=($helper_link_files)"
-    ""
-    $"SCRUBS_DIR_PATHS=($dir_paths)"
-    ""
-    $"SCRUBS_RO_BIND_PATHS=($ro_bind_paths)"
-    ""
-    $"SCRUBS_ENABLE_PROC=($enable_proc)"
-    ""
-  ] | str join "\n"
-}
+use ./sandbox-policy-lib.nu *
 
 def resolve-command-path [command_name: string] {
   let clean_path = $"/run/current-system/sw/bin/($command_name)"
@@ -151,11 +95,11 @@ def main [] {
   mkdir ($helper_root | path join "usr" "bin")
   mkdir ($helper_root | path join "etc" "ssl" "certs")
 
-  let active_policy = (load-policy $sandbox_policy)
-  let default_policy = (load-policy $default_policy_path)
+  let active_policy = (load-sandbox-policy $sandbox_policy)
+  let default_policy = (load-sandbox-policy $default_policy_path)
 
-  render-shell-policy $default_policy | save --force $default_definition
-  render-shell-policy $active_policy | save --force $sandbox_definition
+  render-sandbox-definition $default_policy | save --force $default_definition
+  render-sandbox-definition $active_policy | save --force $sandbox_definition
 
   for helper_file in $active_policy.helper_copy_files {
     copy-text-file $helper_file ($helper_root | path join ($helper_file | str replace --regex '^/' ""))
