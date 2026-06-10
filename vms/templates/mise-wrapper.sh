@@ -2,7 +2,8 @@
 set -eu
 
 real_mise="/run/current-system/sw/bin/mise"
-refresh_script="${HOME}/.local/libexec/scrubs/install-dirty-tools.sh"
+refresh_script="${HOME}/.local/libexec/scrubs/install-dirty-tools.nu"
+nu_bin="/run/current-system/sw/bin/nu"
 rustup_home="${HOME}/.local/share/mise/rustup-home"
 rust_bootstrap_cargo_home="${HOME}/.local/share/mise/rust-cargo-home"
 
@@ -17,8 +18,8 @@ set +e
 status=$?
 set -e
 
-if [ "${status}" -eq 0 ] && [ -x "${refresh_script}" ]; then
-  "${refresh_script}" > /dev/null 2>&1 || true
+if [ "${status}" -eq 0 ] && [ -x "${nu_bin}" ] && [ -f "${refresh_script}" ]; then
+  "${nu_bin}" "${refresh_script}" > /dev/null 2>&1 || true
 fi
 
 exit "${status}"

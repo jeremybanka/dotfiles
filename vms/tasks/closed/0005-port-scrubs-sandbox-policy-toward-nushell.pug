@@ -1,4 +1,4 @@
-issue(id="0005" status="open")
+issue(id="0005" status="closed")
   title Refactor scrubs sandbox policy toward Nushell and declarative artifacts
   user-story
     as-a scrubs maintainer evolving the dirty-runtime system
@@ -28,15 +28,25 @@ issue(id="0005" status="open")
     criterion Any migration path preserves the current working dirty-runtime behavior, including proxy-shim generation, helper-root assembly, and repeat bootstrap survivability.
     criterion The work explicitly avoids rewriting bootstrap-critical scripts into Nushell unless the new contract is shown to be at least as reliable in early-boot and recovery scenarios.
   review-items
-    item(status="open").
+    item(status="completed").
       Decide whether the best intermediate form is Nushell-authored data,
       generated shell artifacts, a plain data file format, or some combination
-      of those approaches.
-    item(status="open").
+      of those approaches. Current direction: `sandbox-policy.nuon` is the
+      source artifact, and scrubs renders guest-local shell definitions from it
+      for the existing launcher and fallback paths. Project shims now override
+      policy through `sandbox-policy.nuon` only, and legacy
+      `sandbox-definition.sh` shim overrides have been removed after disposable
+      non-Tailscale guest bootstrap and re-bootstrap validation.
+    item(status="completed").
       Identify whether `install-dirty-tools.sh` should migrate before
       `dirty-exec.sh`, since the policy layer likely offers better leverage
-      than a full launcher rewrite.
-    item(status="open").
+      than a full launcher rewrite. Current direction: the installer and policy
+      rendering now share a Nu module, `guest-apply.sh` and the `mise` refresh
+      path now invoke the Nu installer directly, and `dirty-exec.sh` remains
+      shell for now.
+    item(status="completed").
       Keep `guest-apply.sh` and the seed installer under explicit scrutiny
-      before attempting any Nushell migration there; they likely remain better
-      served by POSIX shell for the foreseeable future.
+      before attempting any Nushell migration there. Current decision:
+      `guest-apply.sh`, the seed installer, and `dirty-exec.sh` remain better
+      served by POSIX shell for the foreseeable future, while guest-state
+      convergence follow-up work moved to task `0018`.

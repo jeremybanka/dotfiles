@@ -18,7 +18,7 @@ if [ -d "$payload/home/.local/share/scrubs/clean-auth" ]; then
   find "$HOME/.local/share/scrubs/clean-auth" -type f -exec chmod 600 {} \;
 fi
 chmod 755 "$HOME/.local/libexec/scrubs/"*.sh
-"$HOME/.local/libexec/scrubs/install-dirty-tools.sh"
+"/run/current-system/sw/bin/nu" "$HOME/.local/libexec/scrubs/install-dirty-tools.nu"
 ln -snf "$HOME/.local/libexec/scrubs/gh-clean.sh" "$HOME/.local/bin/gh"
 ln -snf "$HOME/.local/libexec/scrubs/codex-clean.sh" "$HOME/.local/bin/codex"
 
