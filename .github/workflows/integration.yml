@@ -25,6 +25,7 @@ jobs:
           version: 2026.6.1
           github_token: ${{ github.token }}
       - run: just fmt-check
+      - run: just scrubs-validation-static
 
   Test:
     runs-on: macos-26

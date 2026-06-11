@@ -1,0 +1,64 @@
+issue(id="0007" status="closed")
+  title Automate the scrubs validation plan with canonical local probes
+  user-story
+    as-a scrubs maintainer changing bootstrap, auth, or dirty-boundary behavior
+    i-want the documented validation plan encoded as repeatable scripts
+    so-that regression checks can be run locally and on suitable runners without relying on memory or one-off terminal transcripts
+  premise.
+    Scrubs now ships a canonical local-first validation runner in
+    `vms/validate.nu`, exposed through `just scrubs-validate`, plus a
+    lightweight hosted-CI-safe parse check in `just scrubs-validation-static`.
+    The runner encodes the documented baseline directly: bootstrap a fresh
+    disposable guest, confirm repeat-bootstrap survivability, confirm
+    clean-space `gh` and Codex auth work without login ceremony, confirm the
+    dirty boundary still hides clean auth surfaces, and confirm HTTPS Git
+    still works through the scrubs-owned `gh` helper path.
+
+    The product constraint remains explicit. GitHub-hosted macOS arm64 runners
+    still cannot exercise the real Apple Silicon `vz` path, so the full
+    validation story stays local or self-hosted. Hosted CI only verifies the
+    static command surface instead of pretending to run the real guest flow.
+
+    The final design is now settled. The main artifact is a reusable runner
+    command rather than a prose-only checklist, while `try-*` guests remain
+    supplemental module fixtures that can be passed in as shims for targeted
+    coverage rather than replacing the default baseline harness.
+
+    Validation completed on June 11, 2026. Disposable guests
+    `scrubs-validate-base-20260611`,
+    `scrubs-validate-try-docker-20260611`, and
+    `scrubs-validate-try-postgres-20260611` each completed the full scripted
+    pass, including repeat bootstrap, clean auth smoke, dirty-boundary smoke,
+    HTTPS Git helper probes, and Codex continuity checks. Along the way, the
+    runner was tightened to trust its guest-local `.mise.toml` fixture before
+    tool installation and to stop running disposable guests before
+    `recreate=true` deletion.
+  acceptance-criteria
+    criterion Scrubs has one or more canonical scripts or commands that encode the documented validation baseline rather than leaving it as README-only operator prose.
+    criterion The scripted plan covers repeat bootstrap survivability, clean-space auth smoke, dirty-space visibility smoke, and the HTTPS Git helper path.
+    criterion The scripted plan is documented with clear assumptions about required host secrets, disposable guest names, and which checks are expected to be non-destructive.
+    criterion The work explicitly distinguishes checks that can run on ordinary GitHub-hosted CI from checks that require local or self-hosted Apple Silicon `vz` capacity.
+    criterion At least one maintainer-oriented path can run the scripted validation plan locally end to end and produce an understandable pass/fail result.
+    criterion The validation design explains the role of `try-*` guests, including whether they remain as canonical fixtures for module-level smoke coverage or are superseded by a more formal test harness.
+  review-items
+    item(status="covered").
+      The canonical artifact is now a small command suite centered on the
+      reusable `vms/validate.nu` runner and the maintainer-facing
+      `just scrubs-validate` wrapper, plus the CI-safe
+      `just scrubs-validation-static` parse check.
+    item(status="covered").
+      The baseline intentionally stays focused on bootstrap survivability,
+      clean auth, dirty-boundary checks, HTTPS Git helper behavior, and Codex
+      continuity. Broader guest-project happy-path tool smokes remain
+      supplemental workload coverage rather than part of the default gate, and
+      `try-*` shims stay available when a module composition needs that extra
+      targeted coverage.
+    item(status="covered").
+      Host-secret-dependent coverage is now explicit: the canonical runner is
+      live-secret-only and fails fast when sealed `gh` or Codex artifacts are
+      absent, because dummy-secret coverage would not validate the real clean
+      wrappers or Git helper path.
+    item(status="covered").
+      The GitHub Actions split is now explicit. Hosted CI runs only the static
+      validation-surface check, while full guest validation remains local or
+      self-hosted on Apple Silicon `vz` capacity.
