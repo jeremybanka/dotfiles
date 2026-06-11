@@ -717,6 +717,43 @@ For any new or materially changed guest flow, the baseline pass is:
     probes such as `nu -c 'print ok'`, `node -v`, `ni --version`, and
     `rg --version` still work through the scrubs runtime path
 
+The canonical encoded baseline now lives in
+[`validate.nu`](/Users/jem/dotfiles/vms/validate.nu), with the standard
+maintainer-facing wrapper:
+
+```sh
+SCRUBS_VALIDATE_INSTANCE_NAME=scrubs-validate-0007 \
+SCRUBS_VALIDATE_SOURCE_IMAGE=./vms/images/scrubs.qcow2 \
+SCRUBS_VALIDATE_RECREATE=true \
+just scrubs-validate
+```
+
+Important assumptions for that runner:
+
+- use a disposable guest name; reruns on the same name require `recreate=true`
+  and should be reserved for disposable validation guests only
+- the runner is intentionally live-secret coverage only; it expects bootstrap
+  to seal real host `gh` and Codex auth, and it fails fast if
+  `gh-token.enc` or `codex-auth.json.enc` are missing because a dummy-secret
+  mode would not validate the real clean wrapper or Git helper path
+- the default path uses `tailscale-disabled`; Tailscale checks remain an
+  explicit extra validation track rather than part of the baseline every
+  change must run
+- guest-local automation is non-destructive to GitHub itself: it creates or
+  overwrites `~/scrubs-validation-lab` and
+  `~/.codex/scrubs-validation/*` inside the disposable guest, and the Git
+  write-shaped probe uses `git push --dry-run`
+- read-only auth profiles can keep the rest of the plan while skipping the
+  write-shaped Git probe with `skip_git_push_dry_run=true`
+
+The lightweight `try-*` shims remain useful as module fixtures rather than
+replacing the baseline harness. When a change touches one of those module
+compositions, rerun the same validation path with
+`SCRUBS_VALIDATE_SHIM_NAME=try-docker`,
+`SCRUBS_VALIDATE_SHIM_NAME=try-postgres`, and similar fixture names.
+The default unshimmed disposable guest remains the canonical regression
+starting point.
+
 Add the following only when the specific feature or regression under test
 depends on guest-side Tailscale:
 
@@ -732,10 +769,12 @@ guardrail for scrubs changes. A guest that cannot survive re-bootstrap without
 locking out `limactl shell`, or that silently regresses its clean auth or Git
 boundaries, is not healthy enough to treat as upgradable in place.
 
-GitHub-hosted Actions can cover only part of this plan. The real Apple
-Silicon `vz` path should be treated as a local or self-hosted Apple Silicon
-runner concern, because GitHub-hosted macOS arm64 runners do not support the
-nested virtualization story needed for the full scrubs runtime path.
+GitHub-hosted Actions can cover only the static surface of this plan. Ordinary
+hosted runners should stick to formatting plus
+`just scrubs-validation-static`, while the real `just scrubs-validate` path
+belongs on a local or self-hosted Apple Silicon `vz` machine because
+GitHub-hosted macOS arm64 runners do not support the nested virtualization
+story needed for the full scrubs runtime path.
 
 ## Troubleshooting
 

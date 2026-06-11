@@ -48,6 +48,28 @@ helix-watch-config:
 bootstrap instance_name clean_auth_profile="personal" shim_name="" source_image="./vms/images/scrubs.qcow2" tailscale_mode="tailscale-enabled":
     nu ./vms/bootstrap.nu --source-image {{ source_image }} {{ if shim_name != "" { "--shim-name " + shim_name + " " } else { "" } }}--clean-auth-profile {{ clean_auth_profile }} {{ instance_name }} {{ tailscale_mode }}
 
+scrubs-validation-static:
+    nu ./vms/validate.nu --help >/dev/null
+
+scrubs-validate:
+    @instance_name="${SCRUBS_VALIDATE_INSTANCE_NAME:-scrubs-validate}"; \
+    clean_auth_profile="${SCRUBS_VALIDATE_CLEAN_AUTH_PROFILE:-}"; \
+    shim_name="${SCRUBS_VALIDATE_SHIM_NAME:-}"; \
+    source_image="${SCRUBS_VALIDATE_SOURCE_IMAGE:-}"; \
+    git_remote_url="${SCRUBS_VALIDATE_GIT_REMOTE_URL:-}"; \
+    tailscale_mode="${SCRUBS_VALIDATE_TAILSCALE_MODE:-tailscale-disabled}"; \
+    recreate="${SCRUBS_VALIDATE_RECREATE:-false}"; \
+    skip_git_push_dry_run="${SCRUBS_VALIDATE_SKIP_GIT_PUSH_DRY_RUN:-false}"; \
+    args=(./vms/validate.nu --tailscale-mode "$tailscale_mode"); \
+    if [ -n "$clean_auth_profile" ]; then args+=(--clean-auth-profile "$clean_auth_profile"); fi; \
+    if [ -n "$shim_name" ]; then args+=(--shim-name "$shim_name"); fi; \
+    if [ -n "$source_image" ]; then args+=(--source-image "$source_image"); fi; \
+    if [ -n "$git_remote_url" ]; then args+=(--git-remote-url "$git_remote_url"); fi; \
+    if [ "$recreate" = "true" ]; then args+=(--recreate); fi; \
+    if [ "$skip_git_push_dry_run" = "true" ]; then args+=(--skip-git-push-dry-run); fi; \
+    if [ -n "$instance_name" ]; then args+=("$instance_name"); fi; \
+    nu "${args[@]}"
+
 download-latest-iso channel="nixos-25.11":
     nu ./vms/download-latest-iso.nu {{ channel }}
 
