@@ -91,6 +91,9 @@ def main [] {
   }
 
   mkdir $proxy_dir
+  if ($helper_root | path exists) {
+    rm -rf $helper_root
+  }
   mkdir ($helper_root | path join "bin")
   mkdir ($helper_root | path join "usr" "bin")
   mkdir ($helper_root | path join "etc" "ssl" "certs")
@@ -125,6 +128,8 @@ def main [] {
   }
 
   remove-generated-proxies $proxy_dir $dirty_exec
+  rm -f ($proxy_dir | path join "mise")
+  rm -f ($proxy_dir | path join "scrubs-dirty-exec")
 
   ^ln -snf $dirty_exec ($proxy_dir | path join "scrubs-dirty-exec")
   cp $mise_wrapper ($proxy_dir | path join "mise")

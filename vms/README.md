@@ -91,6 +91,32 @@ keeping the VM isolation model intact.
 
 It does not assume the cloned project owns a flake.
 
+## Guest-Home Convergence Policy
+
+On repeat bootstrap, scrubs treats guest-home state in three classes:
+
+- exact scrubs-managed state:
+  declared in [`guest-home-policy.nuon`](./guest-home-policy.nuon) as a split
+  between payload-converged paths and runtime-generated helper paths. Today
+  that includes the scrubs-owned git, `mise`, and Nushell config surface, the
+  managed shell entrypoints, the helper subtree at
+  `~/.local/libexec/scrubs/`, the sealed clean-auth subtree at
+  `~/.local/share/scrubs/clean-auth/`, the generated dirty-runtime helper root
+  at `~/.local/share/scrubs/helper-root/`, and the scrubs-owned launcher links
+  in `~/.local/bin/`
+- preserved durable operator state:
+  also declared in [`guest-home-policy.nuon`](./guest-home-policy.nuon). Today
+  that includes project working trees, guest-local Codex state in `~/.codex/`,
+  preserved pre-scrubs shell backups such as `~/.bashrc.pre-scrubs`, and
+  guest-local Nushell history such as `~/.config/nushell/history.txt`
+- out of scope:
+  any other guest-home content not claimed above remains the operator's
+  responsibility and is not treated as declared scrubs state
+
+This split is deliberate. Bootstrap should remove retired scrubs-owned
+artifacts from the exact managed surface, but it should not wipe unrelated
+guest-local work just because a guest is re-bootstrapped in place.
+
 ## Bootstrap Model
 
 `bootstrap.nu` no longer depends on `darwin.linux-builder`.
@@ -687,6 +713,9 @@ For any new or materially changed guest flow, the baseline pass is:
 10. confirm `limactl shell <instance>` still opens an interactive shell
 11. confirm the prior Codex continuity marker is still present in the durable
     `~/.codex` state after re-bootstrap
+12. from inside a guest project workspace, confirm happy-path Linux runtime
+    probes such as `nu -c 'print ok'`, `node -v`, `ni --version`, and
+    `rg --version` still work through the scrubs runtime path
 
 Add the following only when the specific feature or regression under test
 depends on guest-side Tailscale:

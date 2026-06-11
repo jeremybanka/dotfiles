@@ -1,0 +1,69 @@
+{
+  exact_payload_paths: [
+    ".gitconfig"
+    ".gitignore_global"
+    ".config/mise/config.toml"
+    ".config/nushell/carapace-init.nu"
+    ".config/nushell/config.nu"
+    ".config/nushell/config.shared.nu"
+    ".config/nushell/config.linux.nu"
+    ".config/nushell/env.nu"
+    ".config/nushell/env.shared.nu"
+    ".config/nushell/env.linux.nu"
+    ".config/nushell/kolo.nu"
+    ".config/nushell/ni-completions.nu"
+    ".config/nushell/vite-plus.nu"
+    ".local/bin/gh"
+    ".local/bin/codex"
+    ".local/libexec/scrubs"
+    ".local/share/scrubs/clean-auth"
+    ".profile"
+    ".bashrc"
+    ".bash_profile"
+  ]
+  # Declarative direction, not yet fully enforced:
+  # bootstrap emits this list into guest state, but `guest-apply.sh` does not
+  # currently use it to drive convergence or cleanup decisions directly.
+  runtime_generated_paths: [
+    ".local/bin/mise"
+    ".local/bin/scrubs-dirty-exec"
+    ".local/share/scrubs/helper-root"
+  ]
+  # Declarative direction, not yet fully enforced:
+  # this records the intended preserved bucket, but current preservation still
+  # comes mostly from bootstrap simply not claiming these paths as exact
+  # managed state rather than from `guest-apply.sh` consulting this list.
+  preserved_durable_paths: [
+    ".codex"
+    ".bashrc.pre-scrubs"
+    ".profile.pre-scrubs"
+    ".config/nushell/history.txt"
+    "<project-working-trees>"
+  ]
+  legacy_cleanup_paths: [
+    ".gitconfig"
+    ".gitignore_global"
+    ".config/mise/config.toml"
+    ".config/nushell/carapace-init.nu"
+    ".config/nushell/config.nu"
+    ".config/nushell/config.shared.nu"
+    ".config/nushell/config.darwin.nu"
+    ".config/nushell/config.linux.nu"
+    ".config/nushell/env.nu"
+    ".config/nushell/env.shared.nu"
+    ".config/nushell/env.darwin.nu"
+    ".config/nushell/env.linux.nu"
+    ".config/nushell/kolo.nu"
+    ".config/nushell/mise.nu"
+    ".config/nushell/mise.darwin.nu"
+    ".config/nushell/ni-completions.nu"
+    ".config/nushell/vite-plus.nu"
+    ".local/bin/gh"
+    ".local/bin/codex"
+    ".local/libexec/scrubs"
+    ".local/share/scrubs/clean-auth"
+    ".profile"
+    ".bashrc"
+    ".bash_profile"
+  ]
+}

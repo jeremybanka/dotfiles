@@ -1,4 +1,4 @@
-issue(id="0018" status="open")
+issue(id="0018" status="review")
   title Make bootstrap converge scrubs-managed guest state
   user-story
     as-a scrubs operator re-bootstrapping long-lived guests
@@ -26,6 +26,17 @@ issue(id="0018" status="open")
     applying an iron-fist convergence policy to scrubs-managed subtrees like
     `~/.local/libexec/scrubs` and other directories scrubs claims as declared
     configuration.
+
+    A recent Nushell regression in Linux guests also exposed a related shape
+    problem: bootstrap currently ships both Darwin and Linux config fragments
+    into the guest, and Nushell still parse-checks parser keywords like
+    `source` and `use` across inactive branches before evaluation. That makes
+    it tempting to copy cross-platform helper modules such as
+    `mise.darwin.nu` into Linux guests just to satisfy parse-time resolution,
+    but that is the wrong convergence model. The better fix is to treat the
+    platform-specific config selection itself as declared state and rewrite it
+    around parse-time-safe `const` path selection, so each guest only needs
+    the platform files it actually owns.
   acceptance-criteria
     criterion Scrubs documents which guest-home paths are treated as exact managed state, which are preserved by explicit allowlist, and which remain out of scope.
     criterion Re-bootstrapping an existing guest removes retired scrubs-managed payload files such as deleted helper scripts from exact managed directories.
@@ -33,10 +44,24 @@ issue(id="0018" status="open")
     criterion The convergence policy preserves explicitly allowed durable operator state such as project working trees and Codex chat/session history during repeat bootstrap.
     criterion Validation includes at least one re-bootstrap of an existing long-lived canary guest in addition to disposable-guest testing, so migration behavior is exercised directly.
   review-items
-    item(status="open").
-      Decide which guest-home paths scrubs should treat as exact managed
-      subtrees versus explicitly preserved operator state.
-    item(status="open").
-      Decide whether the safest implementation shape is exact directory sync
-      for a few owned paths, a generated manifest of managed files, or some
-      combination of those approaches.
+    item(status="covered").
+      Scrubs now treats guest-home state with an explicit three-way policy.
+      The declared source of truth now lives in `vms/guest-home-policy.nuon`,
+      with companion operator documentation in `vms/README.md`. Together they
+      define exact managed paths, explicitly preserved durable state such as
+      project trees, Codex state, and Nushell history, and a remaining
+      out-of-scope bucket for everything else. `guest-apply.sh` enforces that
+      policy during repeat bootstrap instead of relying on additive copying.
+    item(status="covered").
+      The implementation settled on a combination approach rather than a pure
+      directory mirror or a pure file manifest. Bootstrap now ships a
+      generated managed-path manifest for declared payload content, converges
+      exact managed directories and files to that manifest, and carries a
+      small legacy-cleanup list for older guest artifacts that were previously
+      shipped outside the new declared set.
+    item(status="covered").
+      Nushell platform selection is now part of the convergence model itself.
+      Shared `config.nu` and `env.nu` choose the platform fragment through
+      parse-time-safe `const` path selection, and Linux guests no longer need
+      copied Darwin-only modules such as `mise.darwin.nu` just to satisfy
+      inactive parse branches.

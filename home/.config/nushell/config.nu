@@ -1,11 +1,12 @@
 source ~/.config/nushell/config.shared.nu
 
-let host_os = ((sys host).name | str downcase)
-
-if $host_os == "macos" {
-    source ~/.config/nushell/config.darwin.nu
+const host_os = ($nu.os-info.name | str downcase)
+const host_config = if $host_os == "macos" {
+    "~/.config/nushell/config.darwin.nu"
+} else if $host_os == "linux" {
+    "~/.config/nushell/config.linux.nu"
+} else {
+    null
 }
 
-if $host_os == "linux" {
-    source ~/.config/nushell/config.linux.nu
-}
+source $host_config

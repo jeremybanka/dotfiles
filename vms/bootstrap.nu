@@ -43,6 +43,25 @@ def remote-shell-command [command: string] {
   $"sh -lc '($escaped)'"
 }
 
+def normalize-guest-home-policy [policy: record] {
+  {
+    exact_payload_paths: ($policy.exact_payload_paths | each {|value| $value | into string })
+    runtime_generated_paths: ($policy.runtime_generated_paths | each {|value| $value | into string })
+    preserved_durable_paths: ($policy.preserved_durable_paths | each {|value| $value | into string })
+    legacy_cleanup_paths: ($policy.legacy_cleanup_paths | each {|value| $value | into string })
+  }
+}
+
+def load-guest-home-policy [path: string] {
+  normalize-guest-home-policy (open $path)
+}
+
+def save-policy-list [values: list<string>, output_path: string] {
+  $values
+  | str join "\n"
+  | save --force $output_path
+}
+
 def macos-keychain-secret [service: string, account: string = ""] {
   let args = if $account == "" {
     ["find-generic-password" "-w" "-s" $service]
@@ -522,6 +541,8 @@ def main [
   let mount_type = if $vm_type == "qemu" { "9p" } else { "virtiofs" }
   let ssh_args = (ssh-base-args $guest_user $ssh_port)
   let scp_args = (scp-base-args $ssh_port)
+  let guest_home_policy_path = ($vms_dir | path join "guest-home-policy.nuon")
+  let guest_home_policy = (load-guest-home-policy $guest_home_policy_path)
 
   rm -rf $payload_dir
   mkdir $cache_dir
@@ -560,6 +581,7 @@ def main [
   cp ($vms_dir | path join "templates" "clean-auth-lib.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "clean-auth-lib.sh")
   cp ($vms_dir | path join "templates" "gh-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "gh-clean.sh")
   cp ($vms_dir | path join "templates" "codex-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "codex-clean.sh")
+  cp $guest_home_policy_path ($payload_dir | path join "home" ".local" "share" "scrubs" "guest-home-policy.nuon")
   let default_sandbox_policy = ($vms_dir | path join "templates" "sandbox-default-policy.nuon")
   cp $default_sandbox_policy ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-default-policy.nuon")
   render-sandbox-definition (load-sandbox-policy $default_sandbox_policy) | save --force ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-default-definition.sh")
@@ -575,11 +597,9 @@ def main [
     "carapace-init.nu"
     "config.nu"
     "config.shared.nu"
-    "config.darwin.nu"
     "config.linux.nu"
     "env.nu"
     "env.shared.nu"
-    "env.darwin.nu"
     "env.linux.nu"
     "kolo.nu"
     "ni-completions.nu"
@@ -587,6 +607,11 @@ def main [
   ] {
     cp ($repo_root | path join "home" ".config" "nushell" $file_name) ($payload_dir | path join "home" ".config" "nushell" $file_name)
   }
+
+  save-policy-list $guest_home_policy.exact_payload_paths ($payload_dir | path join "home" ".local" "share" "scrubs" "managed-home-paths.txt")
+  save-policy-list $guest_home_policy.runtime_generated_paths ($payload_dir | path join "home" ".local" "share" "scrubs" "runtime-generated-home-paths.txt")
+  save-policy-list $guest_home_policy.preserved_durable_paths ($payload_dir | path join "home" ".local" "share" "scrubs" "preserved-home-paths.txt")
+  save-policy-list $guest_home_policy.legacy_cleanup_paths ($payload_dir | path join "home" ".local" "share" "scrubs" "legacy-home-paths.txt")
 
   cp ($vms_dir | path join "flake.nix") ($payload_dir | path join "scrubs" "flake.nix")
   cp ($vms_dir | path join "flake.lock") ($payload_dir | path join "scrubs" "flake.lock")
