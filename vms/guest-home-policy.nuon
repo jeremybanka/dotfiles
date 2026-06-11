@@ -21,11 +21,18 @@
     ".bashrc"
     ".bash_profile"
   ]
+  # Declarative direction, not yet fully enforced:
+  # bootstrap emits this list into guest state, but `guest-apply.sh` does not
+  # currently use it to drive convergence or cleanup decisions directly.
   runtime_generated_paths: [
     ".local/bin/mise"
     ".local/bin/scrubs-dirty-exec"
     ".local/share/scrubs/helper-root"
   ]
+  # Declarative direction, not yet fully enforced:
+  # this records the intended preserved bucket, but current preservation still
+  # comes mostly from bootstrap simply not claiming these paths as exact
+  # managed state rather than from `guest-apply.sh` consulting this list.
   preserved_durable_paths: [
     ".codex"
     ".bashrc.pre-scrubs"
