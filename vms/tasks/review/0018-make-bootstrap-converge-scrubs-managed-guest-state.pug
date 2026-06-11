@@ -1,4 +1,4 @@
-issue(id="0018" status="open")
+issue(id="0018" status="review")
   title Make bootstrap converge scrubs-managed guest state
   user-story
     as-a scrubs operator re-bootstrapping long-lived guests
@@ -44,15 +44,23 @@ issue(id="0018" status="open")
     criterion The convergence policy preserves explicitly allowed durable operator state such as project working trees and Codex chat/session history during repeat bootstrap.
     criterion Validation includes at least one re-bootstrap of an existing long-lived canary guest in addition to disposable-guest testing, so migration behavior is exercised directly.
   review-items
-    item(status="open").
-      Decide which guest-home paths scrubs should treat as exact managed
-      subtrees versus explicitly preserved operator state.
-    item(status="open").
-      Decide whether the safest implementation shape is exact directory sync
-      for a few owned paths, a generated manifest of managed files, or some
-      combination of those approaches.
-    item(status="open").
-      Fold Nushell platform config loading into the convergence work by
-      switching `config.nu` and `env.nu` to parse-time `const` path
-      selection, rather than satisfying inactive Darwin branches by copying
-      extra modules into Linux guests.
+    item(status="covered").
+      Scrubs now treats guest-home state with an explicit three-way policy.
+      The new guest-home convergence documentation in `vms/README.md`
+      defines exact managed paths, explicitly preserved durable state such as
+      project trees, Codex state, and Nushell history, and a remaining
+      out-of-scope bucket for everything else. `guest-apply.sh` enforces that
+      policy during repeat bootstrap instead of relying on additive copying.
+    item(status="covered").
+      The implementation settled on a combination approach rather than a pure
+      directory mirror or a pure file manifest. Bootstrap now ships a
+      generated managed-path manifest for declared payload content, converges
+      exact managed directories and files to that manifest, and carries a
+      small legacy-cleanup list for older guest artifacts that were previously
+      shipped outside the new declared set.
+    item(status="covered").
+      Nushell platform selection is now part of the convergence model itself.
+      Shared `config.nu` and `env.nu` choose the platform fragment through
+      parse-time-safe `const` path selection, and Linux guests no longer need
+      copied Darwin-only modules such as `mise.darwin.nu` just to satisfy
+      inactive parse branches.
