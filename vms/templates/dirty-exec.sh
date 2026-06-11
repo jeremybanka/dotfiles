@@ -281,7 +281,7 @@ helper_closure_cache_key="$(
 )"
 helper_closure_cache_file="${helper_closure_cache_root}/${helper_closure_cache_key}.paths"
 
-if [[ ! -f "${helper_closure_cache_file}" ]]; then
+if [[ ! -s "${helper_closure_cache_file}" ]]; then
   build_helper_closure_cache "${helper_closure_cache_file}"
 fi
 
@@ -334,6 +334,16 @@ for bind_path in "${SCRUBS_RO_BIND_PATHS[@]}"; do
   extra_ro_binds+=(--ro-bind "${bind_path}" "${bind_path}")
 done
 
+if [[ -n "${resolved_nix_ld}" ]]; then
+  append_parent_dirs "${nix_ld}"
+  extra_ro_binds+=(--ro-bind "${resolved_nix_ld}" "${nix_ld}")
+fi
+
+if [[ -n "${resolved_nix_ld_library_path}" ]]; then
+  append_parent_dirs "${nix_ld_library_path}"
+  extra_ro_binds+=(--ro-bind "${resolved_nix_ld_library_path}" "${nix_ld_library_path}")
+fi
+
 declare -a proc_bind=()
 if [[ "${SCRUBS_ENABLE_PROC}" == "1" ]]; then
   proc_bind=(--proc /proc)
@@ -378,8 +388,8 @@ exec "${BWRAP_BIN}" \
   --setenv MISE_STATE_DIR "/home/${current_user}/.local/state/mise" \
   --setenv RUSTUP_HOME "/home/${current_user}/.local/share/mise/rustup-home" \
   --setenv CARGO_HOME "/home/${current_user}/.cargo" \
-  --setenv NIX_LD "${resolved_nix_ld}" \
-  --setenv NIX_LD_LIBRARY_PATH "${resolved_nix_ld_library_path}" \
+  --setenv NIX_LD "${nix_ld}" \
+  --setenv NIX_LD_LIBRARY_PATH "${nix_ld_library_path}" \
   --setenv SSL_CERT_FILE "${ssl_cert_file}" \
   "${mise_state_bind[@]}" \
   "${store_ro_binds[@]}" \
