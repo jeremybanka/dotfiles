@@ -91,6 +91,30 @@ keeping the VM isolation model intact.
 
 It does not assume the cloned project owns a flake.
 
+## Guest-Home Convergence Policy
+
+On repeat bootstrap, scrubs treats guest-home state in three classes:
+
+- exact scrubs-managed state:
+  `~/.gitconfig`, `~/.gitignore_global`, `~/.config/mise/config.toml`, the
+  declared Nushell config files under `~/.config/nushell/`, the managed shell
+  entrypoints `~/.profile`, `~/.bashrc`, and `~/.bash_profile`, the exact
+  helper subtree at `~/.local/libexec/scrubs/`, the sealed clean-auth subtree
+  at `~/.local/share/scrubs/clean-auth/`, and the generated dirty-runtime
+  helper state under `~/.local/share/scrubs/helper-root/` plus the scrubs-owned
+  launcher links in `~/.local/bin/`
+- preserved durable operator state:
+  project working trees, guest-local Codex state in `~/.codex/`, preserved
+  pre-scrubs shell backups such as `~/.bashrc.pre-scrubs`, and guest-local
+  Nushell history such as `~/.config/nushell/history.txt`
+- out of scope:
+  any other guest-home content not claimed above remains the operator's
+  responsibility and is not treated as declared scrubs state
+
+This split is deliberate. Bootstrap should remove retired scrubs-owned
+artifacts from the exact managed surface, but it should not wipe unrelated
+guest-local work just because a guest is re-bootstrapped in place.
+
 ## Bootstrap Model
 
 `bootstrap.nu` no longer depends on `darwin.linux-builder`.

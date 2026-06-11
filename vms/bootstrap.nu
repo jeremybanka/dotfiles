@@ -575,11 +575,9 @@ def main [
     "carapace-init.nu"
     "config.nu"
     "config.shared.nu"
-    "config.darwin.nu"
     "config.linux.nu"
     "env.nu"
     "env.shared.nu"
-    "env.darwin.nu"
     "env.linux.nu"
     "kolo.nu"
     "ni-completions.nu"
@@ -587,6 +585,32 @@ def main [
   ] {
     cp ($repo_root | path join "home" ".config" "nushell" $file_name) ($payload_dir | path join "home" ".config" "nushell" $file_name)
   }
+
+  let managed_home_paths = [
+    ".gitconfig"
+    ".gitignore_global"
+    ".config/mise/config.toml"
+    ".config/nushell/carapace-init.nu"
+    ".config/nushell/config.nu"
+    ".config/nushell/config.shared.nu"
+    ".config/nushell/config.linux.nu"
+    ".config/nushell/env.nu"
+    ".config/nushell/env.shared.nu"
+    ".config/nushell/env.linux.nu"
+    ".config/nushell/kolo.nu"
+    ".config/nushell/ni-completions.nu"
+    ".config/nushell/vite-plus.nu"
+    ".local/bin/gh"
+    ".local/bin/codex"
+    ".local/libexec/scrubs"
+    ".local/share/scrubs/clean-auth"
+    ".profile"
+    ".bashrc"
+    ".bash_profile"
+  ]
+  $managed_home_paths
+  | str join "\n"
+  | save --force ($payload_dir | path join "home" ".local" "share" "scrubs" "managed-home-paths.txt")
 
   cp ($vms_dir | path join "flake.nix") ($payload_dir | path join "scrubs" "flake.nix")
   cp ($vms_dir | path join "flake.lock") ($payload_dir | path join "scrubs" "flake.lock")
