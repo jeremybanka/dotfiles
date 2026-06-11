@@ -41,6 +41,11 @@ issue(id="0007" status="open")
       script, a small command suite, or a mix of reusable probes plus a higher-level
       runner command.
     item(status="open").
+      Decide whether the canonical baseline should include a guest-project
+      Linux happy-path smoke such as `nu`, `node`, `ni`, and `rg`, because a
+      guest can finish bootstrap successfully while parser-safe Nushell or the
+      dirty-runtime execution path is still broken.
+    item(status="open").
       Decide how host-secret-dependent checks should be handled, including
       whether there should be dummy-secret smoke coverage, opt-in live-secret
       coverage, or both.

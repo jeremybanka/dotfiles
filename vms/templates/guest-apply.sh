@@ -9,6 +9,10 @@ scrubs_hardware_config="${SCRUBS_HARDWARE_CONFIG:-/etc/nixos/hardware-configurat
 scrubs_state_dir="$HOME/.local/share/scrubs"
 installed_manifest="$scrubs_state_dir/managed-home-paths.txt"
 current_manifest="$payload/home/.local/share/scrubs/managed-home-paths.txt"
+runtime_generated_manifest="$payload/home/.local/share/scrubs/runtime-generated-home-paths.txt"
+preserved_manifest="$payload/home/.local/share/scrubs/preserved-home-paths.txt"
+legacy_manifest="$payload/home/.local/share/scrubs/legacy-home-paths.txt"
+guest_home_policy="$payload/home/.local/share/scrubs/guest-home-policy.nuon"
 
 manifest_contains() {
   manifest_path="$1"
@@ -73,38 +77,6 @@ ensure_symlink() {
   fi
 }
 
-legacy_manifest="$(mktemp)"
-cleanup_legacy_manifest() {
-  rm -f "$legacy_manifest"
-}
-trap cleanup_legacy_manifest EXIT HUP INT TERM
-cat > "$legacy_manifest" <<'EOF'
-.gitconfig
-.gitignore_global
-.config/mise/config.toml
-.config/nushell/carapace-init.nu
-.config/nushell/config.nu
-.config/nushell/config.shared.nu
-.config/nushell/config.darwin.nu
-.config/nushell/config.linux.nu
-.config/nushell/env.nu
-.config/nushell/env.shared.nu
-.config/nushell/env.darwin.nu
-.config/nushell/env.linux.nu
-.config/nushell/kolo.nu
-.config/nushell/mise.nu
-.config/nushell/mise.darwin.nu
-.config/nushell/ni-completions.nu
-.config/nushell/vite-plus.nu
-.local/bin/gh
-.local/bin/codex
-.local/libexec/scrubs
-.local/share/scrubs/clean-auth
-.profile
-.bashrc
-.bash_profile
-EOF
-
 if [ ! -f "$current_manifest" ]; then
   echo "scrubs bootstrap payload is missing managed-home-paths.txt" >&2
   exit 1
@@ -137,6 +109,23 @@ done
 
 converge_exact_dir "$payload/home/.local/libexec/scrubs" "$HOME/.local/libexec/scrubs"
 converge_exact_dir "$payload/home/.local/share/scrubs/clean-auth" "$HOME/.local/share/scrubs/clean-auth"
+converge_file "$current_manifest" "$installed_manifest"
+
+if [ -f "$runtime_generated_manifest" ]; then
+  converge_file "$runtime_generated_manifest" "$scrubs_state_dir/runtime-generated-home-paths.txt"
+fi
+
+if [ -f "$preserved_manifest" ]; then
+  converge_file "$preserved_manifest" "$scrubs_state_dir/preserved-home-paths.txt"
+fi
+
+if [ -f "$legacy_manifest" ]; then
+  converge_file "$legacy_manifest" "$scrubs_state_dir/legacy-home-paths.txt"
+fi
+
+if [ -f "$guest_home_policy" ]; then
+  converge_file "$guest_home_policy" "$scrubs_state_dir/guest-home-policy.nuon"
+fi
 
 if [ -d "$HOME/.local/share/scrubs/clean-auth" ]; then
   chmod 700 "$HOME/.local/share/scrubs/clean-auth"
@@ -201,7 +190,6 @@ converge_file "$payload/home/.profile" "$HOME/.profile"
 converge_file "$payload/home/.bashrc" "$HOME/.bashrc"
 converge_file "$payload/home/.bash_profile" "$HOME/.bash_profile"
 
-cp "$current_manifest" "$installed_manifest"
 chmod 600 "$installed_manifest"
 
 cp "$scrubs_hardware_config" "$payload/scrubs/modules/runtime-hardware.nix"

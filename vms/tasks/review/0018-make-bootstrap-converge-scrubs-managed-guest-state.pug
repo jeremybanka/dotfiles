@@ -46,8 +46,9 @@ issue(id="0018" status="review")
   review-items
     item(status="covered").
       Scrubs now treats guest-home state with an explicit three-way policy.
-      The new guest-home convergence documentation in `vms/README.md`
-      defines exact managed paths, explicitly preserved durable state such as
+      The declared source of truth now lives in `vms/guest-home-policy.nuon`,
+      with companion operator documentation in `vms/README.md`. Together they
+      define exact managed paths, explicitly preserved durable state such as
       project trees, Codex state, and Nushell history, and a remaining
       out-of-scope bucket for everything else. `guest-apply.sh` enforces that
       policy during repeat bootstrap instead of relying on additive copying.

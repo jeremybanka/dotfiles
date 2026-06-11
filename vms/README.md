@@ -96,17 +96,19 @@ It does not assume the cloned project owns a flake.
 On repeat bootstrap, scrubs treats guest-home state in three classes:
 
 - exact scrubs-managed state:
-  `~/.gitconfig`, `~/.gitignore_global`, `~/.config/mise/config.toml`, the
-  declared Nushell config files under `~/.config/nushell/`, the managed shell
-  entrypoints `~/.profile`, `~/.bashrc`, and `~/.bash_profile`, the exact
-  helper subtree at `~/.local/libexec/scrubs/`, the sealed clean-auth subtree
-  at `~/.local/share/scrubs/clean-auth/`, and the generated dirty-runtime
-  helper state under `~/.local/share/scrubs/helper-root/` plus the scrubs-owned
-  launcher links in `~/.local/bin/`
+  declared in [`guest-home-policy.nuon`](./guest-home-policy.nuon) as a split
+  between payload-converged paths and runtime-generated helper paths. Today
+  that includes the scrubs-owned git, `mise`, and Nushell config surface, the
+  managed shell entrypoints, the helper subtree at
+  `~/.local/libexec/scrubs/`, the sealed clean-auth subtree at
+  `~/.local/share/scrubs/clean-auth/`, the generated dirty-runtime helper root
+  at `~/.local/share/scrubs/helper-root/`, and the scrubs-owned launcher links
+  in `~/.local/bin/`
 - preserved durable operator state:
-  project working trees, guest-local Codex state in `~/.codex/`, preserved
-  pre-scrubs shell backups such as `~/.bashrc.pre-scrubs`, and guest-local
-  Nushell history such as `~/.config/nushell/history.txt`
+  also declared in [`guest-home-policy.nuon`](./guest-home-policy.nuon). Today
+  that includes project working trees, guest-local Codex state in `~/.codex/`,
+  preserved pre-scrubs shell backups such as `~/.bashrc.pre-scrubs`, and
+  guest-local Nushell history such as `~/.config/nushell/history.txt`
 - out of scope:
   any other guest-home content not claimed above remains the operator's
   responsibility and is not treated as declared scrubs state
@@ -711,6 +713,9 @@ For any new or materially changed guest flow, the baseline pass is:
 10. confirm `limactl shell <instance>` still opens an interactive shell
 11. confirm the prior Codex continuity marker is still present in the durable
     `~/.codex` state after re-bootstrap
+12. from inside a guest project workspace, confirm happy-path Linux runtime
+    probes such as `nu -c 'print ok'`, `node -v`, `ni --version`, and
+    `rg --version` still work through the scrubs runtime path
 
 Add the following only when the specific feature or regression under test
 depends on guest-side Tailscale:
