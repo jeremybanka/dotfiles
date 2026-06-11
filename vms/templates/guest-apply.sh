@@ -92,6 +92,8 @@ cat > "$legacy_manifest" <<'EOF'
 .config/nushell/env.darwin.nu
 .config/nushell/env.linux.nu
 .config/nushell/kolo.nu
+.config/nushell/mise.nu
+.config/nushell/mise.darwin.nu
 .config/nushell/ni-completions.nu
 .config/nushell/vite-plus.nu
 .local/bin/gh
