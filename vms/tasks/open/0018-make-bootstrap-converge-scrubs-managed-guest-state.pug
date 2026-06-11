@@ -26,6 +26,17 @@ issue(id="0018" status="open")
     applying an iron-fist convergence policy to scrubs-managed subtrees like
     `~/.local/libexec/scrubs` and other directories scrubs claims as declared
     configuration.
+
+    A recent Nushell regression in Linux guests also exposed a related shape
+    problem: bootstrap currently ships both Darwin and Linux config fragments
+    into the guest, and Nushell still parse-checks parser keywords like
+    `source` and `use` across inactive branches before evaluation. That makes
+    it tempting to copy cross-platform helper modules such as
+    `mise.darwin.nu` into Linux guests just to satisfy parse-time resolution,
+    but that is the wrong convergence model. The better fix is to treat the
+    platform-specific config selection itself as declared state and rewrite it
+    around parse-time-safe `const` path selection, so each guest only needs
+    the platform files it actually owns.
   acceptance-criteria
     criterion Scrubs documents which guest-home paths are treated as exact managed state, which are preserved by explicit allowlist, and which remain out of scope.
     criterion Re-bootstrapping an existing guest removes retired scrubs-managed payload files such as deleted helper scripts from exact managed directories.
@@ -40,3 +51,8 @@ issue(id="0018" status="open")
       Decide whether the safest implementation shape is exact directory sync
       for a few owned paths, a generated manifest of managed files, or some
       combination of those approaches.
+    item(status="open").
+      Fold Nushell platform config loading into the convergence work by
+      switching `config.nu` and `env.nu` to parse-time `const` path
+      selection, rather than satisfying inactive Darwin branches by copying
+      extra modules into Linux guests.
