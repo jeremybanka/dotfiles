@@ -43,6 +43,7 @@
   cm = commit --message
   d = diff
   dn = pull
+  f = fetch
   l = log --oneline
   la = log --oneline --abbrev-commit --all --graph --decorate --color
   ll = log
