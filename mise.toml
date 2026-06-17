@@ -1,5 +1,5 @@
 [tools]
-"github:terror/just-lsp" = "0.4.6"
+"github:terror/just-lsp" = "0.4.7"
 delta = "0.19.2"
 dprint = "0.54.0"
 just = "1.52.0"
