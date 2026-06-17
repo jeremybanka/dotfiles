@@ -50,6 +50,7 @@
     "*.ts": "${capture}.js",
     "*.js": "${capture}.js.map, ${capture}.min.js",
     "*.d.ts": "${capture}.d.ts.map",
+    "*.config.ts": "${capture}.*.config.ts",
     "tsconfig.json": "tsconfig.*.json",
     "*.sqlite": "${capture}.${extname}-*",
     "*.db": "${capture}.${extname}-*",
