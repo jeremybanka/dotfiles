@@ -1,0 +1,66 @@
+{
+  primary_shell: "bash"
+  helper_commands: [
+    "awk"
+    "basename"
+    "cat"
+    "chmod"
+    "cp"
+    "cut"
+    "dirname"
+    "env"
+    "find"
+    "git"
+    "grep"
+    "head"
+    "id"
+    "ln"
+    "ls"
+    "mkdir"
+    "mktemp"
+    "pwd"
+    "readlink"
+    "rm"
+    "sed"
+    "sh"
+    "sort"
+    "tail"
+    "tar"
+    "tee"
+    "touch"
+    "tr"
+    "uname"
+    "uniq"
+    "which"
+    "xargs"
+    "xz"
+    "gzip"
+    "unzip"
+    "mise"
+  ]
+  helper_copy_files: [
+    "/etc/passwd"
+    "/etc/group"
+    "/etc/nsswitch.conf"
+  ]
+  helper_link_files: [
+    "/etc/ssl/certs/ca-bundle.crt"
+  ]
+  dir_paths: [
+    "/usr"
+    "/etc"
+    "/home"
+    "/run"
+    "/tmp"
+    "/sys"
+  ]
+  ro_bind_paths: [
+    "/etc/hosts"
+    "/etc/resolv.conf"
+    "/etc/localtime"
+    "/sys"
+    "/run/docker.sock"
+    "/var/run/docker.sock"
+  ]
+  enable_proc: true
+}
