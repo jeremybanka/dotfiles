@@ -58,7 +58,7 @@ config.color_schemes = {
       '#5af', -- cyan
       '#ddd', -- white
     } or {
-      '#fff', --black
+      '#000', --black
       '#700', --red
       '#050', --green
       '#540', --yellow
