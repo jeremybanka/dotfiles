@@ -70,4 +70,3 @@ jobs:
         shell: zsh {0}
       - run: just helix-theme-build
         shell: zsh {0}
-
