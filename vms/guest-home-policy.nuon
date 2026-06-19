@@ -2,6 +2,7 @@
   exact_payload_paths: [
     ".gitconfig"
     ".gitignore_global"
+    ".config/helix/config.toml"
     ".config/mise/config.toml"
     ".config/nushell/carapace-init.nu"
     ".config/nushell/config.nu"
