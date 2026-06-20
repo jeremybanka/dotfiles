@@ -82,7 +82,7 @@ if [ ! -f "$current_manifest" ]; then
   exit 1
 fi
 
-mkdir -p "$HOME/.config/nushell" "$HOME/.config/mise" "$HOME/.local/bin" "$scrubs_state_dir"
+mkdir -p "$HOME/.config/helix" "$HOME/.config/nushell" "$HOME/.config/mise" "$HOME/.local/bin" "$scrubs_state_dir"
 chmod 700 "$scrubs_state_dir"
 
 remove_stale_managed_paths "$legacy_manifest" "$current_manifest"
@@ -90,6 +90,7 @@ remove_stale_managed_paths "$installed_manifest" "$current_manifest"
 
 converge_file "$payload/home/.gitconfig" "$HOME/.gitconfig"
 converge_file "$payload/home/.gitignore_global" "$HOME/.gitignore_global"
+converge_file "$payload/home/.config/helix/config.toml" "$HOME/.config/helix/config.toml"
 converge_file "$payload/home/.config/mise/config.toml" "$HOME/.config/mise/config.toml"
 
 for nushell_file in \
