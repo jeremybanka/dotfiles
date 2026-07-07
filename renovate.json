@@ -27,7 +27,7 @@
       "matchStrings": [
         "\"nixpkgs\":\\s*\\{\\s*\"locked\":\\s*\\{[\\s\\S]*?\"rev\":\\s*\"(?<currentDigest>[a-f0-9]{40})\"[\\s\\S]*?\\}\\s*,\\s*\"original\":\\s*\\{[\\s\\S]*?\"ref\":\\s*\"(?<currentValue>[^\"]+)\""
       ],
-      "depNameTemplate": "scrubs-nixpkgs-digest",
+      "depNameTemplate": "scrubs-nixpkgs",
       "datasourceTemplate": "git-refs",
       "packageNameTemplate": "https://github.com/NixOS/nixpkgs",
       "versioningTemplate": "exact"
@@ -38,7 +38,7 @@
       "matchStrings": [
         "\"nixpkgs-unstable\":\\s*\\{\\s*\"locked\":\\s*\\{[\\s\\S]*?\"rev\":\\s*\"(?<currentDigest>[a-f0-9]{40})\"[\\s\\S]*?\\}\\s*,\\s*\"original\":\\s*\\{[\\s\\S]*?\"ref\":\\s*\"(?<currentValue>[^\"]+)\""
       ],
-      "depNameTemplate": "scrubs-nixpkgs-unstable-digest",
+      "depNameTemplate": "scrubs-nixpkgs-unstable",
       "datasourceTemplate": "git-refs",
       "packageNameTemplate": "https://github.com/NixOS/nixpkgs",
       "versioningTemplate": "exact"
@@ -67,8 +67,8 @@
       "matchManagers": ["custom.regex"],
       "matchDepNames": [
         "scrubs-nixpkgs-release",
-        "scrubs-nixpkgs-digest",
-        "scrubs-nixpkgs-unstable-digest"
+        "scrubs-nixpkgs",
+        "scrubs-nixpkgs-unstable"
       ],
       "groupName": "scrubs nix inputs",
       "groupSlug": "scrubs-nix-inputs",
