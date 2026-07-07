@@ -111,7 +111,7 @@ def normalize-clean-auth-profile-suffix [profile_name: string] {
   let normalized = (
     $profile_name
     | str trim
-    | str upcase
+    | str uppercase
     | str replace --regex --all '[^A-Z0-9]+' "_"
     | str replace --regex '^_+' ""
     | str replace --regex '_+$' ""
@@ -351,7 +351,7 @@ def normalize-tailscale-hostname [instance_name: string] {
   let normalized = (
     $instance_name
     | str trim
-    | str downcase
+    | str lowercase
     | str replace --regex --all '[^a-z0-9-]+' "-"
     | str replace --regex '^-+' ""
     | str replace --regex '-+$' ""
@@ -385,18 +385,18 @@ def resolve-tailscale-tags [settings: record] {
 
 def resolve-tailscale-preauthorized [settings: record] {
   let configured = (get-setting $settings "SCRUBS_TAILSCALE_PREAUTHORIZED" "true")
-  let normalized = ($configured | into string | str trim | str downcase)
+  let normalized = ($configured | into string | str trim | str lowercase)
   $normalized in ["1", "true", "yes", "on"]
 }
 
 def resolve-tailscale-ephemeral [settings: record] {
   let configured = (get-setting $settings "SCRUBS_TAILSCALE_EPHEMERAL" "false")
-  let normalized = ($configured | into string | str trim | str downcase)
+  let normalized = ($configured | into string | str trim | str lowercase)
   $normalized in ["1", "true", "yes", "on"]
 }
 
 def resolve-tailscale-bootstrap-mode [tailscale_mode: string] {
-  let normalized = ($tailscale_mode | str trim | str downcase)
+  let normalized = ($tailscale_mode | str trim | str lowercase)
 
   if $normalized not-in ["tailscale-enabled", "tailscale-disabled"] {
     error make {

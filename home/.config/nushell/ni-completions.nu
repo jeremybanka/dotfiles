@@ -7,7 +7,7 @@ def ni-cache-dir [] {
 }
 
 def ni-cache-key [query: string] {
-    $query | str downcase | str replace -ra '[^a-z0-9._-]' '_'
+    $query | str lowercase | str replace -ra '[^a-z0-9._-]' '_'
 }
 
 def ni-package-cache-path [query: string] {
@@ -64,9 +64,9 @@ def ni-filter-packages [query: string] {
     let filtered = if ($query | is-empty) {
         $packages
     } else {
-        let lowered = ($query | str downcase)
+        let lowered = ($query | str lowercase)
         $packages | where {|pkg|
-            let name = ($pkg.value | str downcase)
+            let name = ($pkg.value | str lowercase)
             ($name | str starts-with $lowered) or ($name | str contains $lowered)
         }
     }

@@ -104,7 +104,7 @@ def resolve-github-target [explicit_remote_url: string] {
 def normalize-branch-fragment [value: string] {
   let normalized = (
     $value
-    | str downcase
+    | str lowercase
     | str replace --regex --all '[^a-z0-9]+' "-"
     | str replace --regex '^-+' ""
     | str replace --regex '-+$' ""

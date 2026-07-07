@@ -471,7 +471,7 @@ def style-assessment [assessment: string, use_color: bool] {
     "unknown" => (colorize "UNKNOWN" "cyan_bold" $use_color)
     "unreachable" => (colorize "UNREACHABLE" "red_bold" $use_color)
     "stopped" => (colorize "STOPPED" "dark_gray" $use_color)
-    _ => (colorize ($assessment | str upcase) "light_gray" $use_color)
+    _ => (colorize ($assessment | str uppercase) "light_gray" $use_color)
   }
 }
 
