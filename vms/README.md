@@ -728,6 +728,26 @@ SCRUBS_VALIDATE_RECREATE=true \
 just scrubs-validate
 ```
 
+For bootstrap race and stale-instance recovery work, the parallel companion now
+lives in
+[`validate-parallel.nu`](/Users/jem/dotfiles/vms/validate-parallel.nu). Its
+default representative batch covers one plain guest plus the `moview` and
+`systemd-ts` shims, and it checks three things that mattered in the July 2026
+incident: parallel bootstrap completion, distinct `sshLocalPort` listeners, and
+post-bootstrap `CURRENT` health from `audit-instances.nu`.
+
+```sh
+SCRUBS_VALIDATE_PARALLEL_PREFIX=scrubs-validate-parallel-0007 \
+SCRUBS_VALIDATE_PARALLEL_SOURCE_IMAGE=./vms/images/scrubs.qcow2 \
+SCRUBS_VALIDATE_PARALLEL_RECREATE=true \
+just scrubs-validate-parallel
+```
+
+Run that parallel path on the host, not inside a restricted sandbox.
+[`audit-instances.nu`](/Users/jem/dotfiles/vms/audit-instances.nu) is the
+authoritative host-side health check, and in-sandbox runs can misreport healthy
+guests as unreachable.
+
 Important assumptions for that runner:
 
 - use a disposable guest name; reruns on the same name require `recreate=true`
@@ -771,8 +791,10 @@ boundaries, is not healthy enough to treat as upgradable in place.
 
 GitHub-hosted Actions can cover only the static surface of this plan. Ordinary
 hosted runners should stick to formatting plus
-`just scrubs-validation-static`, while the real `just scrubs-validate` path
-belongs on a local or self-hosted Apple Silicon `vz` machine because
+`just scrubs-validation-static` and
+`just scrubs-validation-parallel-static`, while the real
+`just scrubs-validate` and `just scrubs-validate-parallel` paths belong on a
+local or self-hosted Apple Silicon `vz` machine because
 GitHub-hosted macOS arm64 runners do not support the nested virtualization
 story needed for the full scrubs runtime path.
 

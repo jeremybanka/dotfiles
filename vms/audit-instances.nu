@@ -111,6 +111,17 @@ def load-instances [] {
   | sort-by name
 }
 
+def filter-instances [instances: table, selected_names: list<string>] {
+  if ($selected_names | is-empty) {
+    $instances
+  } else {
+    $instances | where {|instance|
+      let instance_name = ($instance | get -o name | default "" | into string)
+      $selected_names | any {|selected| $selected == $instance_name }
+    }
+  }
+}
+
 def maybe-get [record: any, path: cell-path, fallback: any = ""] {
   try {
     $record | get $path
@@ -493,16 +504,26 @@ def render-table [rows: table, target: record, use_color: bool] {
 
 def main [
   --no-color
+  --json
+  ...instance_names: string
 ] {
   let use_color = (not $no_color)
   let target = (load-target)
-  let instances = (load-instances)
+  let instances = (filter-instances (load-instances) $instance_names)
 
   if ($instances | is-empty) {
-    print "No Lima instances found."
+    if ($instance_names | is-empty) {
+      print "No Lima instances found."
+    } else {
+      error make { msg: $"No matching Lima instances found for: ($instance_names | str join ', ')" }
+    }
     return
   }
 
   let rows = ($instances | each {|instance| classify-instance $instance $target })
-  render-table $rows $target $use_color
+  if $json {
+    $rows | sort-by sort_rank instance | to json -r
+  } else {
+    render-table $rows $target $use_color
+  }
 }
