@@ -49,6 +49,7 @@
   users.mutableUsers = false;
 
   environment.systemPackages = with pkgs; [
+    bottom
     bubblewrap
     carapace
     curl
