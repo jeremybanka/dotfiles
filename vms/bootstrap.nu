@@ -43,6 +43,111 @@ def remote-shell-command [command: string] {
   $"sh -lc '($escaped)'"
 }
 
+def summarize-command-failure [result: record, fallback: string] {
+  let stderr = ($result.stderr | str trim)
+  if $stderr != "" {
+    $stderr | lines | last
+  } else {
+    let stdout = ($result.stdout | str trim)
+    if $stdout != "" {
+      $stdout | lines | last
+    } else {
+      $fallback
+    }
+  }
+}
+
+def load-instance-info [instance_name: string] {
+  let status_result = (do { ^limactl list --json $instance_name } | complete)
+  if $status_result.exit_code != 0 {
+    return {}
+  }
+
+  try {
+    $status_result.stdout | from json
+  } catch {
+    {}
+  }
+}
+
+def instance-status [instance_info: record] {
+  $instance_info | get -o status | default "" | into string
+}
+
+def instance-ssh-port [instance_info: record] {
+  $instance_info | get -o sshLocalPort | default "" | into string
+}
+
+def wait-for-ssh [ssh_args: list<string>] {
+  mut last_result = {
+    exit_code: 255
+    stdout: ""
+    stderr: ""
+  }
+
+  for _ in 0..59 {
+    let ssh_result = (do { ^ssh ...$ssh_args true } | complete)
+    if $ssh_result.exit_code == 0 {
+      return {
+        ready: true
+        last_result: $ssh_result
+      }
+    }
+
+    $last_result = $ssh_result
+    sleep 2sec
+  }
+
+  {
+    ready: false
+    last_result: $last_result
+  }
+}
+
+def stop-instance [instance_name: string] {
+  let stop_result = (do { ^limactl stop $instance_name } | complete)
+  if $stop_result.exit_code == 0 {
+    return
+  }
+
+  let stop_summary = (summarize-command-failure $stop_result $"limactl stop failed for ($instance_name)")
+  mut status_after_stop = ""
+  for _ in 0..4 {
+    $status_after_stop = (instance-status (load-instance-info $instance_name))
+    if $status_after_stop not-in ["Running", "Stopping"] {
+      break
+    }
+    sleep 2sec
+  }
+
+  if $status_after_stop == "Running" {
+    print --stderr $"limactl stop for ($instance_name) left the instance Running; forcing shutdown."
+    print --stderr $"stop diagnostics: ($stop_summary)"
+  } else if $status_after_stop == "Stopping" {
+    error make {
+      msg: $"limactl stop for ($instance_name) did not finish cleanly."
+      help: $"The instance is still Stopping after the grace window. Diagnostics: ($stop_summary)"
+    }
+  } else if $status_after_stop == "" {
+    error make {
+      msg: $"limactl stop for ($instance_name) did not finish cleanly."
+      help: $"Could not refresh Lima status after the failed stop. Diagnostics: ($stop_summary)"
+    }
+  } else {
+    print --stderr $"limactl stop for ($instance_name) returned a non-zero exit, but the instance is now ($status_after_stop); continuing."
+    print --stderr $"stop diagnostics: ($stop_summary)"
+    return
+  }
+
+  let forced_stop_result = (do { ^limactl stop --force $instance_name } | complete)
+  if $forced_stop_result.exit_code != 0 {
+    error make {
+      msg: $"Failed to stop Lima instance ($instance_name)."
+      help: (summarize-command-failure $forced_stop_result "limactl stop --force failed")
+    }
+  }
+}
+
 def normalize-guest-home-policy [policy: record] {
   {
     exact_payload_paths: ($policy.exact_payload_paths | each {|value| $value | into string })
@@ -470,15 +575,16 @@ def main [
   let vms_dir = (vms-dir)
   let settings = (load-settings)
   let default_working_image = ($repo_root | path join "vms" "images" "scrubs.qcow2")
-  let cache_dir = (($env.TMPDIR? | default "/tmp") | path join "scrubs-lima")
-  let payload_dir = ($cache_dir | path join "scrubs-bootstrap")
-  let guest_apply = ($payload_dir | path join "guest-apply.sh")
-  let template_file = ($vms_dir | path join "lima.local.yaml")
+  let cache_root = (($env.TMPDIR? | default "/tmp") | path join "scrubs-lima")
   let resolved_shim_name = if $shim_name == "" { $instance_name } else { $shim_name }
   let project_shim = (resolve-project-shim ($vms_dir | path join "projects") $resolved_shim_name)
   let selected_clean_auth_profile = (resolve-clean-auth-profile $settings $clean_auth_profile)
   let resolved_tailscale_mode = (resolve-tailscale-bootstrap-mode $tailscale_mode)
   let instance_dir = ($env.HOME | path join ".lima" $instance_name)
+  let cache_dir = ($cache_root | path join $instance_name)
+  let payload_dir = ($cache_dir | path join "scrubs-bootstrap")
+  let guest_apply = ($payload_dir | path join "guest-apply.sh")
+  let template_file = ($cache_dir | path join "lima.local.yaml")
   let current_user = (^id -un | str trim)
   let current_uid = (^id -u | str trim)
   let guest_user = (get-setting $settings "SCRUBS_GUEST_USER" $current_user)
@@ -544,7 +650,8 @@ def main [
   let guest_home_policy_path = ($vms_dir | path join "guest-home-policy.nuon")
   let guest_home_policy = (load-guest-home-policy $guest_home_policy_path)
 
-  rm -rf $payload_dir
+  rm -rf $cache_dir
+  mkdir $cache_root
   mkdir $cache_dir
   mkdir $key_dir
   mkdir ($payload_dir | path join "home" ".config" "helix")
@@ -875,13 +982,34 @@ in
 
   let instance_exists = ($instance_dir | path exists)
   let instance_config_file = ($instance_dir | path join "lima.yaml")
+  let instance_info = if $instance_exists {
+    load-instance-info $instance_name
+  } else {
+    {}
+  }
+  let instance_status = (instance-status $instance_info)
+  let live_ssh_port = (instance-ssh-port $instance_info)
+  mut config_changed = false
   if $instance_exists and ($instance_config_file | path exists) {
     let rendered_lima_config = (open --raw $template_file)
     let current_lima_config = (open --raw $instance_config_file)
     if $rendered_lima_config != $current_lima_config {
       print $"Refreshing Lima instance config at ($instance_config_file)"
       $rendered_lima_config | save --force $instance_config_file
+      $config_changed = true
     }
+  }
+  let needs_running_restart = (
+    $instance_status == "Running"
+    and ($config_changed or ($live_ssh_port != "" and $live_ssh_port != $ssh_port))
+  )
+  if $needs_running_restart {
+    if $config_changed {
+      print "Restarting the running Lima instance so refreshed SSH and port forwards take effect"
+    } else {
+      print $"Restarting the running Lima instance so live SSH port ($live_ssh_port) matches expected port ($ssh_port)"
+    }
+    stop-instance $instance_name
   }
   print $"Starting Lima instance ($instance_name)"
   print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
@@ -898,18 +1026,57 @@ in
   }
 
   print "Waiting for SSH access to the guest"
-  mut ready = false
-  for _ in 0..59 {
-    let ssh_result = (do { ^ssh ...$ssh_args true } | complete)
-    if $ssh_result.exit_code == 0 {
-      $ready = true
-      break
+  let initial_ssh_wait = (wait-for-ssh $ssh_args)
+  mut ready = $initial_ssh_wait.ready
+  mut last_ssh_result = $initial_ssh_wait.last_result
+
+  if not $ready {
+    let post_start_info = (load-instance-info $instance_name)
+    let post_start_status = (instance-status $post_start_info)
+    let post_start_ssh_port = (instance-ssh-port $post_start_info)
+    let retry_reason = if $post_start_ssh_port != "" and $post_start_ssh_port != $ssh_port {
+      $"live SSH port ($post_start_ssh_port) still differs from expected port ($ssh_port)"
+    } else if $post_start_status == "Running" {
+      "the guest reports Running but SSH never came up"
+    } else if $post_start_status == "Starting" {
+      "the guest is still Starting after the SSH wait window"
+    } else {
+      ""
     }
-    sleep 2sec
+
+    if $retry_reason != "" {
+      print $"Retrying guest startup once because ($retry_reason)"
+      stop-instance $instance_name
+      print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
+      try {
+        ^limactl start --timeout $start_timeout $instance_name
+      } catch {
+        print --stderr $"limactl start did not fully complete within ($start_timeout)."
+        print --stderr "Continuing because scrubs only requires direct SSH reachability for bootstrap."
+      }
+
+      let retry_ssh_wait = (wait-for-ssh $ssh_args)
+      $ready = $retry_ssh_wait.ready
+      $last_ssh_result = $retry_ssh_wait.last_result
+    }
   }
 
   if not $ready {
-    error make { msg: "Guest did not become reachable over SSH in time." }
+    let final_instance_info = (load-instance-info $instance_name)
+    let final_instance_status = (instance-status $final_instance_info)
+    let final_live_ssh_port = (instance-ssh-port $final_instance_info)
+    let state_detail = if $final_instance_status == "" {
+      "Lima state unavailable"
+    } else if $final_live_ssh_port == "" {
+      $"Lima state: ($final_instance_status)"
+    } else {
+      $"Lima state: ($final_instance_status); live sshLocalPort: ($final_live_ssh_port); expected SSH port: ($ssh_port)"
+    }
+    let ssh_detail = (summarize-command-failure $last_ssh_result "ssh probe failed")
+    error make {
+      msg: "Guest did not become reachable over SSH in time."
+      help: $"($state_detail). Last SSH failure: ($ssh_detail)"
+    }
   }
 
   let bootstrap_home = $"/home/($bootstrap_user)"
@@ -924,7 +1091,7 @@ in
   ^ssh ...$ssh_args (remote-shell-command $"sh \"($bootstrap_dir)/guest-apply.sh\"")
 
   print "Restarting the guest to activate the staged scrubs generation"
-  ^limactl stop $instance_name
+  stop-instance $instance_name
   print $"Lima start can take up to ($start_timeout); waiting for host startup output..."
   try {
     ^limactl start --timeout $start_timeout $instance_name
@@ -934,18 +1101,26 @@ in
   }
 
   print "Waiting for SSH access to the restarted guest"
-  $ready = false
-  for _ in 0..59 {
-    let ssh_result = (do { ^ssh ...$ssh_args true } | complete)
-    if $ssh_result.exit_code == 0 {
-      $ready = true
-      break
-    }
-    sleep 2sec
-  }
+  let restarted_ssh_wait = (wait-for-ssh $ssh_args)
+  $ready = $restarted_ssh_wait.ready
+  $last_ssh_result = $restarted_ssh_wait.last_result
 
   if not $ready {
-    error make { msg: "Guest did not become reachable over SSH after the restart." }
+    let final_instance_info = (load-instance-info $instance_name)
+    let final_instance_status = (instance-status $final_instance_info)
+    let final_live_ssh_port = (instance-ssh-port $final_instance_info)
+    let state_detail = if $final_instance_status == "" {
+      "Lima state unavailable"
+    } else if $final_live_ssh_port == "" {
+      $"Lima state: ($final_instance_status)"
+    } else {
+      $"Lima state: ($final_instance_status); live sshLocalPort: ($final_live_ssh_port); expected SSH port: ($ssh_port)"
+    }
+    let ssh_detail = (summarize-command-failure $last_ssh_result "ssh probe failed")
+    error make {
+      msg: "Guest did not become reachable over SSH after the restart."
+      help: $"($state_detail). Last SSH failure: ($ssh_detail)"
+    }
   }
 
   print ""

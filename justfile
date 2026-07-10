@@ -51,6 +51,9 @@ bootstrap instance_name clean_auth_profile="personal" shim_name="" source_image=
 scrubs-validation-static:
     nu ./vms/validate.nu --help >/dev/null
 
+scrubs-validation-parallel-static:
+    nu ./vms/validate-parallel.nu --help >/dev/null
+
 scrubs-validate:
     @instance_name="${SCRUBS_VALIDATE_INSTANCE_NAME:-scrubs-validate}"; \
     clean_auth_profile="${SCRUBS_VALIDATE_CLEAN_AUTH_PROFILE:-}"; \
@@ -68,6 +71,21 @@ scrubs-validate:
     if [ "$recreate" = "true" ]; then args+=(--recreate); fi; \
     if [ "$skip_git_push_dry_run" = "true" ]; then args+=(--skip-git-push-dry-run); fi; \
     if [ -n "$instance_name" ]; then args+=("$instance_name"); fi; \
+    nu "${args[@]}"
+
+scrubs-validate-parallel:
+    @batch_prefix="${SCRUBS_VALIDATE_PARALLEL_PREFIX:-scrubs-validate-parallel}"; \
+    clean_auth_profile="${SCRUBS_VALIDATE_PARALLEL_CLEAN_AUTH_PROFILE:-}"; \
+    source_image="${SCRUBS_VALIDATE_PARALLEL_SOURCE_IMAGE:-}"; \
+    tailscale_mode="${SCRUBS_VALIDATE_PARALLEL_TAILSCALE_MODE:-tailscale-disabled}"; \
+    recreate="${SCRUBS_VALIDATE_PARALLEL_RECREATE:-true}"; \
+    skip_audit="${SCRUBS_VALIDATE_PARALLEL_SKIP_AUDIT:-false}"; \
+    args=(./vms/validate-parallel.nu --tailscale-mode "$tailscale_mode"); \
+    if [ -n "$clean_auth_profile" ]; then args+=(--clean-auth-profile "$clean_auth_profile"); fi; \
+    if [ -n "$source_image" ]; then args+=(--source-image "$source_image"); fi; \
+    if [ "$recreate" = "true" ]; then args+=(--recreate); fi; \
+    if [ "$skip_audit" = "true" ]; then args+=(--skip-audit); fi; \
+    if [ -n "$batch_prefix" ]; then args+=("$batch_prefix"); fi; \
     nu "${args[@]}"
 
 download-latest-iso channel="nixos-25.11":

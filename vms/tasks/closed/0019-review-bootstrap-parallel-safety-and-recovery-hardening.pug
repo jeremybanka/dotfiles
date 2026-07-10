@@ -1,0 +1,87 @@
+issue(id="0019" status="closed")
+  title Review bootstrap parallel safety and stale-instance recovery hardening
+  user-story
+    as-a scrubs maintainer recovering from real bootstrap fallout on long-lived guests
+    i-want a clear review of the recent bootstrap hardening changes
+    so-that we keep the stability wins, identify the rough edges, and know what still needs follow-up before treating concurrent bootstrap as trustworthy
+  premise.
+    A real parallel bootstrap batch on July 4, 2026 exposed that
+    `bootstrap.nu` was still unsafe under concurrent fresh-instance creation
+    and under certain stale running-instance states. Multiple guests inherited
+    the wrong host-local SSH listener ports, some hostagents stayed bound to
+    old ports even after their instance configs had been refreshed, and a few
+    guests reported `Running` while never becoming reachable over host-local
+    SSH. Recovery required force-stopping poisoned Lima instances, then
+    re-bootstrapping the affected guests one at a time.
+
+    The immediate hardening work changed bootstrap in three important ways.
+    First, the host-side rendered Lima template and staged payload moved from
+    shared writable paths into per-instance cache paths, removing the most
+    direct cross-instance clobbering hazard. Second, bootstrap now refreshes
+    running guests when their live SSH listener port or rendered Lima config
+    diverges from the intended host-side state. Third, bootstrap now has a
+    more aggressive recovery path for stuck shutdowns and for some
+    running-but-unreachable SSH states.
+
+    Those changes were strong enough to recover the active canary set. After a
+    follow-up repair on July 6, 2026 for the lingering `moview` case, an
+    unsandboxed run of `vms/audit-instances.nu` reported `CURRENT` for
+    `agents-yaml`, `atom-io`, `celilo`, `lasertag`, `moview`, `puggers`,
+    `recoverage`, `redteam`, and `systemd-ts`; `wayforge` remained `STALE`,
+    and `tfr` remained `STOPPED`.
+
+    The review question is not whether these changes helped today; they
+    clearly did. The question is whether the implementation is now shaped
+    correctly for long-term stability, or whether some of the emergency
+    recovery behavior should be tightened before scrubs treats parallel
+    bootstrap or stale-instance self-healing as a solved problem.
+  acceptance-criteria
+    criterion The review records the current recovered state of the active guest set and distinguishes that operational checkpoint from still-open follow-up work.
+    criterion The review explicitly identifies which bootstrap changes are clear keepers, such as per-instance host-side staging and live-config convergence for running guests.
+    criterion The review identifies at least one concrete follow-up around stale running-instance detection and at least one around shutdown recovery behavior.
+    criterion The review defines what validation is still missing before maintainers should treat concurrent bootstrap as a supported or trusted operator workflow.
+  review-items
+    item(status="covered").
+      The move from shared host-side staging paths to per-instance cache paths
+      appears directionally correct and should stay. Rendering
+      `lima.local.yaml` and staging `scrubs-bootstrap` under an
+      instance-specific cache path removed the clearest race that let parallel
+      bootstrap jobs clobber one another's SSH and port-forward metadata.
+    item(status="covered").
+      Refreshing already-running guests when the live SSH listener port or the
+      rendered Lima config diverges from intended state is also a real
+      stability improvement and should stay. That convergence logic was
+      necessary to recover guests such as `atom-io`, `celilo`, and `redteam`
+      in place without delete-and-recreate.
+    item(status="covered").
+      As of the July 6, 2026 recovery checkpoint, an unsandboxed
+      `vms/audit-instances.nu` run reported `CURRENT` for `agents-yaml`,
+      `atom-io`, `celilo`, `lasertag`, `moview`, `puggers`, `recoverage`,
+      `redteam`, and `systemd-ts`. This demonstrates that the current
+      hardening work is strong enough to repair real long-lived guests after
+      the observed failure mode, even if the implementation still needs polish.
+    item(status="covered").
+      The July 6 `moview` incident confirmed that the authoritative fleet
+      checkpoint should come from an unsandboxed `vms/audit-instances.nu` run.
+      In-sandbox checks could misreport healthy guests as unreachable, while
+      the unsandboxed audit correctly reflected that the repaired guest set was
+      back to `CURRENT`.
+    item(status="covered").
+      The SSH recovery path now consults fresh post-start Lima state before it
+      retries. If SSH still does not come up after the initial wait window,
+      bootstrap reloads the live instance status and `sshLocalPort`, retries
+      only for bounded states such as `Running`, `Starting`, or a port mismatch,
+      and preserves the final Lima and SSH diagnostics in the raised error.
+    item(status="covered").
+      The shutdown helper is now narrower and more operator-visible. It still
+      uses `limactl stop --force` as an escape hatch, but only after a failed
+      ordinary stop leaves the instance stuck in `Running` across a short grace
+      window. Other failure classes now surface explicit diagnostics instead of
+      collapsing immediately into unconditional force kill.
+    item(status="covered").
+      Scrubs now has an explicit disposable concurrent validation path in
+      `vms/validate-parallel.nu`, with the maintainer wrapper
+      `just scrubs-validate-parallel`. The representative batch covers a plain
+      guest plus the `moview` and `systemd-ts` shims, and it checks parallel
+      bootstrap completion, distinct host SSH listeners, `limactl shell`
+      reachability, and host-side `CURRENT` audit health across the batch.
