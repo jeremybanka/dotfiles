@@ -1,4 +1,5 @@
 {
+  "$schema": "vscode://schemas/settings/folder",
   // EDITOR /////////////////////////////////////////////////////////////////////
   "editor.wordSeparators": "./\\()\"'-:,.;<>~!@#%^&*|+=[]{}`~?", // $ is not a separator
   "editor.fontFamily": "Theia 0.3.500",
@@ -75,8 +76,7 @@
     "https://www.schemastore.org/": true
   },
   "nushellLanguageServer.nushellExecutablePath": "/opt/homebrew/bin/nu",
-  "typescript.tsserver.maxTsServerMemory": 8192,
-  "zig.zls.path": "zls",
+  "js/ts.tsserver.maxTsServerMemory": 8192,
   "[just]": {
     "editor.codeLens": false
   },
@@ -95,5 +95,13 @@
   "git.path": "/opt/homebrew/bin/git",
   "githubPullRequests.pullBranch": "never",
   "redhat.telemetry.enabled": false,
-  "remote.SSH.configFile": "~/.config/ssh/config"
+  "remote.SSH.configFile": "~/.config/ssh/config",
+  "yaml.disableSchemaDetection": [
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.gitea/workflows/*.yml",
+    "**/.gitea/workflows/*.yaml",
+    "**/.forgejo/workflows/*.yml",
+    "**/.forgejo/workflows/*.yaml"
+  ]
 }
