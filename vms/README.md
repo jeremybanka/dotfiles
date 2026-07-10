@@ -288,7 +288,10 @@ secret with the `auth_keys` scope stored in the macOS Keychain as one global
 scrubs secret. When
 configured, bootstrap seals guest-local auth artifacts and installs the clean
 runtime needed to use them. `gh` and `codex` materialize their credentials on
-demand for the target process. Tailscale materializes its OAuth client secret
+demand for the target process. The clean-space Nushell Codex wrapper treats the
+canonical `CODEX_HOME=$HOME/.codex` exported by Codex Desktop's SSH launcher as
+the default home, so the remote app server follows the same sealed-auth path as
+an interactive guest shell. Tailscale materializes its OAuth client secret
 into `/run` long enough for the NixOS `tailscaled-autoconnect` path to bring
 the guest up as a tagged node, then clears the plaintext secret from `/run`.
 When sealed GitHub auth is present,
@@ -420,8 +423,12 @@ Within the guest, scrubs now treats Codex state in two classes:
   session history such as `history.jsonl`, `session_index.jsonl`, `sessions/`,
   and the local SQLite state files
 - ephemeral clean auth lives only in the tmpfs runtime file materialized by the
-  scrubs wrapper, with `~/.codex/auth.json` maintained as a symlink to that
-  runtime file while Codex is launched through the clean wrapper
+  scrubs Nushell wrapper, with `~/.codex/auth.json` maintained as a symlink to
+  that runtime file while Codex is launched through the clean wrapper
+
+An explicit canonical `CODEX_HOME=$HOME/.codex` remains on this sealed-auth
+path. A genuinely custom `CODEX_HOME`, `OPENAI_API_KEY`, or
+`CODEX_ACCESS_TOKEN` bypasses the guest's default sealed ChatGPT auth instead.
 
 This preserves guest-local conversation state across `just bootstrap
 <instance>` while keeping the ChatGPT auth bundle out of the durable guest
@@ -701,7 +708,8 @@ For any new or materially changed guest flow, the baseline pass is:
 
 1. create a fresh throwaway guest
 2. confirm `limactl shell <instance>` opens an interactive shell
-3. confirm clean-space `gh` and Codex auth are usable without interactive login
+3. confirm clean-space `gh` and Codex auth are usable without interactive login,
+   including the desktop SSH-style `CODEX_HOME=$HOME/.codex` launch path
 4. create a simple Codex continuity marker, for example with `codex exec`, and
    confirm the resulting guest-local session or history artifact appears under
    `~/.codex`

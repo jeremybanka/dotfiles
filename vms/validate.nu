@@ -221,6 +221,25 @@ def probe-codex-login-status [instance_name: string, label: string] {
   pass-entry $label "Codex login status succeeded without interactive login"
 }
 
+def probe-codex-canonical-home-login-status [instance_name: string, label: string] {
+  let command = "
+. \"$HOME/.local/libexec/scrubs/clean-auth-lib.sh\"
+runtime_auth=\"$(scrubs_runtime_auth_dir)/codex-auth.json\"
+rm -f \"$runtime_auth\"
+CODEX_HOME=\"$HOME/.codex\" codex login status >/dev/null
+test -L \"$HOME/.codex/auth.json\"
+test \"$(readlink -f \"$HOME/.codex/auth.json\")\" = \"$runtime_auth\"
+test -s \"$runtime_auth\"
+"
+  let result = (guest-run $instance_name $command)
+
+  if $result.exit_code != 0 {
+    return (fail-entry $label (summarize-command-failure $result "Codex login status failed with canonical CODEX_HOME"))
+  }
+
+  pass-entry $label "Canonical CODEX_HOME rematerialized sealed ChatGPT auth without interactive login"
+}
+
 def probe-codex-marker [instance_name: string, marker_path: string, marker: string] {
   let marker_dir = ($marker_path | path dirname)
   let marker_dir_q = (shell-quote $marker_dir)
@@ -457,6 +476,7 @@ def main [
 
   $results = ($results | append (probe-shell-access $instance_name "limactl shell reachability"))
   $results = ($results | append (probe-sealed-auth-artifacts $instance_name))
+  $results = ($results | append (probe-codex-canonical-home-login-status $instance_name "Codex SSH-style auth smoke"))
   $results = ($results | append (probe-gh-auth $instance_name "gh auth smoke"))
   $results = ($results | append (probe-codex-login-status $instance_name "Codex auth smoke"))
 
@@ -510,6 +530,7 @@ def main [
 
   $results = ($results | append (probe-shell-access $instance_name "limactl shell reachability after re-bootstrap"))
   $results = ($results | append (probe-gh-auth $instance_name "gh auth smoke after re-bootstrap"))
+  $results = ($results | append (probe-codex-canonical-home-login-status $instance_name "Codex SSH-style auth smoke after re-bootstrap"))
   $results = ($results | append (probe-codex-login-status $instance_name "Codex auth smoke after re-bootstrap"))
 
   if $dirty_runtime_ready {

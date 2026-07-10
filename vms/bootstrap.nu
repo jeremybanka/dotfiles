@@ -689,7 +689,7 @@ def main [
   cp ($vms_dir | path join "templates" "mise-wrapper.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "mise-wrapper.sh")
   cp ($vms_dir | path join "templates" "clean-auth-lib.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "clean-auth-lib.sh")
   cp ($vms_dir | path join "templates" "gh-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "gh-clean.sh")
-  cp ($vms_dir | path join "templates" "codex-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "codex-clean.sh")
+  cp ($vms_dir | path join "templates" "codex-clean.nu") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "codex-clean.nu")
   cp $guest_home_policy_path ($payload_dir | path join "home" ".local" "share" "scrubs" "guest-home-policy.nuon")
   let default_sandbox_policy = ($vms_dir | path join "templates" "sandbox-default-policy.nuon")
   cp $default_sandbox_policy ($payload_dir | path join "home" ".local" "libexec" "scrubs" "sandbox-default-policy.nuon")
