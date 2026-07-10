@@ -63,7 +63,7 @@
     lazygit
     unstablePkgs.codex
     unstablePkgs.mise
-    nushell
+    unstablePkgs.nushell
     openssl
     ripgrep
     tokei
