@@ -472,7 +472,7 @@ def with-version-prefix [value: string] {
 }
 
 def short-sha [value: string] {
-  if ((regex-first ($value | str downcase) $SHA_PATTERN) != null) {
+  if ((regex-first ($value | str lowercase) $SHA_PATTERN) != null) {
     $value | str substring 0..8
   } else {
     $value

@@ -35,21 +35,17 @@ jobs:
         with:
           version: 2026.6.11
           github_token: ${{ github.token }}
-      - name: Ensure Homebrew
-        shell: zsh {0}
-        run: |
-          if ! command -v brew >/dev/null 2>&1; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
-      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install nushell
-        shell: zsh {0}
-      - run: just scrubs-validation-static
+      - run: mise exec github:nushell/nushell@0.114.0 -- just scrubs-validation-static
 
   Test:
     runs-on: macos-26
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+        with:
+          version: 2026.6.11
+          github_token: ${{ github.token }}
       - name: Ensure Homebrew
         shell: zsh {0}
         run: |
@@ -66,7 +62,6 @@ jobs:
         shell: zsh {0}
         env:
           VIRTUAL_HOME: ${{ github.workspace }}/home
-      - run: nu ${{ github.workspace }}/scripts/configure-apps.nu
-        shell: zsh {0}
+      - run: mise exec github:nushell/nushell@0.114.0 -- nu ${{ github.workspace }}/scripts/configure-apps.nu
       - run: just helix-theme-build
         shell: zsh {0}

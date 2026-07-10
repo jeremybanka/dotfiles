@@ -11,7 +11,7 @@ def main [
   let repo_root = (repo-root)
   let vm_type = ($env.SCRUBS_REFRESH_VM_TYPE? | default ($env.SCRUBS_VM_TYPE? | default "vz"))
   let guest_arch = ($env.SCRUBS_REFRESH_ARCH? | default ($env.SCRUBS_ARCH? | default "aarch64"))
-  let delete_instance = (($env.SCRUBS_REFRESH_DELETE_INSTANCE? | default "true") | into string | str downcase)
+  let delete_instance = (($env.SCRUBS_REFRESH_DELETE_INSTANCE? | default "true") | into string | str lowercase)
   let default_working_image = ($repo_root | path join "vms" "images" "scrubs.qcow2")
   let resolved_source_image = (
     if $source_image == "" {

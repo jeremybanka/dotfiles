@@ -1,4 +1,3 @@
 brew "helix"
 brew "just"
 brew "mise"
-brew "nushell"
