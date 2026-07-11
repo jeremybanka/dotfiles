@@ -49,6 +49,7 @@
   users.mutableUsers = false;
 
   environment.systemPackages = with pkgs; [
+    bat
     bubblewrap
     carapace
     curl
