@@ -8,6 +8,7 @@ in
 {
   imports = [
     ./modules/clean-base.nix
+    ./modules/clean-playwright.nix
   ]
   ++ (if builtins.pathExists tailscaleConfigModule then [ tailscaleConfigModule ] else [ ])
   ++ (if builtins.pathExists projectShimModule then [ projectShimModule ] else [ ])

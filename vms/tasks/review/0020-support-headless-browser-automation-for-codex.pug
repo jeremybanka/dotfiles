@@ -1,0 +1,49 @@
+issue(id="0020" status="review")
+  title Support headless browser automation for Codex in scrubs guests
+  user-story
+    as-a Codex agent running in a remote scrubs guest
+    i-want a pinned worker-side browser tool that can inspect and interact with local development servers
+    so-that I can validate rendered applications at guest-local addresses without runtime downloads or access to clean credentials
+  premise.
+    Codex tasks in scrubs need browser navigation, accessibility snapshots,
+    clicking and typing, screenshots, console inspection, and network
+    inspection against services such as `127.0.0.1:4321`. The browser must run
+    in the worker network namespace, but it must not turn the clean Codex
+    process into a bridge from untrusted web content to sealed auth or other
+    clean-home state.
+  acceptance-criteria
+    criterion A fresh Codex task reports the Playwright MCP server as connected and exposes navigation, interaction, snapshot, screenshot, console, and network tools.
+    criterion The Playwright MCP package and compatible Chromium revision are pinned by the scrubs Nix flake, with no runtime npm or browser downloads.
+    criterion The MCP server and Chromium run headlessly with isolated state, writable temporary storage, private shared memory, and Chromium's sandbox enabled.
+    criterion The browser process cannot see the real guest home, Codex state, SSH state, or scrubs clean-auth surface.
+    criterion The browser shares the guest network namespace and can reach a dirty-space development server through `http://127.0.0.1:4321`.
+  review-items
+    item(status="covered").
+      The pinned nixpkgs `playwright-mcp` package provides the MCP server and
+      its matching Playwright browser build. The scrubs package override keeps
+      the browser farm to Chromium and Chromium headless shell rather than
+      carrying Firefox and WebKit into every guest.
+    item(status="covered").
+      `codex-playwright-mcp` runs the MCP server and browser inside a dedicated
+      bubblewrap boundary with a synthetic home, private `/tmp` and `/dev/shm`,
+      a narrow Nix closure, and only the active project worktree. It preserves
+      the guest network namespace and explicitly enables Chromium's sandbox.
+    item(status="covered").
+      Bootstrap converges a required `playwright` STDIO server in the durable
+      Codex config with remote executor placement and explicit startup and
+      tool timeouts while preserving unrelated user configuration. Its tools
+      are pre-approved specifically for this isolated, credential-free browser
+      so unattended Codex tasks can use Playwright's side-effecting navigation
+      and interaction tools without weakening other approval boundaries.
+    item(status="covered").
+      Live probes on July 14, 2026 used the pinned Nix package in `atom-io` and
+      then a full bootstrap and repeat bootstrap of `recoverage`. A fresh
+      non-interactive Codex task in `recoverage` connected to Playwright,
+      navigated to a dirty-space server at `http://127.0.0.1:4321`, inspected
+      its accessibility tree, clicked and typed, captured a screenshot, and
+      retrieved the expected console error and `probe.json` 200 network entry.
+      Chromium launched with its sandbox explicitly enabled.
+    item(status="covered").
+      The encoded MCP config survived repeat bootstrap in `recoverage`, and
+      the installed wrapper's runtime closure contains Chromium without the
+      Firefox or WebKit browser packages.
