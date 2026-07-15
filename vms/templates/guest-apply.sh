@@ -155,9 +155,9 @@ configure_codex_playwright_mcp() {
   # `nixos-rebuild boot` stages the wrapper for the reboot that follows this
   # script. Codex accepts a future command path, so do not require it in the
   # currently active generation.
-  CODEX_HOME="$codex_home" "$real_codex" mcp remove playwright >/dev/null 2>&1 || true
-  CODEX_HOME="$codex_home" "$real_codex" mcp add playwright -- "$playwright_mcp" >/dev/null
-  cat >>"$codex_config" <<'EOF'
+  CODEX_HOME="$codex_home" "$real_codex" mcp remove playwright > /dev/null 2>&1 || true
+  CODEX_HOME="$codex_home" "$real_codex" mcp add playwright -- "$playwright_mcp" > /dev/null
+  cat >> "$codex_config" << 'EOF'
 experimental_environment = "remote"
 startup_timeout_sec = 30
 tool_timeout_sec = 120
