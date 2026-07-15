@@ -221,6 +221,41 @@ def probe-codex-login-status [instance_name: string, label: string] {
   pass-entry $label "Codex login status succeeded without interactive login"
 }
 
+def probe-playwright-mcp-config [instance_name: string, label: string] {
+  let command = "
+test -x /run/current-system/sw/bin/codex-playwright-mcp
+codex mcp get playwright | grep -Fq 'command: /run/current-system/sw/bin/codex-playwright-mcp'
+grep -Fq 'experimental_environment = \"remote\"' \"$HOME/.codex/config.toml\"
+grep -Fq 'required = true' \"$HOME/.codex/config.toml\"
+grep -Fq 'default_tools_approval_mode = \"approve\"' \"$HOME/.codex/config.toml\"
+"
+  let result = (guest-run $instance_name $command)
+
+  if $result.exit_code != 0 {
+    return (fail-entry $label (summarize-command-failure $result "Codex Playwright MCP configuration is missing or incomplete"))
+  }
+
+  pass-entry $label "Codex has a required, pre-approved remote-STDIO Playwright MCP backed by the scrubs wrapper"
+}
+
+def probe-playwright-mcp-tools [instance_name: string, lab_dir: string, label: string] {
+  let lab_dir_q = (shell-quote $lab_dir)
+  let initialize_q = (shell-quote '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"scrubs-validation","version":"1"}}}')
+  let initialized_q = (shell-quote '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}')
+  let list_tools_q = (shell-quote '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}')
+  let command = $"
+cd ($lab_dir_q)
+printf '%s\n' ($initialize_q) ($initialized_q) ($list_tools_q) | timeout 15 /run/current-system/sw/bin/codex-playwright-mcp --image-responses omit | grep -Fq '"name":"browser_take_screenshot"'
+"
+  let result = (guest-run $instance_name $command)
+
+  if $result.exit_code != 0 {
+    return (fail-entry $label (summarize-command-failure $result "Playwright MCP did not start or expose browser tools"))
+  }
+
+  pass-entry $label "Sandboxed Playwright MCP started and exposed browser tools over STDIO"
+}
+
 def probe-codex-canonical-home-login-status [instance_name: string, label: string] {
   let command = "
 . \"$HOME/.local/libexec/scrubs/clean-auth-lib.sh\"
@@ -479,6 +514,7 @@ def main [
   $results = ($results | append (probe-codex-canonical-home-login-status $instance_name "Codex SSH-style auth smoke"))
   $results = ($results | append (probe-gh-auth $instance_name "gh auth smoke"))
   $results = ($results | append (probe-codex-login-status $instance_name "Codex auth smoke"))
+  $results = ($results | append (probe-playwright-mcp-config $instance_name "Codex Playwright MCP config"))
 
   let marker_result = (probe-codex-marker $instance_name $marker_path $marker)
   if $marker_result.status == "PASS" {
@@ -491,6 +527,12 @@ def main [
     $lab_ready = true
   }
   $results = ($results | append $lab_setup_result)
+
+  if $lab_ready {
+    $results = ($results | append (probe-playwright-mcp-tools $instance_name $lab_dir "Codex Playwright MCP tools"))
+  } else {
+    $results = ($results | append (skip-entry "Codex Playwright MCP tools" "Skipped because the guest-local validation lab could not be prepared"))
+  }
 
   if $lab_ready {
     let tool_install_result = (install-validation-tools $instance_name $lab_dir)
@@ -532,6 +574,13 @@ def main [
   $results = ($results | append (probe-gh-auth $instance_name "gh auth smoke after re-bootstrap"))
   $results = ($results | append (probe-codex-canonical-home-login-status $instance_name "Codex SSH-style auth smoke after re-bootstrap"))
   $results = ($results | append (probe-codex-login-status $instance_name "Codex auth smoke after re-bootstrap"))
+  $results = ($results | append (probe-playwright-mcp-config $instance_name "Codex Playwright MCP config after re-bootstrap"))
+
+  if $lab_ready {
+    $results = ($results | append (probe-playwright-mcp-tools $instance_name $lab_dir "Codex Playwright MCP tools after re-bootstrap"))
+  } else {
+    $results = ($results | append (skip-entry "Codex Playwright MCP tools after re-bootstrap" "Skipped because the guest-local validation lab could not be prepared"))
+  }
 
   if $dirty_runtime_ready {
     $results = ($results | append (probe-dirty-boundary $instance_name $lab_dir "Dirty boundary smoke after re-bootstrap"))

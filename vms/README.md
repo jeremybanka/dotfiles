@@ -85,6 +85,7 @@ keeping the VM isolation model intact.
 - your `mise` config
 - clean shells that stay Nix-first while `mise`-backed tools are proxied through the scrubs dirty-runtime launcher
 - optional sealed clean-auth wrappers for `gh` and `codex` when host secrets are configured
+- a pinned, headless Playwright MCP browser for Codex tasks
 - a writable `mise` cache under `/tmp` so sandboxed commands stay quiet
 - `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
 - hardened SSH defaults inside the guest
@@ -438,6 +439,36 @@ the wrapper copies forward non-secret state from the legacy runtime home into
 the durable `~/.codex` directory and continues to source auth from the sealed
 runtime path.
 
+## Browser Automation For Codex
+
+Every scrubs guest configures a required `playwright` STDIO MCP server in the
+durable user-level `~/.codex/config.toml`. Codex requests remote executor
+placement for the server, so a worker-side Codex environment starts the MCP
+process in the guest rather than on the controlling desktop. The server and
+its compatible Chromium revision come from the guest's pinned nixpkgs lock;
+there are no runtime npm or browser downloads.
+
+The server's tools are pre-approved in Codex. This is necessary for unattended
+tasks because Playwright annotates navigation and interaction as side-effecting,
+while non-interactive Codex tasks use an approval policy that cannot prompt a
+user. The pre-approval is limited to this isolated, credential-free browser;
+it does not relax shell, filesystem, or other MCP approvals.
+
+The configured command is `codex-playwright-mcp`. It launches Playwright
+headlessly with isolated browser state and Chromium's sandbox enabled. A
+second bubblewrap boundary gives the MCP server and browser a synthetic home,
+private `/tmp` and `/dev/shm`, the current project worktree, a narrow Nix-store
+runtime closure, and no view of `~/.codex`, `~/.ssh`, or the scrubs clean-auth
+surface. The wrapper deliberately does not unshare the network namespace, so a
+browser task can reach a dirty-space development server through guest-local
+addresses such as `http://127.0.0.1:4321` without exposing clean credentials
+to the browser process.
+
+Use `codex mcp get playwright` in the guest to inspect the configuration, or
+`/mcp` in a fresh Codex task to confirm that the server connected. The MCP
+exposes accessibility snapshots, navigation, clicking and typing,
+screenshots, console messages, and network requests.
+
 ## Direct Mobile Access
 
 If a Tailscale OAuth client secret is configured for the selected clean auth
@@ -714,14 +745,17 @@ For any new or materially changed guest flow, the baseline pass is:
    confirm the resulting guest-local session or history artifact appears under
    `~/.codex`
 5. confirm dirty-space probes cannot discover `clean-auth`, `gh`, or `codex`
-6. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
-7. confirm an HTTPS read operation such as `git ls-remote` succeeds
-8. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
-9. run `just bootstrap <instance>` again on that same guest
-10. confirm `limactl shell <instance>` still opens an interactive shell
-11. confirm the prior Codex continuity marker is still present in the durable
+6. confirm `codex mcp get playwright` reports the worker-side Playwright MCP
+7. confirm the browser can reach a dirty-space development server through
+   `http://127.0.0.1:<port>` and can capture a snapshot and screenshot
+8. confirm `git credential fill` succeeds for `github.com` through the scrubs helper path
+9. confirm an HTTPS read operation such as `git ls-remote` succeeds
+10. confirm a non-destructive push-shaped probe such as `git push --dry-run` succeeds when the configured token should allow it
+11. run `just bootstrap <instance>` again on that same guest
+12. confirm `limactl shell <instance>` still opens an interactive shell
+13. confirm the prior Codex continuity marker is still present in the durable
     `~/.codex` state after re-bootstrap
-12. from inside a guest project workspace, confirm happy-path Linux runtime
+14. from inside a guest project workspace, confirm happy-path Linux runtime
     probes such as `nu -c 'print ok'`, `node -v`, `ni --version`, and
     `rg --version` still work through the scrubs runtime path
 

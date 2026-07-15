@@ -138,6 +138,37 @@ chmod 755 "$HOME/.local/libexec/scrubs/codex-clean.nu"
 ensure_symlink "$HOME/.local/libexec/scrubs/gh-clean.sh" "$HOME/.local/bin/gh"
 ensure_symlink "$HOME/.local/libexec/scrubs/codex-clean.nu" "$HOME/.local/bin/codex"
 
+configure_codex_playwright_mcp() {
+  real_codex="/run/current-system/sw/bin/codex"
+  playwright_mcp="/run/current-system/sw/bin/codex-playwright-mcp"
+  codex_home="$HOME/.codex"
+  codex_config="$codex_home/config.toml"
+
+  if [ ! -x "$real_codex" ]; then
+    echo "scrubs bootstrap is missing Codex" >&2
+    exit 1
+  fi
+
+  mkdir -p "$codex_home"
+  chmod 700 "$codex_home"
+
+  # `nixos-rebuild boot` stages the wrapper for the reboot that follows this
+  # script. Codex accepts a future command path, so do not require it in the
+  # currently active generation.
+  CODEX_HOME="$codex_home" "$real_codex" mcp remove playwright > /dev/null 2>&1 || true
+  CODEX_HOME="$codex_home" "$real_codex" mcp add playwright -- "$playwright_mcp" > /dev/null
+  cat >> "$codex_config" << 'EOF'
+experimental_environment = "remote"
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+required = true
+default_tools_approval_mode = "approve"
+EOF
+  chmod 600 "$codex_config"
+}
+
+configure_codex_playwright_mcp
+
 configure_github_git_helper() {
   gh_wrapper="$HOME/.local/bin/gh"
   github_helper_key="credential.https://github.com.helper"
