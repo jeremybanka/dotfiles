@@ -67,6 +67,7 @@
   // LANGUAGES //////////////////////////////////////////////////////////////////
   "json.schemaDownload.trustedDomains": {
     "https://biomejs.dev": true,
+    "https://plugins.dprint.dev": true,
     "https://json-schema.org/": true,
     "https://json.schemastore.org/": true,
     "https://raw.githubusercontent.com/": true,
