@@ -4,6 +4,6 @@
 delta = "0.19.2"
 dprint = "0.55.2"
 just = "1.56.0"
-ripgrep = "15.1.0"
+ripgrep = "15.2.0"
 shfmt = "3.13.1"
 taplo = "0.10.0"
