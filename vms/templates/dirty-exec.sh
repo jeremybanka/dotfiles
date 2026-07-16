@@ -349,6 +349,13 @@ if [[ "${SCRUBS_ENABLE_PROC}" == "1" ]]; then
   proc_bind=(--proc /proc)
 fi
 
+declare -a terminal_env_args=()
+for env_name in TERM COLORTERM NO_COLOR NODE_DISABLE_COLORS FORCE_COLOR; do
+  if [[ "${!env_name+x}" == "x" ]]; then
+    terminal_env_args+=(--setenv "${env_name}" "${!env_name}")
+  fi
+done
+
 exec "${BWRAP_BIN}" \
   --die-with-parent \
   --new-session \
@@ -391,6 +398,7 @@ exec "${BWRAP_BIN}" \
   --setenv NIX_LD "${nix_ld}" \
   --setenv NIX_LD_LIBRARY_PATH "${nix_ld_library_path}" \
   --setenv SSL_CERT_FILE "${ssl_cert_file}" \
+  "${terminal_env_args[@]}" \
   "${mise_state_bind[@]}" \
   "${store_ro_binds[@]}" \
   -- \
