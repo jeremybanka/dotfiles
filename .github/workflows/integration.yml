@@ -35,7 +35,7 @@ jobs:
         with:
           version: 2026.6.11
           github_token: ${{ github.token }}
-      - run: mise exec github:nushell/nushell@0.114.0 -- just scrubs-validation-static
+      - run: mise exec github:nushell/nushell@0.114.1 -- just scrubs-validation-static
 
   Test:
     runs-on: macos-26
@@ -62,6 +62,6 @@ jobs:
         shell: zsh {0}
         env:
           VIRTUAL_HOME: ${{ github.workspace }}/home
-      - run: mise exec github:nushell/nushell@0.114.0 -- nu ${{ github.workspace }}/scripts/configure-apps.nu
+      - run: mise exec github:nushell/nushell@0.114.1 -- nu ${{ github.workspace }}/scripts/configure-apps.nu
       - run: just helix-theme-build
         shell: zsh {0}
