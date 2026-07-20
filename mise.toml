@@ -3,7 +3,7 @@
 "github:nushell/nushell" = "0.114.1"
 delta = "0.19.2"
 dprint = "0.55.2"
-just = "1.56.0"
+just = "1.57.0"
 ripgrep = "15.2.0"
 shfmt = "3.13.1"
 taplo = "0.10.0"
