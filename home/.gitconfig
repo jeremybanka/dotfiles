@@ -59,6 +59,7 @@
   rv = remote --verbose
   s = status
   sh = stash
+  sw = switch --detach
   up = push
 [color]
   ui = true
