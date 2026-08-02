@@ -27,4 +27,8 @@ Thumbs.db
 .env
 keys/
 
+# this is where i keep the local guests (vms) that i ssh into
 home/.config/ssh/projects
+
+# pnpm thinks secrets are configuration
+auth.ini
