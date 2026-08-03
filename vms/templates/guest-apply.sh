@@ -143,6 +143,8 @@ configure_codex_playwright_mcp() {
   playwright_mcp="/run/current-system/sw/bin/codex-playwright-mcp"
   codex_home="$HOME/.codex"
   codex_config="$codex_home/config.toml"
+  codex_config_tmp="$codex_config.scrubs-tmp.$$"
+  codex_config_input="/dev/null"
 
   if [ ! -x "$real_codex" ]; then
     echo "scrubs bootstrap is missing Codex" >&2
@@ -151,19 +153,67 @@ configure_codex_playwright_mcp() {
 
   mkdir -p "$codex_home"
   chmod 700 "$codex_home"
+  if [ -f "$codex_config" ]; then
+    codex_config_input="$codex_config"
+  fi
 
-  # `nixos-rebuild boot` stages the wrapper for the reboot that follows this
-  # script. Codex accepts a future command path, so do not require it in the
-  # currently active generation.
-  CODEX_HOME="$codex_home" "$real_codex" mcp remove playwright > /dev/null 2>&1 || true
-  CODEX_HOME="$codex_home" "$real_codex" mcp add playwright -- "$playwright_mcp" > /dev/null
-  cat >> "$codex_config" << 'EOF'
-experimental_environment = "remote"
-startup_timeout_sec = 30
-tool_timeout_sec = 120
-required = true
-default_tools_approval_mode = "approve"
-EOF
+  # Converge the whole managed table without asking Codex to parse the existing
+  # file first. Older bootstrap runs used `codex mcp add` followed by a blind
+  # append. On a repeat run, Codex could move the table while leaving those
+  # appended keys under a later table, then append a duplicate block.
+  #
+  # Remove the managed Playwright table and exact legacy residue outside other
+  # MCP tables, preserving all unrelated durable user configuration.
+  if ! awk -v playwright_mcp="$playwright_mcp" '
+    function is_table_header(line) {
+      return line ~ /^[[:space:]]*\[\[?[^]]+\]\]?[[:space:]]*(#.*)?$/
+    }
+
+    function is_legacy_managed_setting(line) {
+      return line == "experimental_environment = \"remote\"" \
+        || line == "startup_timeout_sec = 30" \
+        || line == "tool_timeout_sec = 120" \
+        || line == "required = true" \
+        || line == "default_tools_approval_mode = \"approve\""
+    }
+
+    {
+      if (is_table_header($0)) {
+        in_playwright = ($0 ~ /^[[:space:]]*\[mcp_servers\.(playwright|"playwright")(\.[^]]+)?\][[:space:]]*(#.*)?$/)
+        if (in_playwright) {
+          next
+        }
+        current_table = $0
+      }
+
+      if (in_playwright) {
+        next
+      }
+
+      if (current_table !~ /^[[:space:]]*\[mcp_servers\./ && is_legacy_managed_setting($0)) {
+        next
+      }
+
+      print
+    }
+
+    END {
+      print ""
+      print "[mcp_servers.playwright]"
+      print "command = \"" playwright_mcp "\""
+      print "experimental_environment = \"remote\""
+      print "startup_timeout_sec = 30"
+      print "tool_timeout_sec = 120"
+      print "required = true"
+      print "default_tools_approval_mode = \"approve\""
+    }
+  ' "$codex_config_input" > "$codex_config_tmp"; then
+    rm -f "$codex_config_tmp"
+    echo "scrubs bootstrap failed to converge Codex Playwright MCP configuration" >&2
+    exit 1
+  fi
+
+  mv "$codex_config_tmp" "$codex_config"
   chmod 600 "$codex_config"
 }
 
