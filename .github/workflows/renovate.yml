@@ -46,4 +46,3 @@ jobs:
           RENOVATE_REPOSITORIES: jeremybanka/dotfiles
         with:
           token: ${{ steps.app-token.outputs.token }}
-

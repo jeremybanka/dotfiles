@@ -65,4 +65,3 @@ jobs:
       - run: mise exec github:nushell/nushell@0.114.1 -- nu ${{ github.workspace }}/scripts/configure-apps.nu
       - run: just helix-theme-build
         shell: zsh {0}
-
