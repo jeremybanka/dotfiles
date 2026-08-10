@@ -62,6 +62,10 @@ build_runtime_cache() {
     "${cache_home_bin}" \
     "${cache_mise_state_dir}"
 
+  if [[ -n "${active_aube_store}" && "${active_aube_store}" == "${HOME}/"* ]]; then
+    mkdir -p "${cache_home}/${active_aube_store#"${HOME}/"}"
+  fi
+
   write_exec_wrapper /usr/bin/mise "${cache_home_bin}/mise"
 
   for spec in "${runtime_wrapper_specs[@]}"; do
@@ -133,6 +137,21 @@ mise_root="${HOME}/.local/share/mise"
 mise_shims="${mise_root}/shims"
 mise_config_dir="${HOME}/.config/mise"
 mise_state_dir="${HOME}/.local/state/mise"
+# Embedded Aube leaves mise package links pointing into this materialized
+# package tree. Expose only that exact subtree, never the surrounding cache.
+xdg_cache_home="${XDG_CACHE_HOME:-}"
+if [[ -z "${xdg_cache_home}" || "${xdg_cache_home}" != /* ]]; then
+  xdg_cache_home="${HOME}/.cache"
+fi
+if [[ "${xdg_cache_home}" == "/" ]]; then
+  aube_store="/aube/virtual-store"
+else
+  aube_store="${xdg_cache_home%/}/aube/virtual-store"
+fi
+active_aube_store=""
+if [[ -d "${aube_store}" ]]; then
+  active_aube_store="${aube_store}"
+fi
 scrubs_rustup_home="${mise_root}/rustup-home"
 scrubs_rust_bootstrap_cargo_home="${mise_root}/rust-cargo-home"
 runtime_cache_root="/tmp/scrubs-dirty-runtime-cache/${current_user}"
@@ -142,7 +161,7 @@ ssl_cert_file="/etc/ssl/certs/ca-bundle.crt"
 nix_ld="/run/current-system/sw/share/nix-ld/lib/ld.so"
 nix_ld_library_path="/run/current-system/sw/share/nix-ld/lib"
 guest_loader=""
-runtime_cache_version="4"
+runtime_cache_version="5"
 helper_closure_cache_version="2"
 
 resolved_target="$(resolve_mise_target "${command_name}")"
@@ -198,6 +217,7 @@ runtime_cache_key="$(
   printf '%s\n' \
     "${runtime_cache_version}" \
     "${project_root}" \
+    "${active_aube_store}" \
     "${runtime_wrapper_specs[@]}" \
     | cksum \
     | awk '{print $1 "-" $2}'
@@ -216,6 +236,7 @@ declare -a sandbox_dirs=()
 declare -A seen_sandbox_dirs=()
 declare -a extra_ro_binds=()
 declare -a helper_file_binds=()
+declare -a aube_store_bind=()
 
 append_cached_store_path() {
   local closure_path="$1"
@@ -257,6 +278,14 @@ append_parent_dirs() {
     current_parent="$(dirname "${current_parent}")"
   done
 }
+
+if [[ -n "${active_aube_store}" ]]; then
+  if [[ "${active_aube_store}" != "${HOME}/"* ]]; then
+    append_parent_dirs "${active_aube_store}"
+    append_sandbox_dir "${active_aube_store}"
+  fi
+  aube_store_bind=(--ro-bind "${active_aube_store}" "${active_aube_store}")
+fi
 
 if [[ -d "${helper_root}" ]]; then
   while IFS= read -r helper_entry; do
@@ -378,6 +407,7 @@ exec "${BWRAP_BIN}" \
   "${helper_file_binds[@]}" \
   "${extra_ro_binds[@]}" \
   --bind "${fake_home}" "/home/${current_user}" \
+  "${aube_store_bind[@]}" \
   --ro-bind "${mise_root}" "/home/${current_user}/.local/share/mise" \
   --ro-bind "${mise_config_dir}" "/home/${current_user}/.config/mise" \
   --bind "${project_root}" "${project_root}" \
