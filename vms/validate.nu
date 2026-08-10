@@ -301,14 +301,26 @@ git init -b main >/dev/null
 cat > .mise.toml <<'EOF'
 [tools]
 just = \"1.52.0\"
+ni = \"30.5.0\"
+node = \"24\"
 EOF
 cat > justfile <<'EOF'
 probe-dirty-boundary:
     test ! -e \"$HOME/.local/share/scrubs/clean-auth\"
     ! command -v gh >/dev/null 2>&1
     ! command -v codex >/dev/null 2>&1
+
+probe-aube-runtime:
+    ni --version >/dev/null
+    aube_store=\"$HOME/.cache/scrubs-validation-xdg/aube/virtual-store\"; test -d \"$aube_store\"
+    aube_store=\"$HOME/.cache/scrubs-validation-xdg/aube/virtual-store\"; ! touch \"$aube_store/.scrubs-write-probe\" >/dev/null 2>&1
+    test ! -e \"$HOME/.cache/scrubs-validation-secret\"
+    test ! -e \"$HOME/.local/share/scrubs-validation-secret\"
 EOF
 printf 'scrubs validation lab\n' > README.md
+mkdir -p \"$HOME/.cache\" \"$HOME/.local/share\"
+printf 'cache boundary probe\n' > \"$HOME/.cache/scrubs-validation-secret\"
+printf 'data boundary probe\n' > \"$HOME/.local/share/scrubs-validation-secret\"
 git config user.name 'Scrubs Validation'
 git config user.email 'scrubs-validation@example.invalid'
 git add . >/dev/null
@@ -325,13 +337,13 @@ git commit -m 'Initialize scrubs validation lab' >/dev/null
 
 def install-validation-tools [instance_name: string, lab_dir: string] {
   let lab_dir_q = (shell-quote $lab_dir)
-  let result = (guest-run $instance_name $"cd ($lab_dir_q) && mise trust .mise.toml >/dev/null && mise install >/dev/null")
+  let result = (guest-run $instance_name $"cd ($lab_dir_q) && mise trust .mise.toml >/dev/null && XDG_CACHE_HOME=\"$HOME/.cache/scrubs-validation-xdg\" mise install >/dev/null")
 
   if $result.exit_code != 0 {
     return (fail-entry "Validation lab tool install" (summarize-command-failure $result "mise install failed for the validation lab"))
   }
 
-  pass-entry "Validation lab tool install" "Installed the dirty-space `just` runtime for the guest-local fixture"
+  pass-entry "Validation lab tool install" "Installed the dirty-space `just`, `ni`, and Node runtimes for the guest-local fixture"
 }
 
 def probe-dirty-boundary [instance_name: string, lab_dir: string, label: string] {
@@ -343,6 +355,17 @@ def probe-dirty-boundary [instance_name: string, lab_dir: string, label: string]
   }
 
   pass-entry $label "Dirty space could not see clean-auth, gh, or codex"
+}
+
+def probe-aube-runtime [instance_name: string, lab_dir: string, label: string] {
+  let lab_dir_q = (shell-quote $lab_dir)
+  let result = (guest-run $instance_name $"cd ($lab_dir_q) && XDG_CACHE_HOME=\"$HOME/.cache/scrubs-validation-xdg\" just probe-aube-runtime >/dev/null")
+
+  if $result.exit_code != 0 {
+    return (fail-entry $label (summarize-command-failure $result "The dirty-space Aube runtime or isolation probe failed"))
+  }
+
+  pass-entry $label "Dirty-space `ni` resolved its Aube-backed packages while the store stayed read-only and unrelated user data stayed hidden"
 }
 
 def probe-git-credential-fill [instance_name: string, label: string] {
@@ -546,8 +569,10 @@ def main [
 
   if $dirty_runtime_ready {
     $results = ($results | append (probe-dirty-boundary $instance_name $lab_dir "Dirty boundary smoke"))
+    $results = ($results | append (probe-aube-runtime $instance_name $lab_dir "Aube-backed dirty runtime"))
   } else {
     $results = ($results | append (skip-entry "Dirty boundary smoke" "Skipped because the guest-local dirty fixture could not be initialized"))
+    $results = ($results | append (skip-entry "Aube-backed dirty runtime" "Skipped because the guest-local dirty fixture could not be initialized"))
   }
 
   $results = ($results | append (probe-git-credential-fill $instance_name "HTTPS Git credential helper smoke"))
@@ -584,8 +609,10 @@ def main [
 
   if $dirty_runtime_ready {
     $results = ($results | append (probe-dirty-boundary $instance_name $lab_dir "Dirty boundary smoke after re-bootstrap"))
+    $results = ($results | append (probe-aube-runtime $instance_name $lab_dir "Aube-backed dirty runtime after re-bootstrap"))
   } else {
     $results = ($results | append (skip-entry "Dirty boundary smoke after re-bootstrap" "Skipped because the guest-local dirty fixture never initialized"))
+    $results = ($results | append (skip-entry "Aube-backed dirty runtime after re-bootstrap" "Skipped because the guest-local dirty fixture never initialized"))
   }
 
   $results = ($results | append (probe-git-credential-fill $instance_name "HTTPS Git credential helper smoke after re-bootstrap"))
