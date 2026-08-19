@@ -906,24 +906,29 @@ in
     }
   }
 
-  let extra_port_forwards = if (($extra_lima_config | get -o portForwards | default []) | is-empty) {
-    ""
-  } else {
-    let extra_entries = (
-      $extra_lima_config
-      | get portForwards
-      | to yaml
-      | lines
-      | each {|line| if $line == "" { "" } else { "  " + $line } }
-      | str join "\n"
-    )
-
-    if $extra_entries == "" {
-      ""
-    } else {
-      $"\n($extra_entries)"
-    }
-  }
+  let project_port_forwards = ($extra_lima_config | get -o portForwards | default [])
+  let default_port_forwards = [
+    { guestPort: 3000, hostPort: ($host_port_3000 | into int), proto: "tcp" }
+    { guestPort: 5173, hostPort: ($host_port_5173 | into int), proto: "tcp" }
+    { guestPort: 8080, hostPort: ($host_port_8080 | into int), proto: "tcp" }
+  ]
+  let port_forwards = (
+    $default_port_forwards
+    | where {|default_forward|
+        not ($project_port_forwards | any {|project_forward|
+          ((($project_forward | get -o guestPort) == $default_forward.guestPort)
+            and (($project_forward | get -o proto | default "tcp") == $default_forward.proto))
+        })
+      }
+    | append $project_port_forwards
+  )
+  let rendered_port_forwards = (
+    $port_forwards
+    | to yaml
+    | lines
+    | each {|line| if $line == "" { "" } else { "  " + $line } }
+    | str join "\n"
+  )
 
   let repo_pubkey = (open --raw $"($key_path).pub" | str trim)
   $"
@@ -973,10 +978,7 @@ in
     | str replace --all "REPLACE_WITH_MOUNT_TYPE" $mount_type
     | str replace --all "REPLACE_WITH_SSH_PORT" $ssh_port
     | str replace --all "REPLACE_WITH_HOST_RESOLVER" $host_resolver
-    | str replace --all "REPLACE_WITH_HOST_PORT_3000" $host_port_3000
-    | str replace --all "REPLACE_WITH_HOST_PORT_5173" $host_port_5173
-    | str replace --all "REPLACE_WITH_HOST_PORT_8080" $host_port_8080
-    | str replace --all "REPLACE_WITH_EXTRA_PORT_FORWARDS" $extra_port_forwards
+    | str replace --all "REPLACE_WITH_PORT_FORWARDS" $rendered_port_forwards
     | str replace --all "REPLACE_WITH_DNS_BLOCK" $dns_block
   ) | save --force $template_file
 

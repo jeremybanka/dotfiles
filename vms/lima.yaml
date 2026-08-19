@@ -232,13 +232,4 @@ provision:
       chmod 755 /var/lib/cloud/scripts/per-instance/00-lima-unlock-user.sh
 
 portForwards:
-  - guestPort: 3000
-    hostPort: REPLACE_WITH_HOST_PORT_3000
-    proto: tcp
-  - guestPort: 5173
-    hostPort: REPLACE_WITH_HOST_PORT_5173
-    proto: tcp
-  - guestPort: 8080
-    hostPort: REPLACE_WITH_HOST_PORT_8080
-    proto: tcp
-REPLACE_WITH_EXTRA_PORT_FORWARDS
+REPLACE_WITH_PORT_FORWARDS

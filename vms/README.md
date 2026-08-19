@@ -899,8 +899,9 @@ shim-name override:
   [`bootstrap.nu`](/Users/jem/dotfiles/vms/bootstrap.nu); that resolves
   `vms/projects/<shim-name>/` instead
 - `guest.nix` is copied into the guest payload as `modules/project-shim.nix`
-- optional `lima.yaml` currently supports a `portForwards` list that gets
-  appended to the generated Lima `portForwards` list for that VM only
+- optional `lima.yaml` currently supports a `portForwards` list for that VM
+  only; a project entry replaces a default entry with the same guest port and
+  protocol, while other entries are appended
 - optional `sandbox-policy.nuon` is now the preferred dirty-space sandbox
   override; it replaces the guest-wide policy artifact for helper commands,
   copied files, mounted system facts, writable directories, and proc handling
