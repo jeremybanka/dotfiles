@@ -247,3 +247,27 @@ export extern "nd" [
     -c
     ...args: string
 ]
+
+export alias bi = bun install
+
+export def --wrapped br [
+    script?: string@"nu-complete nr scripts"
+    ...args: string
+] {
+    if $script == null {
+        ^bun run ...$args
+    } else {
+        ^bun run $script ...$args
+    }
+}
+
+export def --wrapped ba [
+    bin?: string@"nu-complete na bins"
+    ...args: string
+] {
+    if $bin == null {
+        ^bun run ...$args
+    } else {
+        ^bun run $bin ...$args
+    }
+}
