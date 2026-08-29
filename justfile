@@ -100,6 +100,9 @@ refresh-base-image source_image="./vms/images/scrubs.qcow2" output_path="./vms/i
 audit-instances:
     nu ./vms/audit-instances.nu
 
+nixpkgs-unstable-status:
+    @nu ./vms/nixpkgs-unstable-status.nu
+
 seed instance_name="scrubs-seed":
     nu ./vms/seed.nu {{ instance_name }}
 
