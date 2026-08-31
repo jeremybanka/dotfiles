@@ -86,6 +86,8 @@ keeping the VM isolation model intact.
 - clean shells that stay Nix-first while `mise`-backed tools are proxied through the scrubs dirty-runtime launcher
 - optional sealed clean-auth wrappers for `gh` and `codex` when host secrets are configured
 - a pinned, headless Playwright MCP browser for Codex tasks
+- a persistent dirty-only Bun package cache plus a conservative eight-request
+  install concurrency limit
 - a writable `mise` cache under `/tmp` so sandboxed commands stay quiet
 - `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
 - hardened SSH defaults inside the guest
@@ -109,7 +111,11 @@ On repeat bootstrap, scrubs treats guest-home state in three classes:
   also declared in [`guest-home-policy.nuon`](./guest-home-policy.nuon). Today
   that includes project working trees, guest-local Codex state in `~/.codex/`,
   preserved pre-scrubs shell backups such as `~/.bashrc.pre-scrubs`, and
-  guest-local Nushell history such as `~/.config/nushell/history.txt`
+  guest-local Nushell history such as `~/.config/nushell/history.txt`. Bun's
+  package cache is also preserved under
+  `~/.local/share/scrubs/dirty-cache/bun/install/cache`; dirty processes see
+  only that exact cache directory at Bun's normal synthetic-home path, not the
+  surrounding real-home state
 - out of scope:
   any other guest-home content not claimed above remains the operator's
   responsibility and is not treated as declared scrubs state

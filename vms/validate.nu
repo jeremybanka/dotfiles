@@ -303,6 +303,7 @@ cat > .mise.toml <<'EOF'
 just = \"1.52.0\"
 ni = \"30.5.0\"
 node = \"24\"
+bun = \"1.4.0\"
 EOF
 cat > justfile <<'EOF'
 probe-dirty-boundary:
@@ -316,6 +317,13 @@ probe-aube-runtime:
     aube_store=\"$HOME/.cache/scrubs-validation-xdg/aube/virtual-store\"; ! touch \"$aube_store/.scrubs-write-probe\" >/dev/null 2>&1
     test ! -e \"$HOME/.cache/scrubs-validation-secret\"
     test ! -e \"$HOME/.local/share/scrubs-validation-secret\"
+
+probe-bun-runtime:
+    test -d \"$HOME/.bun/install/cache\"
+    test ! -e \"$HOME/.local/share/scrubs/dirty-cache\"
+    grep -Fq -- '--network-concurrency=8' \"$(command -v bun)\"
+    touch \"$HOME/.bun/install/cache/.scrubs-validation-cache-bind\"
+    bun -e 'process.exit(0)'
 EOF
 printf 'scrubs validation lab\n' > README.md
 mkdir -p \"$HOME/.cache\" \"$HOME/.local/share\"
@@ -343,7 +351,7 @@ def install-validation-tools [instance_name: string, lab_dir: string] {
     return (fail-entry "Validation lab tool install" (summarize-command-failure $result "mise install failed for the validation lab"))
   }
 
-  pass-entry "Validation lab tool install" "Installed the dirty-space `just`, `ni`, and Node runtimes for the guest-local fixture"
+  pass-entry "Validation lab tool install" "Installed the dirty-space `just`, `ni`, Node, and Bun runtimes for the guest-local fixture"
 }
 
 def probe-dirty-boundary [instance_name: string, lab_dir: string, label: string] {
@@ -366,6 +374,17 @@ def probe-aube-runtime [instance_name: string, lab_dir: string, label: string] {
   }
 
   pass-entry $label "Dirty-space `ni` resolved its Aube-backed packages while the store stayed read-only and unrelated user data stayed hidden"
+}
+
+def probe-bun-runtime [instance_name: string, lab_dir: string, label: string] {
+  let lab_dir_q = (shell-quote $lab_dir)
+  let result = (guest-run $instance_name $"cd ($lab_dir_q) && just probe-bun-runtime >/dev/null && test -f \"$HOME/.local/share/scrubs/dirty-cache/bun/install/cache/.scrubs-validation-cache-bind\"")
+
+  if $result.exit_code != 0 {
+    return (fail-entry $label (summarize-command-failure $result "The dirty-only Bun cache bind or package-manager tuning is missing"))
+  }
+
+  pass-entry $label "Bun used its synthetic-home configuration and wrote through the narrow persistent cache bind"
 }
 
 def probe-git-credential-fill [instance_name: string, label: string] {
@@ -570,9 +589,11 @@ def main [
   if $dirty_runtime_ready {
     $results = ($results | append (probe-dirty-boundary $instance_name $lab_dir "Dirty boundary smoke"))
     $results = ($results | append (probe-aube-runtime $instance_name $lab_dir "Aube-backed dirty runtime"))
+    $results = ($results | append (probe-bun-runtime $instance_name $lab_dir "Persistent dirty Bun cache"))
   } else {
     $results = ($results | append (skip-entry "Dirty boundary smoke" "Skipped because the guest-local dirty fixture could not be initialized"))
     $results = ($results | append (skip-entry "Aube-backed dirty runtime" "Skipped because the guest-local dirty fixture could not be initialized"))
+    $results = ($results | append (skip-entry "Persistent dirty Bun cache" "Skipped because the guest-local dirty fixture could not be initialized"))
   }
 
   $results = ($results | append (probe-git-credential-fill $instance_name "HTTPS Git credential helper smoke"))
@@ -610,9 +631,11 @@ def main [
   if $dirty_runtime_ready {
     $results = ($results | append (probe-dirty-boundary $instance_name $lab_dir "Dirty boundary smoke after re-bootstrap"))
     $results = ($results | append (probe-aube-runtime $instance_name $lab_dir "Aube-backed dirty runtime after re-bootstrap"))
+    $results = ($results | append (probe-bun-runtime $instance_name $lab_dir "Persistent dirty Bun cache after re-bootstrap"))
   } else {
     $results = ($results | append (skip-entry "Dirty boundary smoke after re-bootstrap" "Skipped because the guest-local dirty fixture never initialized"))
     $results = ($results | append (skip-entry "Aube-backed dirty runtime after re-bootstrap" "Skipped because the guest-local dirty fixture never initialized"))
+    $results = ($results | append (skip-entry "Persistent dirty Bun cache after re-bootstrap" "Skipped because the guest-local dirty fixture never initialized"))
   }
 
   $results = ($results | append (probe-git-credential-fill $instance_name "HTTPS Git credential helper smoke after re-bootstrap"))

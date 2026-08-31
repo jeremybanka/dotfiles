@@ -42,6 +42,38 @@ EOF
   chmod 755 "${wrapper_path}"
 }
 
+write_bun_wrapper() {
+  local target_path="$1"
+  local wrapper_path="$2"
+
+  mkdir -p "$(dirname "${wrapper_path}")"
+  rm -f "${wrapper_path}"
+  cat > "${wrapper_path}" << EOF
+#!/bin/sh
+# Bun 1.4.0 can strand its default 48 concurrent package requests in Linux
+# guests. Apply the measured-safe default to installs launched anywhere inside
+# dirty space, while preserving an explicit caller override.
+case "\${1:-}" in
+  install|i)
+    for arg in "\$@"; do
+      case "\${arg}" in
+        --network-concurrency|--network-concurrency=*)
+          exec '${target_path}' "\$@"
+          ;;
+      esac
+    done
+
+    subcommand="\$1"
+    shift
+    exec '${target_path}' "\${subcommand}" --network-concurrency=${bun_install_network_concurrency} "\$@"
+    ;;
+esac
+
+exec '${target_path}' "\$@"
+EOF
+  chmod 755 "${wrapper_path}"
+}
+
 build_runtime_cache() {
   local cache_dir="$1"
   local cache_tmp_dir="${cache_dir}.tmp.$$"
@@ -55,6 +87,7 @@ build_runtime_cache() {
   rm -rf "${cache_tmp_dir}"
   mkdir -p \
     "${cache_home}/.config" \
+    "${cache_home}/.bun/install/cache" \
     "${cache_home}/.cargo" \
     "${cache_home}/.local/bin" \
     "${cache_home}/.local/share" \
@@ -71,7 +104,11 @@ build_runtime_cache() {
   for spec in "${runtime_wrapper_specs[@]}"; do
     shim_name="${spec%%=*}"
     resolved_shim_target="${spec#*=}"
-    write_exec_wrapper "${resolved_shim_target}" "${cache_home_bin}/${shim_name}"
+    if [[ "${shim_name}" == "bun" ]]; then
+      write_bun_wrapper "${resolved_shim_target}" "${cache_home_bin}/${shim_name}"
+    else
+      write_exec_wrapper "${resolved_shim_target}" "${cache_home_bin}/${shim_name}"
+    fi
   done
 
   cat > "${cache_home}/.gitconfig" << 'EOF'
@@ -156,12 +193,17 @@ scrubs_rustup_home="${mise_root}/rustup-home"
 scrubs_rust_bootstrap_cargo_home="${mise_root}/rust-cargo-home"
 runtime_cache_root="/tmp/scrubs-dirty-runtime-cache/${current_user}"
 helper_closure_cache_root="/tmp/scrubs-helper-closure-cache/${current_user}"
+# Persist only Bun's package payload cache across synthetic-home/runtime-key
+# changes. The surrounding real home remains outside the dirty boundary.
+dirty_cache_root="${HOME}/.local/share/scrubs/dirty-cache"
+bun_install_cache="${dirty_cache_root}/bun/install/cache"
+bun_install_network_concurrency="8"
 node_modules_bin="${project_root}/node_modules/.bin"
 ssl_cert_file="/etc/ssl/certs/ca-bundle.crt"
 nix_ld="/run/current-system/sw/share/nix-ld/lib/ld.so"
 nix_ld_library_path="/run/current-system/sw/share/nix-ld/lib"
 guest_loader=""
-runtime_cache_version="5"
+runtime_cache_version="6"
 helper_closure_cache_version="2"
 
 resolved_target="$(resolve_mise_target "${command_name}")"
@@ -210,8 +252,17 @@ declare -a runtime_wrapper_specs=(
   "${extra_dirty_wrapper_specs[@]}"
 )
 
-mkdir -p "${runtime_cache_root}" "${helper_closure_cache_root}" /tmp/mise-cache
+mkdir -p \
+  "${runtime_cache_root}" \
+  "${helper_closure_cache_root}" \
+  "${bun_install_cache}" \
+  /tmp/mise-cache
 chmod 700 "${runtime_cache_root}" "${helper_closure_cache_root}"
+chmod 700 \
+  "${dirty_cache_root}" \
+  "${dirty_cache_root}/bun" \
+  "${dirty_cache_root}/bun/install" \
+  "${bun_install_cache}"
 
 runtime_cache_key="$(
   printf '%s\n' \
@@ -227,6 +278,11 @@ fake_home="${runtime_cache_dir}/home"
 
 if [[ ! -x "${fake_home}/.local/share/scrubs-dirty/bin/mise" ]]; then
   build_runtime_cache "${runtime_cache_dir}"
+fi
+
+sandbox_target="${resolved_target}"
+if [[ "${command_name}" == "bun" ]]; then
+  sandbox_target="/home/${current_user}/.local/share/scrubs-dirty/bin/bun"
 fi
 
 declare -a store_ro_binds=()
@@ -407,6 +463,7 @@ exec "${BWRAP_BIN}" \
   "${helper_file_binds[@]}" \
   "${extra_ro_binds[@]}" \
   --bind "${fake_home}" "/home/${current_user}" \
+  --bind "${bun_install_cache}" "/home/${current_user}/.bun/install/cache" \
   "${aube_store_bind[@]}" \
   --ro-bind "${mise_root}" "/home/${current_user}/.local/share/mise" \
   --ro-bind "${mise_config_dir}" "/home/${current_user}/.config/mise" \
@@ -432,4 +489,4 @@ exec "${BWRAP_BIN}" \
   "${mise_state_bind[@]}" \
   "${store_ro_binds[@]}" \
   -- \
-  "${resolved_target}" "$@"
+  "${sandbox_target}" "$@"
