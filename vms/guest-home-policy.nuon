@@ -39,6 +39,7 @@
     ".bashrc.pre-scrubs"
     ".profile.pre-scrubs"
     ".config/nushell/history.txt"
+    ".local/share/scrubs/dirty-cache/bun/install/cache"
     "<project-working-trees>"
   ]
   legacy_cleanup_paths: [
