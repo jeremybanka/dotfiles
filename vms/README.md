@@ -94,6 +94,16 @@ keeping the VM isolation model intact.
 
 It does not assume the cloned project owns a flake.
 
+Codex temporarily uses the checksum-pinned upstream **0.153.3** Linux package
+from [`modules/clean-codex.nix`](./modules/clean-codex.nix) for GPT-6 Astra support.
+The module automatically returns to `unstablePkgs.codex` once the pinned
+nixpkgs-unstable input provides 0.153.3 or newer. The package stays in the Nix
+store behind the existing clean-auth wrapper. Re-bootstrap a guest to apply
+the shim; changing these files does not update an already running guest.
+Track [nixpkgs PR #559991](https://github.com/NixOS/nixpkgs/pull/559991) for the
+upstream update. Once it reaches `nixpkgs-unstable`, update that input in
+`flake.lock` and verify the guest before removing the temporary module.
+
 ## Guest-Home Convergence Policy
 
 On repeat bootstrap, scrubs treats guest-home state in three classes:
