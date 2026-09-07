@@ -8,7 +8,6 @@ in
 {
   imports = [
     ./modules/clean-base.nix
-    ./modules/clean-codex.nix
     ./modules/clean-playwright.nix
     ./modules/clean-tailscale.nix
   ]

@@ -62,6 +62,7 @@
     helix
     jq
     lazygit
+    unstablePkgs.codex
     unstablePkgs.mise
     unstablePkgs.nushell
     openssl
