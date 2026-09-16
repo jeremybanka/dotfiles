@@ -62,7 +62,9 @@ def link-shim-proxies [proxy_dir: string, mise_shims_dir: string, dirty_exec: st
     }
 
     let command_name = ($shim_path | path basename)
-    if $command_name == "mise" {
+    # Keep Nushell and its completion provider clean, including outside git
+    # worktrees. Mise-managed copies remain available through scrubs-dirty-exec.
+    if $command_name in ["mise", "nu", "carapace"] {
       continue
     }
 
