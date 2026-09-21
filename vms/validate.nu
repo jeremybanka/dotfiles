@@ -293,6 +293,8 @@ def probe-codex-marker [instance_name: string, marker_path: string, marker: stri
 
 def prepare-validation-lab [instance_name: string, lab_dir: string] {
   let lab_dir_q = (shell-quote $lab_dir)
+  let justfile = (open --raw (vms-dir | path join "templates" "validation-lab.justfile"))
+  let aube_probe = (open --raw (vms-dir | path join "templates" "validation-aube-store.cjs"))
   let command = $"
 rm -rf ($lab_dir_q)
 mkdir -p ($lab_dir_q)
@@ -306,24 +308,10 @@ node = \"24\"
 bun = \"1.4.0\"
 EOF
 cat > justfile <<'EOF'
-probe-dirty-boundary:
-    test ! -e \"$HOME/.local/share/scrubs/clean-auth\"
-    ! command -v gh >/dev/null 2>&1
-    ! command -v codex >/dev/null 2>&1
-
-probe-aube-runtime:
-    ni --version >/dev/null
-    aube_store=\"$HOME/.cache/scrubs-validation-xdg/aube/virtual-store\"; test -d \"$aube_store\"
-    aube_store=\"$HOME/.cache/scrubs-validation-xdg/aube/virtual-store\"; ! touch \"$aube_store/.scrubs-write-probe\" >/dev/null 2>&1
-    test ! -e \"$HOME/.cache/scrubs-validation-secret\"
-    test ! -e \"$HOME/.local/share/scrubs-validation-secret\"
-
-probe-bun-runtime:
-    test -d \"$HOME/.bun/install/cache\"
-    test ! -e \"$HOME/.local/share/scrubs/dirty-cache\"
-    grep -Fq -- '--network-concurrency=8' \"$(command -v bun)\"
-    touch \"$HOME/.bun/install/cache/.scrubs-validation-cache-bind\"
-    bun -e 'process.exit(0)'
+($justfile)
+EOF
+cat > probe-aube-store.cjs <<'EOF'
+($aube_probe)
 EOF
 printf 'scrubs validation lab\n' > README.md
 mkdir -p \"$HOME/.cache\" \"$HOME/.local/share\"

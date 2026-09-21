@@ -32,6 +32,10 @@
       users = [ "default" ];
       ssh_pwauth = false;
       disable_root = true;
+      # The exporter removes host keys. Let NixOS sshd-keygen generate them
+      # once on first boot; cloud-init must not race or delete those keys.
+      ssh_deletekeys = false;
+      ssh_genkeytypes = [ ];
     };
   };
 

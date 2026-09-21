@@ -223,8 +223,8 @@ sudo -i
 /mnt/host-scrubs-seed/install.sh
 ```
 
-After installation finishes, shut the guest down and export the reusable base
-image:
+After installation finishes, boot the installed guest and export the reusable
+base image. Export requires SSH access for cleanup and stops the guest itself:
 
 ```sh
 just export-seed-image scrubs-seed /absolute/path/to/nixos-base-aarch64.qcow2
@@ -249,6 +249,37 @@ just refresh-base-image \
   /absolute/path/to/current-base.qcow2 \
   /absolute/path/to/refreshed-base.qcow2
 ```
+
+With no arguments, `just refresh-base-image` reads `vms/images/scrubs.qcow2`
+and writes `vms/images/scrubs-next.qcow2`. It uses the existing `vms/flake.lock`;
+it does not update the pins. The temporary instance must not already exist,
+and the output must be a new file. Refresh uses the generic base configuration
+without project shims, host credential injection, or Tailscale enrollment.
+
+**Export erases all user data in the guest's `/home/*` and `/root`. Only export
+disposable seed or maintenance guests.** It removes credentials, bootstrap
+payloads, SSH host keys, machine ID, Tailscale state, and random seeds; cleans
+cloud-init; garbage-collects the Nix store; and trims free space. Cleanup or
+shutdown errors abort export. Conversion writes to a temporary file and must
+pass `qemu-img check` before the candidate is published.
+
+Before promoting a candidate, boot a fresh disposable guest from it and verify
+its unique machine ID and SSH host keys, absence of inherited credentials and
+Tailscale identity, and successful bootstrap. The existing regression suite
+can then exercise authenticated bootstrap, repeat bootstrap, and the dirty
+boundary with an explicit candidate path:
+
+```sh
+SCRUBS_VALIDATE_SOURCE_IMAGE="$PWD/vms/images/scrubs-next.qcow2" \
+SCRUBS_VALIDATE_INSTANCE_NAME=scrubs-image-validation \
+just scrubs-validate
+```
+
+After validation, preserve the current image under a dated rollback filename
+and rename the candidate to `scrubs.qcow2`. Existing guests keep their own
+disks; promotion affects newly created guests. Keep one rollback image until
+the refreshed image has proven reliable. `just scrubs-image-export-test` runs
+the export failure-boundary tests without creating a VM.
 
 By default this uses `SCRUBS_REFRESH_VM_TYPE=vz`, because this is just a normal
 native-arch Linux guest boot and does not depend on the live ISO path.

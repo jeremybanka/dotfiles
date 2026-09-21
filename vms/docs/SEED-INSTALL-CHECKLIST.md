@@ -85,12 +85,16 @@ shutdown now
 
 ## 8. Export the base image on macOS
 
-After the VM shuts down, run this on the Mac:
+Boot the installed system without the installer ISO and verify that
+`limactl shell scrubs-seed-2` can reach it. Then run this on the Mac:
 
 ```sh
 cd /Users/jem/dotfiles
 just export-seed-image scrubs-seed-2 /absolute/path/to/nixos-base-aarch64.qcow2
 ```
+
+Export erases guest user data, resets machine identity, and stops the guest
+itself. It requires a running disposable guest and a new output filename.
 
 ## Notes
 

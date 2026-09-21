@@ -51,6 +51,9 @@ bootstrap instance_name clean_auth_profile="personal" shim_name="" source_image=
 scrubs-validation-static:
     nu ./vms/validate.nu --help >/dev/null
 
+scrubs-image-export-test:
+    python3 -B -m unittest discover -s vms/tests -p 'test_image_export.py' -v
+
 scrubs-validation-parallel-static:
     nu ./vms/validate-parallel.nu --help >/dev/null
 
@@ -94,7 +97,7 @@ download-latest-iso channel="nixos-25.11":
 export-seed-image instance_name output_path:
     nu ./vms/export-seed-image.nu {{ instance_name }} {{ output_path }}
 
-refresh-base-image source_image="./vms/images/scrubs.qcow2" output_path="./vms/images/scrubs.qcow2" instance_name="scrubs-refresh":
+refresh-base-image source_image="./vms/images/scrubs.qcow2" output_path="./vms/images/scrubs-next.qcow2" instance_name="scrubs-refresh":
     nu ./vms/refresh-base-image.nu --source-image {{ source_image }} --output-path "{{ output_path }}" --instance-name {{ instance_name }}
 
 audit-instances:

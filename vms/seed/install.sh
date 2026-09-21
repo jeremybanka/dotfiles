@@ -44,5 +44,5 @@ nixos-install --no-root-passwd
 
 echo
 echo "Seed image installed."
-echo "Power the guest off, then run:"
+echo "Boot the installed system without the installer ISO and verify Lima SSH access, then run:"
 echo "  just export-seed-image scrubs-seed /absolute/path/to/nixos-base-aarch64.qcow2"

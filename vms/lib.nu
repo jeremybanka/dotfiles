@@ -6,6 +6,10 @@ export def vms-dir [] {
   repo-root | path join "vms"
 }
 
+export def lima-home [] {
+  $env.LIMA_HOME? | default ($env.HOME | path join ".lima") | path expand
+}
+
 export def load-settings [] {
   let settings_file = (vms-dir | path join "settings.env")
 
