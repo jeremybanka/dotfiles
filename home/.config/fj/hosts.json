@@ -1,0 +1,11 @@
+{
+  "hosts": {
+    "git.celilo.computer": {
+      "url": "https://git.celilo.computer",
+      "user": "jem",
+      "gitProtocol": "ssh",
+      "tokenStorage": "git-credential"
+    }
+  },
+  "defaultHost": "git.celilo.computer"
+}
