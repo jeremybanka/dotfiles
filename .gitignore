@@ -10,6 +10,14 @@ home/.config/.wrangler
 home/.config/carapace
 home/.config/raycast/extensions
 
+# Local telemetry state, runtime credentials, and generated caches.
+home/.config/openspec/config.json
+home/.config/raycast/aster-endpoint.json
+home/.config/raycast/node-compile-cache/
+
+# WireGuard profiles include private keys.
+home/.config/wireguard/
+
 apps/InDesign/Workspaces/*_CurrentWorkspace.xml
 
 repomix-output.xml
