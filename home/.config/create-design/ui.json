@@ -1,0 +1,136 @@
+[
+  {
+    "version": 1,
+    "id": "local",
+    "name": "Banka",
+    "product": "create-design",
+    "state": {
+      "tiling": {
+        "version": 3,
+        "columns": [
+          {
+            "id": 1,
+            "alignment": "top",
+            "collapsed": false,
+            "tiles": [
+              {
+                "id": "pages:default",
+                "kind": "pages",
+                "fill": false
+              },
+              {
+                "id": "layers:default",
+                "kind": "layers",
+                "fill": true
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "alignment": "top",
+            "collapsed": false,
+            "tiles": [
+              {
+                "id": "canvas:default",
+                "kind": "canvas",
+                "fill": false
+              },
+              {
+                "id": "export:default",
+                "kind": "export",
+                "fill": true
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "alignment": "top",
+            "collapsed": false,
+            "tiles": [
+              {
+                "id": "tools:default",
+                "kind": "tools",
+                "fill": false
+              },
+              {
+                "id": "version-control:ms9czobp:1",
+                "kind": "version-control",
+                "fill": true
+              },
+              {
+                "id": "typography:msewirij:1",
+                "kind": "typography",
+                "fill": false
+              },
+              {
+                "id": "blend:msez5woo:1",
+                "kind": "blend",
+                "fill": false
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "alignment": "top",
+            "collapsed": false,
+            "tiles": [
+              {
+                "id": "object:default",
+                "kind": "object",
+                "fill": false
+              },
+              {
+                "id": "transform:migrated-v4",
+                "kind": "transform",
+                "fill": false
+              },
+              {
+                "id": "arrange:migrated-v4",
+                "kind": "arrange",
+                "fill": false
+              },
+              {
+                "id": "appearance:ms9bpe3f:1",
+                "kind": "appearance",
+                "fill": true
+              }
+            ]
+          }
+        ]
+      },
+      "hotbars": {
+        "primary": [
+          "tool-select",
+          "tool-direct",
+          "tool-pen",
+          "tool-rect",
+          "tool-ellipse",
+          "tool-transform",
+          "undo",
+          "redo",
+          "duplicate-offset",
+          "group-selection",
+          "align-center",
+          "export-pdf"
+        ],
+        "alternate": [
+          "tool-pen",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "preferences": {
+        "canvasDimmer": null
+      }
+    }
+  }
+]
