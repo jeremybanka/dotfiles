@@ -1,0 +1,7 @@
+portForwards:
+  - guestPort: 3000
+    hostPort: 3000
+    proto: tcp
+  - guestPort: 4569
+    hostPort: 4569
+    proto: tcp
