@@ -55,7 +55,7 @@ def main [
   print "  sudo -i"
   print "  /mnt/host-scrubs-seed/install.sh"
   print ""
-  print "When installation completes, shut the guest down from inside NixOS."
+  print "When installation completes, boot the installed system without the ISO and verify Lima SSH access."
   print "Then export the reusable base image with:"
   print $"  just export-seed-image ($instance_name) /absolute/path/to/nixos-base-aarch64.qcow2"
 }

@@ -36,6 +36,7 @@ jobs:
           version: 2026.8.14
           github_token: ${{ github.token }}
       - run: mise exec github:nushell/nushell@0.114.1 -- just scrubs-validation-static
+      - run: just scrubs-image-export-test
 
   Test:
     runs-on: macos-26

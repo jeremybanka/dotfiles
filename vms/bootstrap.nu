@@ -16,7 +16,7 @@ def ssh-base-args [guest_user: string, ssh_port: string] {
     "-o" "BatchMode=yes"
     "-o" "IdentitiesOnly=yes"
     "-o" "GSSAPIAuthentication=no"
-    "-i" ($env.HOME | path join ".lima" "_config" "user")
+    "-i" (lima-home | path join "_config" "user")
     "-p" $ssh_port
     $"($guest_user)@127.0.0.1"
   ]
@@ -32,7 +32,7 @@ def scp-base-args [ssh_port: string] {
     "-o" "BatchMode=yes"
     "-o" "IdentitiesOnly=yes"
     "-o" "GSSAPIAuthentication=no"
-    "-i" ($env.HOME | path join ".lima" "_config" "user")
+    "-i" (lima-home | path join "_config" "user")
     "-P" $ssh_port
     "-r"
   ]
@@ -569,6 +569,7 @@ def main [
   --source-image(-s): string = ""
   --shim-name: string = ""
   --clean-auth-profile(-p): string = ""
+  --for-base-image # Use the generic base without project overrides or host credentials.
   tailscale_mode: string = "tailscale-enabled"
 ] {
   let repo_root = (repo-root)
@@ -577,10 +578,14 @@ def main [
   let default_working_image = ($repo_root | path join "vms" "images" "scrubs.qcow2")
   let cache_root = (($env.TMPDIR? | default "/tmp") | path join "scrubs-lima")
   let resolved_shim_name = if $shim_name == "" { $instance_name } else { $shim_name }
-  let project_shim = (resolve-project-shim ($vms_dir | path join "projects") $resolved_shim_name)
+  let project_shim = if $for_base_image {
+    { source: "", guest_module: "", lima_config: "", sandbox_policy: "" }
+  } else {
+    resolve-project-shim ($vms_dir | path join "projects") $resolved_shim_name
+  }
   let selected_clean_auth_profile = (resolve-clean-auth-profile $settings $clean_auth_profile)
   let resolved_tailscale_mode = (resolve-tailscale-bootstrap-mode $tailscale_mode)
-  let instance_dir = ($env.HOME | path join ".lima" $instance_name)
+  let instance_dir = (lima-home | path join $instance_name)
   let cache_dir = ($cache_root | path join $instance_name)
   let payload_dir = ($cache_dir | path join "scrubs-bootstrap")
   let guest_apply = ($payload_dir | path join "guest-apply.sh")
@@ -729,9 +734,9 @@ def main [
     cp $module_path ($payload_dir | path join "scrubs" "modules" ($module_path | path basename))
   }
 
-  let gh_token = (resolve-github-token $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix)
-  let codex_auth_json = (resolve-codex-auth-json $settings $selected_clean_auth_profile.suffix)
-  let tailscale_enabled = ($resolved_tailscale_mode == "tailscale-enabled")
+  let gh_token = if $for_base_image { "" } else { resolve-github-token $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix }
+  let codex_auth_json = if $for_base_image { "" } else { resolve-codex-auth-json $settings $selected_clean_auth_profile.suffix }
+  let tailscale_enabled = (not $for_base_image) and ($resolved_tailscale_mode == "tailscale-enabled")
   let tailscale_oauth_secret = if $tailscale_enabled {
     (resolve-tailscale-oauth-secret $settings)
   } else {
