@@ -45,6 +45,25 @@ helix-theme-install-agent:
 helix-watch-config:
     nu ./scripts/watch-helix-config.nu
 
+codex-backups-init config:
+    nu ./vms/chat-backups.nu init {{ quote(config) }}
+
+codex-backups-run config:
+    nu ./vms/chat-backups.nu run {{ quote(config) }}
+
+codex-backups-status config:
+    nu ./vms/chat-backups.nu status {{ quote(config) }}
+
+codex-backups-restore config snapshot output:
+    nu ./vms/chat-backups.nu restore {{ quote(config) }} {{ quote(snapshot) }} {{ quote(output) }}
+
+# Install a daily host job without enabling it; inspect the printed plist first.
+codex-backups-install-agent config hour="3" minute="0":
+    nu ./vms/chat-backups.nu install-launch-agent {{ quote(config) }} --hour {{ hour }} --minute {{ minute }}
+
+codex-backups-test:
+    nu ./vms/tests/chat-backups.nu
+
 bootstrap instance_name clean_auth_profile="personal" shim_name="" source_image="./vms/images/scrubs.qcow2" tailscale_mode="tailscale-enabled":
     nu ./vms/bootstrap.nu --source-image {{ source_image }} {{ if shim_name != "" { "--shim-name " + shim_name + " " } else { "" } }}--clean-auth-profile {{ clean_auth_profile }} {{ instance_name }} {{ tailscale_mode }}
 
