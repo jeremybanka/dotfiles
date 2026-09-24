@@ -84,6 +84,10 @@
 
   systemd.tmpfiles.rules = [
     "d /tmp/mise-cache 1777 root root -"
+    # ChatGPT iOS probes SSH hosts with PATH=/usr/bin:/bin and `uname -s`.
+    # Keep this clean-side compatibility path narrow; dirty space builds its
+    # own /usr and already has an explicitly allowed uname helper.
+    "L+ /usr/bin/uname - - - - /run/current-system/sw/bin/uname"
   ];
 
   system.activationScripts.limaCompatBash = ''

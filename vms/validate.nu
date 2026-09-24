@@ -192,6 +192,19 @@ def probe-shell-access [instance_name: string, label: string] {
   pass-entry $label "limactl shell reached the guest cleanly"
 }
 
+def probe-mobile-shell [instance_name: string, label: string] {
+  # Match the iOS SSH startup probe, including its deliberately restricted PATH.
+  let command = "/bin/sh -c 'export PATH=/usr/bin:/bin; printf \"\\n%s\\n\" __CODEX_REMOTE_POSIX_SHELL_READY__; uname -s'"
+  let result = (guest-run $instance_name $command)
+  if $result.exit_code != 0 {
+    return (fail-entry $label (summarize-command-failure $result "Mobile SSH operating-system probe failed"))
+  }
+  if (($result.stdout | str trim) != "__CODEX_REMOTE_POSIX_SHELL_READY__\nLinux") {
+    return (fail-entry $label "Mobile SSH probe returned an unexpected response")
+  }
+  pass-entry $label "Mobile SSH probe found Linux with PATH=/usr/bin:/bin"
+}
+
 def probe-sealed-auth-artifacts [instance_name: string] {
   let command = "test -f \"$HOME/.local/share/scrubs/clean-auth/gh-token.enc\" && test -f \"$HOME/.local/share/scrubs/clean-auth/codex-auth.json.enc\" && test -f \"$HOME/.local/share/scrubs/clean-auth/seal-key\""
   let result = (guest-run $instance_name $command)
@@ -540,6 +553,7 @@ def main [
   }
 
   $results = ($results | append (probe-shell-access $instance_name "limactl shell reachability"))
+  $results = ($results | append (probe-mobile-shell $instance_name "Mobile SSH shell compatibility"))
   $results = ($results | append (probe-sealed-auth-artifacts $instance_name))
   $results = ($results | append (probe-codex-canonical-home-login-status $instance_name "Codex SSH-style auth smoke"))
   $results = ($results | append (probe-gh-auth $instance_name "gh auth smoke"))
@@ -605,6 +619,7 @@ def main [
   }
 
   $results = ($results | append (probe-shell-access $instance_name "limactl shell reachability after re-bootstrap"))
+  $results = ($results | append (probe-mobile-shell $instance_name "Mobile SSH shell compatibility after re-bootstrap"))
   $results = ($results | append (probe-gh-auth $instance_name "gh auth smoke after re-bootstrap"))
   $results = ($results | append (probe-codex-canonical-home-login-status $instance_name "Codex SSH-style auth smoke after re-bootstrap"))
   $results = ($results | append (probe-codex-login-status $instance_name "Codex auth smoke after re-bootstrap"))
