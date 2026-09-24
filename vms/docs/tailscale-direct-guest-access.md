@@ -315,6 +315,24 @@ Check that the policy rule uses the actual guest username, for example:
 "users": ["jem"]
 ```
 
+### ChatGPT Reports `Codex execution failed` After SSH Login
+
+ChatGPT iOS 1.2026.258 (35393528846) probes the remote operating system with
+`/bin/sh`, resets `PATH` to `/usr/bin:/bin`, and runs `uname -s`. On NixOS,
+`uname` normally lives outside that path. The SSH login succeeds, but the probe
+exits 127 before Codex starts.
+
+Scrubs provides `/usr/bin/uname` through a NixOS tmpfiles rule for this probe.
+To check the exact restricted-path behavior:
+
+```sh
+limactl shell wayforge -- /bin/sh -c 'export PATH=/usr/bin:/bin; uname -s'
+```
+
+It must print `Linux` and exit successfully. Re-bootstrap older guests to
+install the compatibility rule. This is a clean-side path; the dirty sandbox
+continues to construct its own `/usr` and use its existing allowed helpers.
+
 ### Need More Detail
 
 These commands are the most useful next checks:
