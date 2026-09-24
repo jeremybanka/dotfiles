@@ -1,0 +1,32 @@
+# Copy outside the checkout, replace paths, and chmod 600 the real config.
+version = 1
+repository = "/ABSOLUTE/PATH/TO/encrypted-restic-repository"
+state_dir = "/Users/YOU/Library/Application Support/CodexChatBackups/state"
+
+# Use a randomly generated password, also saved in your password manager.
+# For unattended operation, this command must not require interactive approval.
+password_command = [
+  "/usr/bin/security",
+  "find-generic-password",
+  "-w",
+  "-s",
+  "codex-chat-backups",
+]
+# Alternatively, use a chmod-600 password_file (exactly one password source).
+# password_file = "/ABSOLUTE/PATH/TO/restic-password"
+
+# Future R2 repository: s3:https://ACCOUNT_ID.r2.cloudflarestorage.com/BUCKET
+# credentials_file = "/ABSOLUTE/PATH/TO/private-cloud-credentials.toml"
+# Credentials file permits AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
+# AWS_SESSION_TOKEN, AWS_DEFAULT_REGION. Never put credentials in this config.
+
+[[sources]]
+name = "wayforge"
+kind = "guest"
+instance = "wayforge"
+
+# For a local rehearsal using a previously verified portability export:
+# [[sources]]
+# name = "fixture"
+# kind = "archive"
+# path = "/ABSOLUTE/PATH/TO/fixture.chats.tar.gz"
