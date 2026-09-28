@@ -26,6 +26,10 @@ kind = "guest"
 instance = "wayforge"
 # Live is the default; quiet retains the original stopped-writer export mode.
 capture = "live"
+# Backups always omit repositories, Git history, and workspace assets.
+# After native verification, an optional private JSON path-to-SHA256 map can
+# preserve exact known-damaged rollout bytes. Any file change fails capture.
+# preserve_malformed = "/ABSOLUTE/PATH/TO/verified-history-acknowledgements.json"
 
 # For a local rehearsal using a previously verified portability export:
 # [[sources]]

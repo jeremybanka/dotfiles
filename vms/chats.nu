@@ -21,11 +21,19 @@ def remote-worker [instance: string body: closure] {
   } catch {|e| guest $instance [rm -rf $remote] | ignore; error make $e }
 }
 # Snapshot all task histories and their workspaces. The source stays intact.
-def 'main export' [instance: string artifact: path --live] {
+def 'main export' [instance: string artifact: path --live --preserve-malformed: path --chats-only] {
   let out = (lexical $artifact)
   if (exists $out) { fail $"Artifact exists: ($out)" }
   remote-worker $instance {|remote|
-    guest $instance ([/run/current-system/sw/bin/nu --no-config-file ($remote + '/chats.nu') _export ($remote + '/archive.tar.gz')] | append (if $live { [--live] } else { [] })) | ignore
+    mut flags = (if $live { [--live] } else { [] })
+    if $chats_only { $flags = ($flags | append [--chats-only]) }
+    if $preserve_malformed != null {
+      if not $live { fail 'Malformed-history acknowledgements on export require live capture' }
+      invoke [limactl copy (lexical $preserve_malformed) $"($instance):($remote)/preserve-malformed.json"] | ignore
+      $flags = ($flags | append [--preserve-malformed ($remote + '/preserve-malformed.json')])
+    }
+    let priority = if $live { [nice -n 19 ionice -c 3] } else { [] }
+    guest $instance ($priority | append [/run/current-system/sw/bin/nu --no-config-file ($remote + '/chats.nu') _export ($remote + '/archive.tar.gz')] | append $flags) | ignore
     # Stage beside output so no-clobber hard-link publication works across disks.
     let temp = (invoke [mktemp -d ($out + '.incoming.XXXXXX')])
     try {
@@ -66,15 +74,18 @@ def 'main import' [instance: string artifact: path ...maps: string --dry-run --a
 def 'main recover' [instance: string] {
   remote-worker $instance {|remote| guest $instance [/run/current-system/sw/bin/nu --no-config-file ($remote + '/chats.nu') _recover] | from json } | to json
 }
-def 'main _export' [artifact: path --live] {
+def 'main _export' [artifact: path --live --preserve-malformed: path --chats-only] {
   let home = ($env.HOME | path expand)
   with-lock ($home | path join .codex .scrubs-chats.nu-lock) {
     if $live {
       let version = (invoke [/run/current-system/sw/bin/codex --version])
-      return (export-live $home (lexical $artifact) $version (schema-for $version))
+      let acknowledged = if $preserve_malformed == null { {} } else { open $preserve_malformed }
+      return (export-live $home (lexical $artifact) $version (schema-for $version) --preserve-malformed $acknowledged --chats-only=$chats_only)
     }
+    if $preserve_malformed != null { fail 'Malformed-history acknowledgements on export require live capture' }
     quiet
-    let result = (export-data $home (lexical $artifact) (invoke [/run/current-system/sw/bin/codex --version]))
+    let version = (invoke [/run/current-system/sw/bin/codex --version])
+    let result = (export-data $home (lexical $artifact) $version --chats-only=$chats_only)
     quiet
     $result
   } | to json

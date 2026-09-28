@@ -11,12 +11,14 @@ runner does not reach into arbitrary Nix-store paths to find tools.
 
 ## Current scope
 
-- Back up verified portability archives or export an explicitly named Lima
-  guest through its clean runtime. All cloud access happens on the host.
+- Back up Codex histories, task metadata, and chat attachments from an explicitly
+  named Lima guest through its clean runtime. Repository files, Git history,
+  workspace assets, and worktrees belong to the forge and are not captured.
+  All cloud access happens on the host.
 - Upload expanded, checksum-verified files, not a repeatedly compressed tarball.
   Stable source names group snapshots independently of guest filesystem paths.
 - Record per-source attempts, last successful backup, capture time, snapshot ID,
-  task count, and workspace warnings. One failed guest does not prevent others
+  task count, and any acknowledged damaged histories. One failed guest does not prevent others
   from being backed up. Any source failure makes the overall run exit nonzero.
 - Use a private state directory and a process lock. A partial restic backup is
   a failure; it cannot replace the last successful backup record.
@@ -34,34 +36,65 @@ backup API and copy a bounded, complete-line prefix of each JSONL stream. An
 unfinished last record stays on the source and is deferred to a later backup;
 the manifest records its excluded byte count. Appending tokens can continue.
 No process is stopped, disconnected, or signaled, and stopped guests are not
-started. Set `capture = "quiet"` for the original stopped-writer export mode.
+started. Live workers use low CPU and idle I/O priority. Set `capture = "quiet"`
+for the original stopped-writer export mode.
 
 Database connections forbid creation of a missing source and issue only read
 and backup operations. SQLite may maintain its normal WAL sidecar files; no
 application tables are modified by capture.
 
 Live capture retries the entire attempt up to three times if a copied prefix is
-rewritten, tree membership changes, workspace/attachment bytes change, a JSON
+rewritten, tree membership changes, attachment bytes change, a JSON
 record is malformed, or an indexed byte offset is absent. It validates schema,
 foreign keys, resolvable history relationships, and attachment-index state before
 publishing an archive. Unassociated history rows are rejected rather than
 silently omitted; retained legacy orphan rows may need a separate compatibility
-adapter. Continuously changing workspaces can exhaust the retries. A failed
+adapter. A failed
 capture preserves the previous successful backup.
 
 This is a **validated recovery window**, not an atomic filesystem snapshot.
 Each database has its own snapshot; rollout prefixes can include later complete
-events, and workspace files are independently copied and rechecked. The manifest
-records the window and stream cutoffs. Nothing claims that all project files and
-task metadata represent one application transaction. Check `captured_at` as well
+events, and attachment files are independently copied and rechecked. The manifest
+records the window and stream cutoffs. Nothing claims that all task metadata
+represents one application transaction. Check `captured_at` as well
 as `last_success`: backing up an old archive does not make its contents fresh.
 
-Full migration exports retain associated workspaces. They can be large and
-include sensitive project files, including project-local secrets. Codex login
-credentials are excluded by the migration adapter, but this is not a general
-secret scrubber. This draft does not introduce dependency/build-cache exclusion
-rules; those need an explicit capture policy before routine deployment.
-Host-local Codex capture and desktop association backup are also follow-up work.
+The backup runner always requests `--chats-only`, preserving working-directory
+references without reading or copying those directories. Restore code and Git
+history from the forge separately. For old migration archives used as backup
+sources, the host verifies the archive, then removes workspace payloads and their
+manifest entries before uploading. A regular migration export still includes
+workspaces; that remains a separate workflow.
+
+Chat text and attachments can themselves contain sensitive material. Codex login
+credentials are excluded; this is not a general secret scrubber. Host-local
+capture and desktop association backup remain follow-up work.
+
+Live capture estimates staging and archive space before copying payloads, leaving
+a 2 GiB reserve plus metadata headroom. Insufficient space fails the attempt.
+This check is not a disk reservation; other processes can still consume space.
+Disposable manifest writes do not invoke a guest-wide filesystem sync.
+
+### Preserving known damaged histories
+
+Live export refuses malformed JSON by default. After verifying the retained
+turns and items through native Codex on an isolated copy, an operator can provide
+a private JSON object mapping each affected path relative to `.codex` to its
+full-file SHA-256. Configure its absolute path as `preserve_malformed` for a live
+guest source, or pass `--preserve-malformed FILE` to `chats.nu export --live`.
+
+The acknowledgement must name a rollout under `sessions/` or
+`archived_sessions/`. Capture requires the entire file to match, with complete
+trailing bytes and valid initial metadata. Growth, rewrites, stale hashes,
+missing files, and acknowledgements of valid files fail. Indexed byte boundaries
+and candidate databases are still validated; no record is discarded or repaired.
+The manifest and backup status record the exact preserved hashes.
+
+Restore does not automatically trust an archive's acknowledgements. Pass the
+verified JSON explicitly to `chats.nu import --preserve-malformed FILE`.
+Acknowledged files cannot undergo path/content rewriting; use original task
+paths when their contents include them. This preserves existing damage rather
+than reconstructing missing events.
 
 ## Local rehearsal
 
@@ -139,20 +172,18 @@ replaced. Keep the referenced runtime while a job is installed.
 
 1. Exercise the validated live capture on representative real task stores and
    verify restored tasks through native Codex in a disposable guest. Synthetic
-   concurrent-writer capture and database/workspace import are covered now;
+   concurrent-writer capture and database import are covered now;
    application-level atomicity would require writer cooperation or a filesystem
    snapshot. SQLite's backup API alone does not coordinate all stores.
 2. Capture local-host task data and the minimum desktop project associations
    needed to restore the sidebar; exclude unrelated app state and credentials.
-3. Add an explicit workspace policy for uncommitted files versus regenerable
-   dependencies, caches, and project-local secrets.
-4. Add stale-backup notifications and periodic disposable-guest restore checks.
+3. Add stale-backup notifications and periodic disposable-guest restore checks.
    Exit status and a status file exist now; notifications are not implemented.
-5. Validate cloud round trips and recovery with independently held credentials.
+4. Validate cloud round trips and recovery with independently held credentials.
    Choose an appropriate protection against deletion, then separately enable
    retention/pruning. Do not apply bucket expiry rules directly to restic objects.
-6. Avoid gzip export/re-extraction by factoring the verified staging operation
-   out of the migration exporter once the capture policy is settled.
+5. Avoid gzip export/re-extraction by factoring verified staging out of the
+   migration exporter.
 
 ## Validation
 
@@ -170,6 +201,13 @@ refusal, missing indexed boundaries, bounded retry, tree edits, both supported
 schemas, and capture plus restore while another process writes WAL updates and
 appends history. `just codex-backups-test` runs it for both versions, and CI runs
 these tests plus the existing migration regression suite.
+
+`vms/tests/chats-preservation.nu` additionally exercises checksum-pinned damaged
+histories through live capture, encrypted backup, archive reconstruction, and
+explicit import. It checks refusal of changed bytes, partial tails, malformed
+metadata, unused pins, and insufficient staging space. The backup integration
+test also proves that an older full migration archive cannot upload workspace
+files through this runner.
 
 ### Real-store rehearsal, 2026-09-28
 
@@ -192,13 +230,28 @@ The rehearsal also exposed repeated Git inspection for chats sharing a project;
 capture now discovers each workspace once per attempt. Invalid JSON errors now
 identify the file and line without including conversation text.
 
-Before repeating the full test, add an explicit, checksum-pinned preservation
-path for already damaged histories, with native verification and unchanged-byte
-checks. The importer has such an acknowledgement mechanism, but live export
-does not yet support it. Also account for workspace staging space: this source
-had roughly 27 GB of project data and only 30 GB free, before counting history,
-worktrees, and the compressed archive. No production schedule should be enabled
-on the strength of the diagnostic restore alone.
+That rehearsal motivated the checksum-pinned live preservation path above.
+Backup scope is now explicitly chat-only: the roughly 27 GB of repository data
+seen during that test is the forge's responsibility and will not be staged.
+The subsequent chat-only capture completed while wayforge remained in use:
+1,606 chats, no workspaces, and a 481 MiB compressed archive. Its transfer checksum
+matched. A private local restic repository accepted the expanded payload, passed
+`check --read-data`, and reconstructed a verified restore archive. Import into
+the disposable `chat-backup-restore` guest restored 57,226 database rows and all
+1,606 chat records. The acknowledged damaged rollout remained unchanged. Source
+staging was removed after transfer; no source Codex process was stopped.
+
+The native verifier follows edited sessions' shared-history byte cutoffs and
+item ordinal limits. Superseded turns and items remain in the retained source
+files/database rows but are correctly absent from the current native view.
+Regression tests require all in-range items and reject missing visible turns.
+Native Codex 0.157.0 successfully read all 1,606 restored chats, including 2,176
+visible turns and 53,869 items. Seventeen superseded turns were accounted for in
+retained histories. No model was run or account credential installed in the
+restore guest.
+
+This is a local encrypted rehearsal; no private cloud or production schedule is
+enabled.
 
 References: [restic backup semantics](https://restic.readthedocs.io/en/stable/040_backup.html),
 [retention](https://restic.readthedocs.io/en/stable/060_forget.html), and

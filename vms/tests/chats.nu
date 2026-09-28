@@ -26,6 +26,32 @@ def test [name: string body: closure --desktop] {
 }
 def main [] {
   let tests = [
+    ['native verification honors an edited session byte cutoff' {|f|
+      let root = ($f.source | path join .codex)
+      let base = ($root | path join sessions $'rollout-2026-09-09T00-00-00-($f.tid).jsonl')
+      let prefix = ([{type: session_meta payload: {id: $f.tid}} {type: event_msg payload: {type: task_started turn_id: kept}}] | each { to json --raw } | str join "\n") + "\n"
+      ($prefix + (({type: event_msg payload: {type: task_started turn_id: superseded}} | to json --raw) + "\n")) | save --raw $base
+      let current = [{type: session_meta payload: {id: $f.tid history_base: {thread_id: $f.tid end_ordinal_exclusive: 2 end_byte_offset: ($prefix | encode utf-8 | bytes length)}}} {type: event_msg payload: {type: task_started turn_id: replacement}}]
+      ($current | each { to json --raw } | str join "\n") + "\n" | save --raw -f $f.rollout
+      let files = ([$base $f.rollout] | each {|p| {key: ('codex/' + ($p | path relative-to $root)) value: {sha256: (digest $p)}} } | transpose --header-row --ignore-titles --as-record)
+      let manifest = {source_home: $f.source files: $files}
+      let ancestry = [{id: $f.tid path: $base} {id: $f.tid path: $f.rollout}]
+      let expected = {id: $f.tid rollout_path: $f.rollout}
+      let history = {thread_turns: {rows: [{thread_id: $f.tid turn_id: kept} {thread_id: $f.tid turn_id: superseded}]} thread_items: {rows: [{thread_id: $f.tid turn_id: kept item_id: kept-item rollout_ordinal: 1} {thread_id: $f.tid turn_id: kept item_id: superseded-item rollout_ordinal: 2}]}}
+      let actual = [{id: kept items: [{id: kept-item}]} {id: replacement items: []}]
+      let result = (check-retained-history $expected $actual $history $manifest $ancestry $root)
+      assert equal $result.retained_superseded_turns [superseded]
+      expect-error { check-retained-history $expected [{id: kept items: []} {id: replacement items: []}] $history $manifest $ancestry $root } 'missing item'
+      expect-error { check-retained-history $expected [{id: replacement items: []}] $history $manifest $ancestry $root } 'canonical rollout'
+      expect-error { visible-turn-ids $base $manifest $ancestry $root --limit 1 } 'not a complete line'
+    }]
+    ['database JSON preserves text, nulls, Unicode, and full-width integers' {|f|
+      let db = ($f.base | path join json.sqlite)
+      sql-script $db 'CREATE TABLE sample (id INTEGER, text TEXT, empty TEXT, absent TEXT);'
+      let row = {id: 9007199254740993 text: ("{\"unicode\":\"café\"}\n" + (char nul)) empty: '' absent: null}
+      sql-script $db (insert-sql sample $row)
+      assert equal (database-dump $db [sample]).sample.rows [$row]
+    }]
     ['shared workspace discovery preserves every chat' {|f|
       invoke [git -C $f.project init --quiet] | ignore
       invoke [git -C $f.project -c user.name=Fixture -c user.email=fixture@example.invalid -c commit.gpgsign=false commit --quiet --allow-empty -m Fixture] | ignore
@@ -247,6 +273,24 @@ def main [] {
       assert equal ($index.attachmentPaths | length) 2
       assert ($index.attachmentPaths | all {|p| exists $p })
       assert equal (inject $f).changes 0
+    }]
+    ['retained session aliases resolve shared boundaries without relaxing validation' {|f|
+      let sid = '00000000-0000-4000-8000-000000000099'
+      let base = ($f.source | path join .codex sessions $'rollout-2026-09-09T18-32-14-($f.tid)_($sid).jsonl')
+      let bytes = (open --raw $f.rollout | into binary)
+      $bytes | save --raw $base
+      let meta = (open --raw $f.rollout | lines | first | from json | upsert payload.history_base {thread_id: $sid end_ordinal_exclusive: 2 end_byte_offset: ($bytes | bytes length)})
+      ($meta | to json --raw) + "\n" | save --raw -f $f.rollout
+      let manifest = {source_home: $f.source threads: [{id: $f.tid rollout_path: $f.rollout}]}
+      let offsets = (rewrite-rollouts ($f.source | path join .codex) $manifest [])
+      assert equal ($offsets | get $sid | get (($bytes | bytes length) | into string)) ($bytes | bytes length)
+      assert equal ($offsets | get $f.tid | get (($bytes | bytes length) | into string)) ($bytes | bytes length)
+      let row = (remap-row {thread_id: $sid next_rollout_byte_offset: ($bytes | bytes length)} thread_history_projection_state [] $offsets)
+      assert equal $row.next_rollout_byte_offset ($bytes | bytes length)
+      ($meta | update payload.history_base.end_byte_offset 1 | to json --raw) + "\n" | save --raw -f $f.rollout
+      expect-error { rewrite-rollouts ($f.source | path join .codex) $manifest [] } 'Missing shared-history byte boundary'
+      rm $base
+      expect-error { rewrite-rollouts ($f.source | path join .codex) $manifest [] } 'Missing shared-history byte boundary'
     }]
     ['shared history byte preservation and relocation refusal' {|f|
       let base = ($f.source + '/.codex/sessions/base.jsonl')

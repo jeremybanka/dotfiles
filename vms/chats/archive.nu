@@ -176,7 +176,7 @@ export def snapshot [source: string target: string prefix: string] {
 export def inspect-archive [artifact: string] {
   temporary {|temp|
     let m = (unpack $artifact ($temp | path join stage))
-    $m | select format export_id codex_version roots missing excluded_codex_entries | insert threads ($m.threads | each {|t|
+    $m | select format export_id codex_version roots missing excluded_codex_entries | insert scope ($m.scope? | default 'chats-and-workspaces') | insert preserved_malformed_rollouts ($m.capture?.preserved_malformed_rollouts? | default {}) | insert threads ($m.threads | each {|t|
       {id: $t.id title: ($t.name? | default ($t.title?)) cwd: $t.cwd? archived: (($t.archived? | default 0) == 1) updated_at: $t.updated_at?}
     })
   }

@@ -4,7 +4,7 @@ use ../chats/archive.nu *
 use chats-native.nu *
 
 # Read all imported records through native Codex, without running a model.
-def main [instance: string artifact: path ...pairs: string --maintenance] {
+def main [instance: string artifact: path ...pairs: string --maintenance --checkpoint: path] {
   let home = (invoke [limactl shell $instance -- sh -lc 'printf %s "$HOME"'])
   temporary {|temp|
     let stage = ($temp | path join stage)
@@ -19,6 +19,6 @@ def main [instance: string artifact: path ...pairs: string --maintenance] {
       let meta = (open --raw $meta_path | lines | first | from json).payload
       {id: $meta.id path: ($manifest.source_home + '/.codex/' + ($relative | path relative-to codex)) forked_from: $meta.forked_from_id?}
     })
-    verify-records $instance $manifest $maps $ancestry --rollout-root ($stage | path join codex)
+    verify-records $instance $manifest $maps $ancestry --rollout-root ($stage | path join codex) --checkpoint $checkpoint
   } | to json
 }

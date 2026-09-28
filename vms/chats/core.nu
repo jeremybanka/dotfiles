@@ -58,14 +58,14 @@ export def copy [source: string target: string] {
   mkdir ($target | path dirname)
   invoke [cp -a $source $target] | ignore
 }
-export def atomic-json [p: string value: any] {
+export def atomic-json [p: string value: any --transient] {
   mkdir ($p | path dirname)
   let temp = $p + '.' + (random uuid) + '.tmp'
   $value | to json --raw | save --raw $temp
   invoke [chmod '600' $temp] | ignore
-  invoke [sync] | ignore
+  if not $transient { invoke [sync] | ignore }
   mv -f $temp $p
-  invoke [sync] | ignore
+  if not $transient { invoke [sync] | ignore }
 }
 export def temporary [body: closure] {
   let p = (invoke [mktemp -d /tmp/scrubs-chats.XXXXXX] | path expand)

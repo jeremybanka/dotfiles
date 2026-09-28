@@ -44,13 +44,17 @@ def main [] {
     assert equal $restored.tasks 1
     let m = (unpack $archive ($base | path join restored))
     assert ('codex/auth.json' not-in $m.files)
-    assert equal (open --raw ($base | path join restored workspaces 0 draft.txt)) "uncommitted fixture\n"
+    assert equal $m.scope chats
+    assert equal $m.roots []
+    assert equal $m.git {}
+    assert (not ($m.files | columns | any {|p| $p | str starts-with 'workspaces/' }))
+    assert (not (exists ($base | path join restored workspaces 0 draft.txt)))
     inject ($f | update artifact $archive) | ignore
-    assert equal (open --raw ($f.target | path join project draft.txt)) "uncommitted fixture\n"
+    assert (not (exists ($f.target | path join project)))
     assert equal (open --raw ($f.target | path join .codex auth.json)) 'DO-NOT-EXPORT-CREDENTIAL'
     expect-error { restore-archive $c $first_id $archive } 'already exists'
     expect-error { restore-archive $c latest ($base | path join nope.tar.gz) } 'explicit snapshot'
-    print 'PASS restore reconstructs a validated importable archive without credentials or overwrites'
+    print 'PASS restore reconstructs a chat-only archive without workspace data, credentials, or overwrites'
 
     let previous = (status $c).sources.fixture
     let broken = ($c | update sources [{name: fixture kind: archive path: ($base | path join absent.tar.gz)} {name: healthy kind: archive path: $f.artifact}])

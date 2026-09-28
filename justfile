@@ -63,6 +63,7 @@ codex-backups-install-agent config hour="3" minute="0":
 
 codex-backups-test:
     nu ./vms/tests/chat-backups.nu
+    nu ./vms/tests/chats-preservation.nu
     nu ./vms/tests/chats-live.nu
     nu ./vms/tests/chats-live.nu --version 'codex-cli 0.157.0'
 

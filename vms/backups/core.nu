@@ -21,6 +21,10 @@ export def config [path: path] {
     if $s.kind == archive and not ($s.path | str starts-with '/') { fail 'Archive paths must be absolute' }
     if $s.kind == guest and $s.instance !~ '^[a-zA-Z0-9][a-zA-Z0-9_-]*$' { fail 'Invalid Lima instance name' }
     if $s.kind == guest and ($s.capture? | default live) not-in [live quiet] { fail 'Guest capture must be live or quiet' }
+    if ($s.preserve_malformed? | is-not-empty) {
+      if $s.kind != guest or ($s.capture? | default live) != live { fail 'Malformed-history acknowledgements require a live guest source' }
+      private-file $s.preserve_malformed
+    }
   }
   if not ($c.state_dir | str starts-with '/') { fail 'state_dir must be absolute' }
   no-links $c.state_dir
@@ -78,18 +82,28 @@ export def run-backup [c: record] {
           let archive = if $source.kind == archive { $source.path } else {
             let out = ($temp | path join source.tar.gz)
             # Live mode permits active Codex writers and validates the captured history.
-            let flags = if ($source.capture? | default live) == quiet { [] } else { [--live] }
+            mut flags = if ($source.capture? | default live) == quiet { [--chats-only] } else { [--live --chats-only] }
+            if ($source.preserve_malformed? | is-not-empty) { $flags = ($flags | append [--preserve-malformed $source.preserve_malformed]) }
             invoke ([$nu.current-exe --no-config-file $migration_cli export $source.instance $out] | append $flags) | ignore
             $out
           }
           let payload = ($temp | path join payload)
-          let manifest = (unpack $archive $payload)
+          mut manifest = (unpack $archive $payload)
           if ($manifest.missing_history? | default [] | is-not-empty) { fail 'Export reports missing task histories' }
+          # Old migration archives may contain repositories. Never upload those
+          # as part of a chat backup; retain only the verified Codex payload.
+          if ($manifest.missing | any {|p| $p | str starts-with 'Missing or external history' }) { fail 'Export reports missing task histories' }
+          rm -rf ($payload | path join workspaces)
+          mkdir ($payload | path join workspaces)
+          $manifest = ($manifest | upsert scope chats | update roots [] | update git {} | update missing [])
+          let workspace_keys = ($manifest.files | columns | where {|p| $p | str starts-with 'workspaces/' })
+          if ($workspace_keys | is-not-empty) { $manifest.files = ($manifest.files | reject ...$workspace_keys) }
+          atomic-json ($payload | path join manifest.json) $manifest --transient
           # Back up expanded files, so restic deduplicates history across exports.
           let output = (do { cd $temp; restic $c [backup --json --host $source.name --tag $backup_tag --tag ('source=' + $source.name) --group-by 'host,tags' payload] })
           let summary = ($output | lines | where {|line| $line | str starts-with '{' } | each { from json } | where message_type == summary | last)
           if ($summary.snapshot_id? | is-empty) { fail 'restic returned no snapshot ID' }
-          {snapshot_id: $summary.snapshot_id export_id: $manifest.export_id captured_at: $manifest.created_at tasks: ($manifest.threads | length) workspace_warnings: $manifest.missing added_bytes: $summary.data_added new_data_blobs: $summary.data_blobs}
+          {snapshot_id: $summary.snapshot_id export_id: $manifest.export_id captured_at: $manifest.created_at scope: chats tasks: ($manifest.threads | length) preserved_malformed_rollouts: ($manifest.capture?.preserved_malformed_rollouts? | default {}) added_bytes: $summary.data_added new_data_blobs: $summary.data_blobs}
         })
         $previous | merge {last_attempt: $started last_success: (date now | format date '%+') last_result: success error: null backup: $result}
       } catch {|e|

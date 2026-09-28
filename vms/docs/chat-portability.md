@@ -49,6 +49,23 @@ See [backup consistency and limitations](chat-backups.md) for the recovery-windo
 contract. Import still requires a quiet destination. Version 0.157.0 preserves
 creator identities, the renamed task-attachment table, and item lifecycle times.
 
+The backup runner additionally passes `--chats-only`: this keeps task histories,
+metadata, attachments, and working-directory references, while omitting all
+repository/workspace content. Restore those repositories from the forge. This
+flag does not change the default full migration export. Live guest capture runs
+with low CPU and idle I/O priority.
+
+Live export also accepts `--preserve-malformed FILE` for an exact checksum map of
+previously verified damaged rollouts, using the same explicit acknowledgement
+format described for import below. The entire file must stay unchanged and have
+complete trailing bytes; a changed checksum or unused acknowledgement fails.
+Archives record preserved hashes, but import still requires an explicit map.
+
+Retained sessions can have a separate ID in a native rollout filename while
+their metadata retains the stable chat ID. The adapter resolves both identities
+and validates historical rows against the retained files; shared-history offsets
+must still land on an existing line boundary. Ambiguous aliases fail validation.
+
 Export copies the worker into a private temporary location, runs it in clean
 space through `limactl shell`, retrieves the compressed snapshot, checks all
 payload hashes, and publishes the host artifact without replacing an existing

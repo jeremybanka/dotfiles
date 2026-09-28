@@ -1,6 +1,7 @@
 use core.nu *
 use archive.nu *
 use live.nu *
+use capacity.nu *
 
 export def codex-executable [p: string] {
   let n = ($p | path basename | str replace ' (deleted)' '' | str trim --left --char '.' | str replace --regex '-wrapped$' '')
@@ -14,18 +15,30 @@ export def quiet [] {
 export def database-dump [path: string allowed: list] {
   let tables = (sql $path "SELECT name,sql FROM sqlite_master WHERE type='table'")
   $allowed | where {|name| $name in $tables.name } | reduce -f {} {|name,a|
-    $a | insert $name {sql: ($tables | where name == $name | first | get sql) rows: (sql $path $"SELECT * FROM (sql-name $name)")}
+    # SQLite's SQL JSON encoder avoids the CLI formatter's very expensive
+    # escaping of large saved tool results. Preserve JSON-looking TEXT as text.
+    let columns = (sql $path ('PRAGMA table_info(' + (sql-name $name) + ')') | get name)
+    let fields = ($columns | each {|c| [(sql-value $c) (sql-name $c)] } | flatten | str join ',')
+    let query = 'SELECT json_group_array(json_object(' + $fields + ')) FROM ' + (sql-name $name)
+    let rows = (invoke [sqlite3 -batch -bail -noheader -list $path $query] | from json --strict)
+    $a | insert $name {sql: ($tables | where name == $name | first | get sql) rows: $rows}
   }
 }
-export def export-data [home: string artifact: string version: string --live --schema: record --after-databases: closure] {
+export def export-data [home: string artifact: string version: string --live --schema: record --after-databases: closure --preserve-malformed: record = {} --chats-only] {
   let started_at = ((date now | into int) // 1000000000)
   if (exists $artifact) { fail $"Artifact exists: ($artifact)" }
   let codex = ($home | path join .codex)
+  if not $live and ($preserve_malformed | is-not-empty) { fail 'Malformed-history acknowledgements on export require live capture' }
+  for pin in ($preserve_malformed | transpose path hash) {
+    if not (safe-relative $pin.path) or $pin.path !~ '^(sessions|archived_sessions)/.+\.jsonl$' or ($pin.hash | describe) != string or $pin.hash !~ '^[0-9a-f]{64}$' { fail 'Invalid malformed-history acknowledgement' }
+    if (kind ($codex | path join $pin.path)) != file { fail $'Acknowledged history does not exist: ($pin.path)' }
+  }
   if (exists ($codex | path join config.toml)) {
     let custom = ((open ($codex | path join config.toml)).sqlite_home? | default $codex | path expand)
     if $custom != ($codex | path expand) { fail 'Custom sqlite_home is not supported by this adapter' }
   }
   mut databases = {}
+  if $live { print -e 'Capturing online chat database snapshots' }
   let specs = [{pattern: 'state_*.sqlite' tables: $state_tables} {pattern: 'goals_*.sqlite' tables: $goal_tables} {pattern: 'thread_history_*.sqlite' tables: $history_tables}]
   # Capture identity metadata last, reducing races with newly indexed tasks.
   for spec in (if $live { $specs | reverse } else { $specs }) {
@@ -44,6 +57,7 @@ export def export-data [home: string artifact: string version: string --live --s
     }
   }
   if $after_databases != null { do $after_databases }
+  if $live { print -e 'Chat database snapshots captured; discovering history streams' }
   mut threads = ($databases | values | each {|db| $db.threads?.rows? | default [] } | flatten)
   if ($threads | any {|t| ($t.history_mode? | default legacy) not-in [legacy paginated] }) { fail 'Unsupported Codex history_mode' }
   mut known = ($threads | each {|t| $t.id })
@@ -68,6 +82,7 @@ export def export-data [home: string artifact: string version: string --live --s
       $missing = ($missing | append $"Missing or external history for ($thread.id): ($thread.rollout_path)")
       $missing_history = ($missing_history | append $thread.id)
     }
+    if $chats_only { continue }
     let cwd = ($thread.cwd? | default '')
     if not ($cwd | str starts-with '/') or (kind $cwd) != dir { $missing = ($missing | append $"Unavailable workspace for ($thread.id): ($cwd)"); continue }
     # A consolidated guest can have hundreds of chats in the same project.
@@ -101,9 +116,15 @@ export def export-data [home: string artifact: string version: string --live --s
     $safe = ($safe | append $p)
   }
   let selected = ($safe | uniq | where {|p| not ($safe | any {|q| $p != $q and (under $p $q) }) } | sort)
-  let manifest = {format: 1 export_id: (random uuid) created_at: ((date now | into int) // 1000000000) source_home: $home codex_version: $version threads: $threads databases: $databases roots: [] git: $git_roots missing: $missing missing_history: $missing_history files: {} excluded_codex_entries: (ls -a $codex | get name | path basename | where {|p| $p not-in $chat_paths and $p !~ '^(state_|goals_|thread_history_)' })}
+  let manifest = {format: 1 scope: (if $chats_only { 'chats' } else { 'chats-and-workspaces' }) export_id: (random uuid) created_at: ((date now | into int) // 1000000000) source_home: $home codex_version: $version threads: $threads databases: $databases roots: [] git: $git_roots missing: $missing missing_history: $missing_history files: {} excluded_codex_entries: (ls -a $codex | get name | path basename | where {|p| $p not-in $chat_paths and $p !~ '^(state_|goals_|thread_history_)' })}
   temporary {|stage|
+    if $live {
+      let sources = ($chat_paths | each {|p| $codex | path join $p } | where {|p| exists $p } | append $selected)
+      let payload = (path-bytes ($sources | each {|p| [$p] | append (walk $p) } | flatten))
+      require-space (free-bytes $stage) $payload | ignore
+    }
     mkdir ($stage | path join codex) ($stage | path join workspaces)
+    if $live { print -e 'Capturing chat payload and verifying unchanged prefixes' }
     mut m = $manifest
     mut captures = []
     for name in $chat_paths {
@@ -111,7 +132,7 @@ export def export-data [home: string artifact: string version: string --live --s
       if (exists $source) {
         if (kind $source) == symlink { fail $"Unexpected Codex history symlink: ($source)" }
         if $live {
-          let captured = (capture-tree $source ($stage | path join codex $name) ('codex/' + $name))
+          let captured = (capture-tree $source ($stage | path join codex $name) ('codex/' + $name) --preserve-malformed $preserve_malformed)
           $m.files = ($m.files | merge $captured.files)
           $captures = ($captures | append $captured)
         } else { $m.files = ($m.files | merge (snapshot $source ($stage | path join codex $name) ('codex/' + $name))) }
@@ -132,12 +153,15 @@ export def export-data [home: string artifact: string version: string --live --s
     if $live {
       if $schema == null { fail 'Live capture requires a schema adapter' }
       for captured in $captures { verify-tree $captured }
-      validate-live $stage $m $schema
-      $m = ($m | insert capture {mode: live consistency: 'validated-prefixes-and-per-database-snapshots' started_at: $started_at finished_at: ((date now | into int) // 1000000000) history_prefixes: ($captures | each {|c| $c.prefixes } | flatten)})
+      print -e 'Validating captured history relationships and database candidates'
+      validate-live $stage $m $schema --preserve-malformed $preserve_malformed
+      $m = ($m | insert capture {mode: live consistency: 'validated-prefixes-and-per-database-snapshots' started_at: $started_at finished_at: ((date now | into int) // 1000000000) history_prefixes: ($captures | each {|c| $c.prefixes } | flatten) preserved_malformed_rollouts: $preserve_malformed})
     }
-    atomic-json ($stage | path join manifest.json) $m
+    # Staging is disposable; do not flush the active guest's entire filesystem.
+    atomic-json ($stage | path join manifest.json) $m --transient
     # Publish without overwriting an existing artifact. COPYFILE_DISABLE avoids macOS AppleDouble entries.
     let incoming = ($stage | path join archive.tar.gz)
+    if $live { print -e 'Validation passed; compressing the chat archive' }
     with-env {COPYFILE_DISABLE: '1'} { invoke ([tar --format=pax --no-xattrs --no-acls] | append (if $nu.os-info.name == macos { [--no-fflags] } else { [] }) | append [-czf $incoming -C $stage codex workspaces manifest.json]) | ignore }
     invoke [chmod '600' $incoming] | ignore
     invoke [ln $incoming $artifact] | ignore
@@ -146,12 +170,12 @@ export def export-data [home: string artifact: string version: string --live --s
 }
 
 # Bounded retry of a complete attempt. No partial artifact is published.
-export def export-live [home: string artifact: string version: string schema: record --attempts: int = 3 --after-databases: closure] {
+export def export-live [home: string artifact: string version: string schema: record --attempts: int = 3 --after-databases: closure --preserve-malformed: record = {} --chats-only] {
   if $attempts < 1 or $attempts > 10 { fail 'Live capture attempts must be between 1 and 10' }
   if $version != $schema.codex_version { fail $'Live capture requires adapter ($schema.codex_version)' }
   mut errors = []
   for attempt in 1..$attempts {
-    let outcome = try { {result: (export-data $home $artifact $version --live --schema $schema --after-databases $after_databases)} } catch {|e| {error: ($e.rendered? | default $e.msg)} }
+    let outcome = try { {result: (export-data $home $artifact $version --live --schema $schema --after-databases $after_databases --preserve-malformed $preserve_malformed --chats-only=$chats_only)} } catch {|e| {error: ($e.rendered? | default $e.msg)} }
     if 'result' in $outcome { return ($outcome.result | insert attempts $attempt | insert capture_mode live) }
     $errors = ($errors | append $outcome.error)
     if $attempt < $attempts { sleep 100ms }
