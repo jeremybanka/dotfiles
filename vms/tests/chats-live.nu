@@ -33,6 +33,14 @@ def main [--version: string = 'codex-cli 0.154.0'] {
     $original | save --raw -f $f.rollout
     print 'PASS complete-byte prefixes handle partial UTF-8, growth, and rewrites'
 
+    let malformed = ($base | path join malformed.jsonl)
+    "{\"valid\":true}\nPRIVATE-MALFORMED-CONTENT\n" | save --raw $malformed
+    let message = try { capture-prefix $malformed ($base | path join malformed-copy) | ignore; '' } catch {|e| $e.msg }
+    assert ($message =~ 'Invalid JSON record in live history:' and $message =~ 'line 2')
+    assert (not ($message | str contains 'PRIVATE-MALFORMED-CONTENT'))
+    assert (not (exists ($base | path join malformed-copy)))
+    print 'PASS malformed history reports its location without exposing chat content'
+
     # Exercise closed WAL stores as well as the active writer below.
     sql ($f.source | path join .codex state_5.sqlite) 'PRAGMA journal_mode=WAL' | ignore
     let artifact = ($base | path join live.tar.gz)

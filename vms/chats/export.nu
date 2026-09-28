@@ -62,6 +62,7 @@ export def export-data [home: string artifact: string version: string --live --s
   mut roots = []
   mut registered = []
   mut git_roots = {}
+  mut scanned_workspaces = []
   for thread in $threads {
     if (kind $thread.rollout_path) != file or not (under $thread.rollout_path $codex) {
       $missing = ($missing | append $"Missing or external history for ($thread.id): ($thread.rollout_path)")
@@ -69,6 +70,10 @@ export def export-data [home: string artifact: string version: string --live --s
     }
     let cwd = ($thread.cwd? | default '')
     if not ($cwd | str starts-with '/') or (kind $cwd) != dir { $missing = ($missing | append $"Unavailable workspace for ($thread.id): ($cwd)"); continue }
+    # A consolidated guest can have hundreds of chats in the same project.
+    # Discover its Git worktrees and status once per capture attempt.
+    if $cwd in $scanned_workspaces { continue }
+    $scanned_workspaces = ($scanned_workspaces | append $cwd)
     let git = try {
       let top = (invoke [git -C $cwd rev-parse --show-toplevel])
       let common = (invoke [git -C $cwd rev-parse --path-format=absolute --git-common-dir])

@@ -26,6 +26,22 @@ def test [name: string body: closure --desktop] {
 }
 def main [] {
   let tests = [
+    ['shared workspace discovery preserves every chat' {|f|
+      invoke [git -C $f.project init --quiet] | ignore
+      invoke [git -C $f.project -c user.name=Fixture -c user.email=fixture@example.invalid -c commit.gpgsign=false commit --quiet --allow-empty -m Fixture] | ignore
+      let second_id = '00000000-0000-4000-8000-000000000002'
+      let second_rollout = ($f.rollout | path dirname | path join second.jsonl)
+      open --raw $f.rollout | str replace --all $f.tid $second_id | save --raw $second_rollout
+      let state = ($f.source | path join .codex state_5.sqlite)
+      let second = (sql $state 'SELECT * FROM threads' | first | update id $second_id | update rollout_path $second_rollout)
+      sql-script $state (insert-sql threads $second)
+      reexport $f
+      let captured = (inspect-archive $f.artifact)
+      assert equal ($captured.threads.id | sort) ([$f.tid $second_id] | sort)
+      assert equal ($captured.roots | length) 1
+      inject $f | ignore
+      assert equal (sql ($f.target | path join .codex state_5.sqlite) 'SELECT count(*) AS n FROM threads').0.n 2
+    }]
     ['native verification distinguishes retained edits from current history' {|f|
       let root = ($f.source + '/.codex')
       let current = ($f.rollout | path dirname | path join replacement.jsonl)

@@ -171,6 +171,35 @@ schemas, and capture plus restore while another process writes WAL updates and
 appends history. `just codex-backups-test` runs it for both versions, and CI runs
 these tests plus the existing migration regression suite.
 
+### Real-store rehearsal, 2026-09-28
+
+The first rehearsal against the consolidated wayforge guest did **not** pass
+the full backup/restore test. With its Codex processes still running, prefix
+preflight checked 1,622 real rollout streams and found one malformed complete
+record in a legacy puggers history. There were no incomplete trailing bytes.
+The production prefix validator rejects that record without publishing a copy.
+The full export was stopped after this deterministic blocker was established;
+no real-data backup archive or restic snapshot was produced.
+
+A separate diagnostic restored online database snapshots and that exact,
+checksum-verified rollout into a fresh guest running Codex 0.157.0, without
+account credentials. Native `thread/read` and paginated `thread/turns/list`
+returned all 2 indexed turns and 27 indexed items. This proves that the retained
+chat is readable; it does not validate the full archive/import/restic pipeline.
+No model was run, and the source histories were not repaired or rewritten.
+
+The rehearsal also exposed repeated Git inspection for chats sharing a project;
+capture now discovers each workspace once per attempt. Invalid JSON errors now
+identify the file and line without including conversation text.
+
+Before repeating the full test, add an explicit, checksum-pinned preservation
+path for already damaged histories, with native verification and unchanged-byte
+checks. The importer has such an acknowledgement mechanism, but live export
+does not yet support it. Also account for workspace staging space: this source
+had roughly 27 GB of project data and only 30 GB free, before counting history,
+worktrees, and the compressed archive. No production schedule should be enabled
+on the strength of the diagnostic restore alone.
+
 References: [restic backup semantics](https://restic.readthedocs.io/en/stable/040_backup.html),
 [retention](https://restic.readthedocs.io/en/stable/060_forget.html), and
 [Apple LaunchAgent guidance](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html).

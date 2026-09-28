@@ -15,7 +15,12 @@ export def capture-prefix [source: string target: string] {
   let tail = ($bytes | bytes split 0x[0a] | last | bytes length)
   let length = $limit - $tail
   let prefix = if $length == 0 { 0x[] } else { $bytes | bytes at 0..<$length }
-  if $length > 0 { $prefix | decode utf-8 | lines | each { from json --strict } | ignore }
+  if $length > 0 {
+    for entry in ($prefix | decode utf-8 | lines | enumerate) {
+      let valid = try { $entry.item | from json --strict | ignore; true } catch { false }
+      if not $valid { fail $'Invalid JSON record in live history: ($source), line ($entry.index + 1)' }
+    }
+  }
   $prefix | save --raw -f $target
   chmod-mode $target (mode $source)
   {bytes: $length observed_bytes: $limit omitted_partial_bytes: $tail sha256: ($prefix | hash sha256)}
