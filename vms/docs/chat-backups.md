@@ -3,8 +3,11 @@
 The host runs Nushell orchestration and restic 0.19.1. Restic owns encryption,
 compression, deduplication, and repository integrity. The existing portability
 adapter owns capture validation and reconstructing an importable archive.
-The migration files on this branch are reused from `e7cea05`; this does not
-change that adapter's Codex 0.154.0 compatibility boundary.
+The migration files originated in `e7cea05`. Explicit schema adapters now cover
+Codex 0.154.0 and 0.157.0; capture and restore must use the same supported version.
+The clean guest module includes SQLite. Guests provisioned before that dependency
+was added need a normal bootstrap before invoking the backup CLI; the backup
+runner does not reach into arbitrary Nix-store paths to find tools.
 
 ## Current scope
 
@@ -26,12 +29,32 @@ change that adapter's Codex 0.154.0 compatibility boundary.
   Installation copies the runner and its modules into an immutable runtime
   directory, so branch switches and temporary checkout cleanup cannot remove it.
 
-**This is not yet a seamless backup of running Codex tasks.** The guest exporter
-requires stopped Codex processes and workspace writers. It does not disconnect
-or kill them, start stopped guests, or modify migration pause markers. A busy
-or unavailable guest is reported as failed and retains its previous successful
-backup. Check `captured_at` as well as `last_success`: repeatedly backing up an
-old archive does not make its contents fresh.
+Guest backups default to **live capture**. They use SQLite's online
+backup API and copy a bounded, complete-line prefix of each JSONL stream. An
+unfinished last record stays on the source and is deferred to a later backup;
+the manifest records its excluded byte count. Appending tokens can continue.
+No process is stopped, disconnected, or signaled, and stopped guests are not
+started. Set `capture = "quiet"` for the original stopped-writer export mode.
+
+Database connections forbid creation of a missing source and issue only read
+and backup operations. SQLite may maintain its normal WAL sidecar files; no
+application tables are modified by capture.
+
+Live capture retries the entire attempt up to three times if a copied prefix is
+rewritten, tree membership changes, workspace/attachment bytes change, a JSON
+record is malformed, or an indexed byte offset is absent. It validates schema,
+foreign keys, resolvable history relationships, and attachment-index state before
+publishing an archive. Unassociated history rows are rejected rather than
+silently omitted; retained legacy orphan rows may need a separate compatibility
+adapter. Continuously changing workspaces can exhaust the retries. A failed
+capture preserves the previous successful backup.
+
+This is a **validated recovery window**, not an atomic filesystem snapshot.
+Each database has its own snapshot; rollout prefixes can include later complete
+events, and workspace files are independently copied and rechecked. The manifest
+records the window and stream cutoffs. Nothing claims that all project files and
+task metadata represent one application transaction. Check `captured_at` as well
+as `last_success`: backing up an old archive does not make its contents fresh.
 
 Full migration exports retain associated workspaces. They can be large and
 include sensitive project files, including project-local secrets. Codex login
@@ -114,9 +137,11 @@ replaced. Keep the referenced runtime while a job is installed.
 
 ## Before enabling unattended production backups
 
-1. Establish consistent capture across live rollout files and multiple SQLite
-   databases, and prove it with concurrent-writer and restore tests. SQLite's
-   backup API alone does not coordinate all these stores.
+1. Exercise the validated live capture on representative real task stores and
+   verify restored tasks through native Codex in a disposable guest. Synthetic
+   concurrent-writer capture and database/workspace import are covered now;
+   application-level atomicity would require writer cooperation or a filesystem
+   snapshot. SQLite's backup API alone does not coordinate all stores.
 2. Capture local-host task data and the minimum desktop project associations
    needed to restore the sidebar; exclude unrelated app state and credentials.
 3. Add an explicit workspace policy for uncommitted files versus regenerable
@@ -136,7 +161,15 @@ restic repository. It covers unchanged-file deduplication, full repository
 checks, archive reconstruction and import, credential exclusion, no-overwrite
 restore, independent source failures, retention dry-run, overlapping runs,
 wrong passwords, configuration validation, and LaunchAgent plist semantics.
-It neither contacts real guests nor configures a real cloud bucket or agent.
+The local suite neither contacts real guests nor configures a cloud bucket or
+agent. The live suite has also been run with synthetic stores in wayforge's clean
+Linux runtime. It never reads or replaces the guest's real task histories.
+
+`vms/tests/chats-live.nu` covers fixed prefixes, split UTF-8, truncation/rewrite
+refusal, missing indexed boundaries, bounded retry, tree edits, both supported
+schemas, and capture plus restore while another process writes WAL updates and
+appends history. `just codex-backups-test` runs it for both versions, and CI runs
+these tests plus the existing migration regression suite.
 
 References: [restic backup semantics](https://restic.readthedocs.io/en/stable/040_backup.html),
 [retention](https://restic.readthedocs.io/en/stable/060_forget.html), and

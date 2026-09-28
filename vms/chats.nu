@@ -4,6 +4,7 @@ use chats/core.nu *
 use chats/archive.nu *
 use chats/export.nu *
 use chats/import.nu *
+use chats/schema.nu *
 
 const source_dir = path self | path dirname
 
@@ -20,11 +21,11 @@ def remote-worker [instance: string body: closure] {
   } catch {|e| guest $instance [rm -rf $remote] | ignore; error make $e }
 }
 # Snapshot all task histories and their workspaces. The source stays intact.
-def 'main export' [instance: string artifact: path] {
+def 'main export' [instance: string artifact: path --live] {
   let out = (lexical $artifact)
   if (exists $out) { fail $"Artifact exists: ($out)" }
   remote-worker $instance {|remote|
-    guest $instance [/run/current-system/sw/bin/nu --no-config-file ($remote + '/chats.nu') _export ($remote + '/archive.tar.gz')] | ignore
+    guest $instance ([/run/current-system/sw/bin/nu --no-config-file ($remote + '/chats.nu') _export ($remote + '/archive.tar.gz')] | append (if $live { [--live] } else { [] })) | ignore
     # Stage beside output so no-clobber hard-link publication works across disks.
     let temp = (invoke [mktemp -d ($out + '.incoming.XXXXXX')])
     try {
@@ -65,9 +66,13 @@ def 'main import' [instance: string artifact: path ...maps: string --dry-run --a
 def 'main recover' [instance: string] {
   remote-worker $instance {|remote| guest $instance [/run/current-system/sw/bin/nu --no-config-file ($remote + '/chats.nu') _recover] | from json } | to json
 }
-def 'main _export' [artifact: path] {
+def 'main _export' [artifact: path --live] {
   let home = ($env.HOME | path expand)
   with-lock ($home | path join .codex .scrubs-chats.nu-lock) {
+    if $live {
+      let version = (invoke [/run/current-system/sw/bin/codex --version])
+      return (export-live $home (lexical $artifact) $version (schema-for $version))
+    }
     quiet
     let result = (export-data $home (lexical $artifact) (invoke [/run/current-system/sw/bin/codex --version]))
     quiet
@@ -79,7 +84,8 @@ def 'main _import' [artifact: path ...maps: string --dry-run --allow-missing-wor
   with-lock ($home | path join .codex .scrubs-chats.nu-lock) {
     quiet
     let acknowledged = if $preserve_malformed == null { {} } else { open $preserve_malformed }
-    import-data $home (lexical $artifact) $maps (invoke [/run/current-system/sw/bin/codex --version]) (open ($source_dir | path join chats-schema.json)) --dry-run=$dry_run --allow-missing-workspaces=$allow_missing_workspaces --before-install { quiet } --preserve-malformed $acknowledged
+    let version = (invoke [/run/current-system/sw/bin/codex --version])
+    import-data $home (lexical $artifact) $maps $version (schema-for $version) --dry-run=$dry_run --allow-missing-workspaces=$allow_missing_workspaces --before-install { quiet } --preserve-malformed $acknowledged
   } | to json
 }
 def 'main _recover' [] {

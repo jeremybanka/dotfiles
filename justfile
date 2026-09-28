@@ -63,6 +63,8 @@ codex-backups-install-agent config hour="3" minute="0":
 
 codex-backups-test:
     nu ./vms/tests/chat-backups.nu
+    nu ./vms/tests/chats-live.nu
+    nu ./vms/tests/chats-live.nu --version 'codex-cli 0.157.0'
 
 bootstrap instance_name clean_auth_profile="personal" shim_name="" source_image="./vms/images/scrubs.qcow2" tailscale_mode="tailscale-enabled":
     nu ./vms/bootstrap.nu --source-image {{ source_image }} {{ if shim_name != "" { "--shim-name " + shim_name + " " } else { "" } }}--clean-auth-profile {{ clean_auth_profile }} {{ instance_name }} {{ tailscale_mode }}

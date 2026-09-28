@@ -24,6 +24,8 @@ password_command = [
 name = "wayforge"
 kind = "guest"
 instance = "wayforge"
+# Live is the default; quiet retains the original stopped-writer export mode.
+capture = "live"
 
 # For a local rehearsal using a previously verified portability export:
 # [[sources]]

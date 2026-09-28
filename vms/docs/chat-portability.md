@@ -5,11 +5,12 @@ into one inspectable `.tar.gz` file. Import merges that snapshot into another
 guest. Export never deletes the source, and import refuses conflicting files
 or conversation identities.
 
-This is an experimental, version-specific adapter for **Codex 0.154.0**.
+This is an experimental, version-specific adapter for **Codex 0.154.0 and 0.157.0**.
 The original round trip was validated with 0.153.3 on disposable scrubs guests;
 the 0.154.0 adapter additionally preserves the nullable `originator` and
 `daybreak_enabled` task fields. Both source and destination must use the adapter
-version for import. The checked-in `chats-schema.json` contains native schema
+version for import. The checked-in `chats-schema.json` and
+`chats/schema-0.157.json` contain native schema
 definitions and migration checksums, not user data. It lets a completely empty
 destination initialize its databases without running a model. Archive-provided
 SQL is never executed; its table definitions must match the destination schema.
@@ -21,7 +22,7 @@ SQL is never executed; its table definitions must match the destination schema.
 - Bootstrap the destination normally so it has its own clean configuration and
   credentials. Guests use the clean Nushell and SQLite packages included in
   scrubs. The desktop worker uses macOS launchd.
-- Disconnect the affected host in the Codex app and close its CLI sessions.
+- For import and the default quiet export, disconnect the affected host in the Codex app and close its CLI sessions.
   Keep workspace writers stopped until transfer finishes. The worker refuses
   to run while a Codex process is present; it does not interrupt tasks for you.
 - Use the canonical guest `~/.codex`. Custom Codex/database locations are not
@@ -40,6 +41,13 @@ in place.
 just scrubs-chats-export old-guest ./old-guest.chats.tar.gz
 just scrubs-chats-inspect ./old-guest.chats.tar.gz
 ```
+
+For live backup capture, use `nu vms/chats.nu export old-guest ARCHIVE --live`.
+This permits running Codex processes, captures SQLite snapshots and complete
+history prefixes, validates indexed offsets, and retries incompatible changes.
+See [backup consistency and limitations](chat-backups.md) for the recovery-window
+contract. Import still requires a quiet destination. Version 0.157.0 preserves
+creator identities, the renamed task-attachment table, and item lifecycle times.
 
 Export copies the worker into a private temporary location, runs it in clean
 space through `limactl shell`, retrieves the compressed snapshot, checks all

@@ -20,6 +20,7 @@ export def config [path: path] {
     if $s.kind not-in [archive guest] { fail 'Source kind must be archive or guest' }
     if $s.kind == archive and not ($s.path | str starts-with '/') { fail 'Archive paths must be absolute' }
     if $s.kind == guest and $s.instance !~ '^[a-zA-Z0-9][a-zA-Z0-9_-]*$' { fail 'Invalid Lima instance name' }
+    if $s.kind == guest and ($s.capture? | default live) not-in [live quiet] { fail 'Guest capture must be live or quiet' }
   }
   if not ($c.state_dir | str starts-with '/') { fail 'state_dir must be absolute' }
   no-links $c.state_dir
@@ -76,8 +77,9 @@ export def run-backup [c: record] {
         let result = (temporary {|temp|
           let archive = if $source.kind == archive { $source.path } else {
             let out = ($temp | path join source.tar.gz)
-            # The existing clean guest exporter refuses active Codex writers.
-            invoke [$nu.current-exe --no-config-file $migration_cli export $source.instance $out] | ignore
+            # Live mode permits active Codex writers and validates the captured history.
+            let flags = if ($source.capture? | default live) == quiet { [] } else { [--live] }
+            invoke ([$nu.current-exe --no-config-file $migration_cli export $source.instance $out] | append $flags) | ignore
             $out
           }
           let payload = ($temp | path join payload)

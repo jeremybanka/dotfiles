@@ -1,6 +1,6 @@
 # Clean-side migration primitives. No project runtime or credential helpers.
 export const chat_paths = [sessions archived_sessions attachments generated_images visualizations session_index.jsonl history.jsonl]
-export const state_tables = [thread_sections projects project_roots threads thread_dynamic_tools thread_spawn_edges thread_artifacts]
+export const state_tables = [thread_sections projects project_roots threads thread_dynamic_tools thread_spawn_edges thread_artifacts thread_attachments]
 export const goal_tables = [thread_goals thread_goal_continuation_deferrals]
 export const history_tables = [thread_turns thread_items thread_history_projection_state thread_realtime_items]
 
@@ -122,11 +122,14 @@ export def sql-script [db: string script: string] {
   let result = ($script | ^sqlite3 -batch -bail $db | complete)
   if $result.exit_code != 0 { fail $"SQLite failed: ($result.stderr)" }
 }
-export def db-backup [source: string target: string] {
+export def db-backup [source: string target: string --existing] {
   if (exists $target) { fail $"Backup exists: ($target)" }
   # SQLite's backup API includes WAL data and preserves implicit rowids too.
   # JSON quoting matches the CLI's double-quoted argument escapes, with no raw newlines.
-  invoke [sqlite3 -batch -bail $source ('.backup ' + ($target | to json --raw))] | ignore
+  # mode=rw forbids creating a vanished source, while permitting SQLite's WAL
+  # sidecar bookkeeping. A read-only connection can fail on closed WAL stores.
+  let input = if $existing { 'file:' + ($source | url encode) + '?mode=rw' } else { $source }
+  invoke [sqlite3 -batch -bail $input ('.backup ' + ($target | to json --raw))] | ignore
   invoke [chmod '600' $target] | ignore
 }
 export def initialize-db [p: string template: record] {

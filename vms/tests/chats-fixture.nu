@@ -4,10 +4,10 @@ use ../chats/archive.nu *
 use ../chats/import.nu *
 
 export const schema_path = path self | path dirname | path join .. chats-schema.json
-export def fixture [base: string] {
+export def fixture [base: string --schema: record] {
   let source = ($base | path join source)
   let target = ($base | path join destination-with-longer-name)
-  let schema = (open $schema_path)
+  let schema = ($schema | default (open $schema_path))
   for home in [$source $target] {
     mkdir ($home | path join .codex)
     'DO-NOT-EXPORT-CREDENTIAL' | save ($home | path join .codex auth.json)
