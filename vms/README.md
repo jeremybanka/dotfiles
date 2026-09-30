@@ -105,6 +105,20 @@ This pin is temporary. Once `nixpkgs-unstable` supplies Codex 0.159.1 or newer
 with a cached `aarch64-linux` build, return Codex to that input and remove
 `nixpkgs-codex` and its audit metadata.
 
+## Project-local Node commands and completion
+
+Scrubs exposes executables from the nearest ancestor `node_modules/.bin` through
+sandbox launchers. Search stops at the current Git worktree root. Both direct
+commands and their completion requests use the same directory selection; local
+packages cannot shadow clean system commands.
+
+With Nushell 0.116+, register a Comline CLI once using
+`node-completion add break-check`. Registration persists across guest bootstrap
+and follows the package version selected by the current directory. No clean
+shell autoload directory is exposed to dirty package installers. See the
+[Nushell integration documentation](../home/.config/nushell/README.md) for PATH
+precedence, completion registration, limits, and validation commands.
+
 ## Guest-Home Convergence Policy
 
 On repeat bootstrap, scrubs treats guest-home state in three classes:

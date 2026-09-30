@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# Project command proxies must never influence clean sandbox construction.
+export PATH=/run/current-system/sw/bin:/run/wrappers/bin
+
 die() {
   echo "scrubs dirty exec: $*" >&2
   exit 1
@@ -145,11 +148,27 @@ build_helper_closure_cache() {
   mv "${cache_tmp_file}" "${cache_file}"
 }
 
-command_name="$(basename "$0")"
-if [[ "$command_name" == "scrubs-dirty-exec" ]]; then
-  [[ "$#" -gt 0 ]] || die "expected a command name"
+local_node=0
+if [[ "$(basename "$0")" == "dirty-exec.sh" && "${1:-}" == "--local-node" ]]; then
+  local_node=1
+  shift
+  [[ "$#" -gt 0 ]] || die "expected a local command name"
   command_name="$1"
   shift
+  case "$command_name" in
+    git | gh | codex | nu | carapace | mise | scrubs-dirty-exec | node-completion) die "reserved clean command: $command_name" ;;
+  esac
+  [[ "$command_name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._+-]*$ ]] || die "invalid local command name"
+  if [[ -e "/run/current-system/sw/bin/$command_name" || -e "/run/wrappers/bin/$command_name" ]]; then
+    die "reserved clean command: $command_name"
+  fi
+else
+  command_name="$(basename "$0")"
+  if [[ "$command_name" == "scrubs-dirty-exec" ]]; then
+    [[ "$#" -gt 0 ]] || die "expected a command name"
+    command_name="$1"
+    shift
+  fi
 fi
 
 MISE_BIN="/run/current-system/sw/bin/mise"
@@ -198,7 +217,10 @@ helper_closure_cache_root="/tmp/scrubs-helper-closure-cache/${current_user}"
 dirty_cache_root="${HOME}/.local/share/scrubs/dirty-cache"
 bun_install_cache="${dirty_cache_root}/bun/install/cache"
 bun_install_network_concurrency="8"
-node_modules_bin="${project_root}/node_modules/.bin"
+node_modules_bin=""
+if [[ -n "${project_root}" ]]; then
+  node_modules_bin="$(/run/current-system/sw/bin/nu --no-config-file "${HOME}/.config/nushell/local-node-path.nu" "$working_dir" --root "$project_root")"
+fi
 ssl_cert_file="/etc/ssl/certs/ca-bundle.crt"
 nix_ld="/run/current-system/sw/share/nix-ld/lib/ld.so"
 nix_ld_library_path="/run/current-system/sw/share/nix-ld/lib"
@@ -206,8 +228,18 @@ guest_loader=""
 runtime_cache_version="6"
 helper_closure_cache_version="2"
 
-resolved_target="$(resolve_mise_target "${command_name}")"
-[[ -n "${resolved_target}" ]] || die "${command_name} is not configured in mise for this directory"
+if [[ "$local_node" == "1" ]]; then
+  [[ -n "$node_modules_bin" ]] || die "no local node_modules/.bin in this worktree"
+  resolved_target="${node_modules_bin}/${command_name}"
+  [[ -f "$resolved_target" && -x "$resolved_target" ]] || die "local command is missing or not executable: ${command_name}"
+  case "$(readlink -f "$resolved_target")" in
+    "${project_root}/"*) ;;
+    *) die "local command resolves outside this worktree" ;;
+  esac
+else
+  resolved_target="$(resolve_mise_target "${command_name}")"
+  [[ -n "${resolved_target}" ]] || die "${command_name} is not configured in mise for this directory"
+fi
 
 for candidate_loader in /lib/ld-linux-aarch64.so.1 /lib64/ld-linux-x86-64.so.2; do
   if [[ -e "${candidate_loader}" ]]; then
@@ -281,7 +313,7 @@ if [[ ! -x "${fake_home}/.local/share/scrubs-dirty/bin/mise" ]]; then
 fi
 
 sandbox_target="${resolved_target}"
-if [[ "${command_name}" == "bun" ]]; then
+if [[ "${command_name}" == "bun" && "$local_node" == "0" ]]; then
   sandbox_target="/home/${current_user}/.local/share/scrubs-dirty/bin/bun"
 fi
 

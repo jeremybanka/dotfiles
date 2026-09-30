@@ -716,6 +716,8 @@ def main [
     "env.shared.nu"
     "env.linux.nu"
     "kolo.nu"
+    "local-node.nu"
+    "local-node-path.nu"
     "ni-completions.nu"
     "vite-plus.nu"
   ] {

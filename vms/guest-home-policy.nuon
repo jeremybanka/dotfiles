@@ -12,6 +12,8 @@
     ".config/nushell/env.shared.nu"
     ".config/nushell/env.linux.nu"
     ".config/nushell/kolo.nu"
+    ".config/nushell/local-node.nu"
+    ".config/nushell/local-node-path.nu"
     ".config/nushell/ni-completions.nu"
     ".config/nushell/vite-plus.nu"
     ".local/bin/gh"
@@ -39,6 +41,7 @@
     ".bashrc.pre-scrubs"
     ".profile.pre-scrubs"
     ".config/nushell/history.txt"
+    ".config/local-node/completions.nuon"
     ".local/share/scrubs/dirty-cache/bun/install/cache"
     "<project-working-trees>"
   ]
