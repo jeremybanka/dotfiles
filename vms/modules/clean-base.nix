@@ -1,4 +1,4 @@
-{ pkgs, unstablePkgs, codexPackage, ... }:
+{ pkgs, unstablePkgs, ... }:
 {
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
@@ -66,7 +66,7 @@
     helix
     jq
     lazygit
-    codexPackage
+    unstablePkgs.codex
     unstablePkgs.mise
     unstablePkgs.nushell
     openssl
