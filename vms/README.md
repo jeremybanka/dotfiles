@@ -94,6 +94,13 @@ keeping the VM isolation model intact.
 
 It does not assume the cloned project owns a flake.
 
+Codex comes from the separate `nixpkgs-codex` input, pinned to Codex 0.159.1
+for its bundled GPT-6.1 Sol catalog. To upgrade Codex independently, change
+that input's commit in `flake.nix`, then run `nix flake lock` in `vms/` and
+commit both files. The existing NixOS and unstable inputs remain independent.
+Re-bootstrap existing guests to apply the package update; the instance audit
+also compares the Codex input revision.
+
 ## Guest-Home Convergence Policy
 
 On repeat bootstrap, scrubs treats guest-home state in three classes:
