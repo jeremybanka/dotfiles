@@ -81,6 +81,7 @@ def load-target [] {
   )
   let nixpkgs_revision = ($flake_lock.nodes.nixpkgs.locked.rev | default "")
   let nixpkgs_unstable_revision = ($flake_lock.nodes."nixpkgs-unstable".locked.rev | default "")
+  let nixpkgs_codex_revision = ($flake_lock.nodes."nixpkgs-codex".locked.rev | default "")
 
   {
     nixos_release: (normalize-release-channel $nixpkgs_ref)
@@ -90,6 +91,8 @@ def load-target [] {
     nixpkgs_unstable_ref: $nixpkgs_unstable_ref
     nixpkgs_unstable_revision: $nixpkgs_unstable_revision
     nixpkgs_unstable_short_revision: (short-rev $nixpkgs_unstable_revision)
+    nixpkgs_codex_revision: $nixpkgs_codex_revision
+    nixpkgs_codex_short_revision: (short-rev $nixpkgs_codex_revision)
   }
 }
 
@@ -244,6 +247,7 @@ def probe-guest-lock [instance_name: string] {
     ok: true
     nixpkgs_revision: (try { $parsed.nodes.nixpkgs.locked.rev | into string } catch { "" })
     nixpkgs_unstable_revision: (try { $parsed.nodes."nixpkgs-unstable".locked.rev | into string } catch { "" })
+    nixpkgs_codex_revision: (try { $parsed.nodes."nixpkgs-codex".locked.rev | into string } catch { "" })
   }
 }
 
@@ -306,6 +310,11 @@ def probe-instance [instance_name: string] {
   } else {
     ""
   }
+  let nixpkgs_codex_revision = if $trusted_lock {
+    $lock_probe.nixpkgs_codex_revision | default ""
+  } else {
+    ""
+  }
 
   {
     ok: true
@@ -313,6 +322,7 @@ def probe-instance [instance_name: string] {
     nixos_release: (extract-version-channel ($version_probe.nixos_version | default ""))
     nixpkgs_revision: $nixpkgs_revision
     nixpkgs_unstable_revision: $nixpkgs_unstable_revision
+    nixpkgs_codex_revision: $nixpkgs_codex_revision
     metadata_note: (join-notes $metadata_notes)
   }
 }
@@ -329,6 +339,7 @@ def classify-instance [instance: record, target: record] {
       nixos_release: "-"
       nixpkgs: "-"
       nixpkgs_unstable: "-"
+      nixpkgs_codex: "-"
       note: "not running; cannot assess"
       sort_rank: 4
     }
@@ -343,6 +354,7 @@ def classify-instance [instance: record, target: record] {
       nixos_release: "-"
       nixpkgs: "-"
       nixpkgs_unstable: "-"
+      nixpkgs_codex: "-"
       note: $probe.reason
       sort_rank: 3
     }
@@ -353,6 +365,8 @@ def classify-instance [instance: record, target: record] {
   let guest_nixpkgs_unstable_revision = ($probe.nixpkgs_unstable_revision | default "")
   let guest_nixpkgs_short_revision = (short-rev $guest_nixpkgs_revision)
   let guest_nixpkgs_unstable_short_revision = (short-rev $guest_nixpkgs_unstable_revision)
+  let guest_nixpkgs_codex_revision = ($probe.nixpkgs_codex_revision | default "")
+  let guest_nixpkgs_codex_short_revision = (short-rev $guest_nixpkgs_codex_revision)
   let drift_notes = (
     [
       (
@@ -382,6 +396,16 @@ def classify-instance [instance: record, target: record] {
           null
         }
       )
+      (
+        if (
+          $guest_nixpkgs_codex_revision != ""
+          and $guest_nixpkgs_codex_revision != $target.nixpkgs_codex_revision
+        ) {
+          $"nixpkgs-codex: ($guest_nixpkgs_codex_short_revision) -> ($target.nixpkgs_codex_short_revision)"
+        } else {
+          null
+        }
+      )
     ]
     | where {|item| $item != null }
     | each {|item| $item | into string }
@@ -405,6 +429,13 @@ def classify-instance [instance: record, target: record] {
       (
         if $guest_nixpkgs_unstable_short_revision == "" {
           "missing nixpkgs-unstable revision"
+        } else {
+          null
+        }
+      )
+      (
+        if $guest_nixpkgs_codex_revision == "" {
+          "missing nixpkgs-codex revision; re-bootstrap to apply the Codex pin"
         } else {
           null
         }
@@ -464,6 +495,7 @@ def classify-instance [instance: record, target: record] {
     nixos_release: $guest_release
     nixpkgs: $guest_nixpkgs_short_revision
     nixpkgs_unstable: $guest_nixpkgs_unstable_short_revision
+    nixpkgs_codex: $guest_nixpkgs_codex_short_revision
     note: (
       if ($note_parts | is-empty) {
         "up to date"
@@ -497,6 +529,7 @@ def render-table [rows: table, target: record, use_color: bool] {
         nixos_release: (format-version-cell $row.nixos_release $target.nixos_release $use_color)
         nixpkgs: (format-version-cell $row.nixpkgs $target.nixpkgs_short_revision $use_color)
         nixpkgs_unstable: (format-version-cell $row.nixpkgs_unstable $target.nixpkgs_unstable_short_revision $use_color)
+        nixpkgs_codex: (format-version-cell $row.nixpkgs_codex $target.nixpkgs_codex_short_revision $use_color)
         note: $row.note
       }
     }
