@@ -4,7 +4,8 @@ The host runs Nushell orchestration and restic 0.19.1. Restic owns encryption,
 compression, deduplication, and repository integrity. The existing portability
 adapter owns capture validation and reconstructing an importable archive.
 The migration files originated in `e7cea05`. Explicit schema adapters now cover
-Codex 0.154.0 and 0.157.0; capture and restore must use the same supported version.
+Codex 0.154.0, 0.157.0, and 0.159.1; capture and restore must use the same
+supported version.
 The clean guest module includes SQLite. Guests provisioned before that dependency
 was added need a normal bootstrap before invoking the backup CLI; the backup
 runner does not reach into arbitrary Nix-store paths to find tools.
@@ -199,7 +200,7 @@ Linux runtime. It never reads or replaces the guest's real task histories.
 `vms/tests/chats-live.nu` covers fixed prefixes, split UTF-8, truncation/rewrite
 refusal, missing indexed boundaries, bounded retry, tree edits, both supported
 schemas, and capture plus restore while another process writes WAL updates and
-appends history. `just codex-backups-test` runs it for both versions, and CI runs
+appends history. `just codex-backups-test` runs it for all three versions, and CI runs
 these tests plus the existing migration regression suite.
 
 `vms/tests/chats-preservation.nu` additionally exercises checksum-pinned damaged
@@ -252,6 +253,23 @@ restore guest.
 
 This is a local encrypted rehearsal; no private cloud or production schedule is
 enabled.
+
+### Native compatibility rehearsal, 2026-10-01
+
+The 0.159.1 adapter was captured from main's pinned native binary in a disposable
+guest. State migration 58 adds three archive-sort indexes; the goals and history
+schemas and their migration checksums match 0.157.0. The complete native schema
+is stored in `chats/schema-0.159.json`, including the new migration checksum.
+
+The opt-in `tests/chats-native-roundtrip.nu` test initializes isolated source
+stores with native Codex, seeds canonical paginated history and a legacy archived
+chat, and materializes the paginated items through native resume. It exercises
+live chat-only capture, encrypted restic backup and full data check, archive
+reconstruction, import into blank stores, and native reads across pagination.
+The destination migration checksums must match the adapter. No account
+credentials or model requests are needed.
+The 0.159.1 rehearsal passed for all three chats, 105 turns, and 210 items,
+including a page boundary after 100 turns, a saved fork, and the archived chat.
 
 References: [restic backup semantics](https://restic.readthedocs.io/en/stable/040_backup.html),
 [retention](https://restic.readthedocs.io/en/stable/060_forget.html), and

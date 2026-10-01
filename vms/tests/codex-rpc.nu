@@ -52,10 +52,15 @@ export def rpc [command: list requests: list --timeout: duration = 60sec --clean
   }
 }
 
-export def guest-rpc [instance: string requests: list --timeout: duration = 120sec] {
+export def guest-rpc [instance: string requests: list --timeout: duration = 120sec --codex-home: string] {
   let pidfile = '/tmp/scrubs-rpc-' + (random uuid) + '.pid'
   let cleanup = {
     invoke [limactl shell $instance -- sh -c 'if [ -f "$1" ]; then read -r pid < "$1"; rm -f "$1"; kill -TERM "$pid" 2>/dev/null || true; fi' scrubs-stop $pidfile] | ignore
   }
-  rpc [limactl shell $instance -- sh -c 'umask 077; echo $$ > "$1"; shift; exec "$@"' scrubs-server $pidfile /run/current-system/sw/bin/codex -c mcp_servers.playwright.enabled=false -c mcp_servers.playwright.required=false app-server] $requests --timeout $timeout --cleanup $cleanup
+  let environment = if $codex_home == null { [] } else { [/run/current-system/sw/bin/env ('CODEX_HOME=' + $codex_home)] }
+  # A blank isolated config must not get an incomplete MCP table from the
+  # disable overrides. Supply its clean command; it remains disabled.
+  let transport = if $codex_home == null { [] } else { [-c 'mcp_servers.playwright.command="/run/current-system/sw/bin/codex-playwright-mcp"'] }
+  let command = [limactl shell $instance -- sh -c 'umask 077; echo $$ > "$1"; shift; exec "$@"' scrubs-server $pidfile] | append $environment | append [/run/current-system/sw/bin/codex] | append $transport | append [-c mcp_servers.playwright.enabled=false -c mcp_servers.playwright.required=false app-server]
+  rpc $command $requests --timeout $timeout --cleanup $cleanup
 }

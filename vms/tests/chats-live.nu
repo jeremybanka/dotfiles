@@ -15,7 +15,7 @@ def rejects [body: closure pattern: string] {
 def main [--version: string = 'codex-cli 0.154.0'] {
   temporary {|base|
     let f = (fixture $base --schema (schema-for $version))
-    if $version == 'codex-cli 0.157.0' {
+    if $version in ['codex-cli 0.157.0' 'codex-cli 0.159.1'] {
       sql-script ($f.source | path join .codex state_5.sqlite) $"UPDATE threads SET creator_user_id='synthetic-user',creator_account_id='synthetic-account'; INSERT INTO thread_attachments VALUES \('attachment', '($f.tid)', 'file', 'fixture', '{}', 1\);"
     }
     let original = (open --raw $f.rollout | into binary)
@@ -49,8 +49,15 @@ def main [--version: string = 'codex-cli 0.154.0'] {
     let m = (unpack $artifact ($base | path join unpacked))
     assert equal $m.capture.mode live
     assert equal $m.files.'codex/sessions/fixture.jsonl'.sha256 ($original | hash sha256)
+    if $version == 'codex-cli 0.159.1' {
+      let older = (schema-for 'codex-cli 0.157.0')
+      rejects { import-data $f.target $artifact [] $older.codex_version $older } 'requires.*both hosts'
+      assert equal (sql ($f.target | path join .codex state_5.sqlite) 'SELECT count(*) AS n FROM threads').0.n 0
+      rejects { schema-for 'codex-cli 0.159.0' } 'Unsupported Codex version'
+      print 'PASS version-specific imports refuse mixed versions without changing the destination'
+    }
     inject ($f | update artifact $artifact) | ignore
-    if $version == 'codex-cli 0.157.0' {
+    if $version in ['codex-cli 0.157.0' 'codex-cli 0.159.1'] {
       assert equal (sql ($f.target | path join .codex state_5.sqlite) 'SELECT creator_user_id FROM threads').0.creator_user_id synthetic-user
       assert equal (sql ($f.target | path join .codex state_5.sqlite) 'SELECT id FROM thread_attachments').0.id attachment
     }

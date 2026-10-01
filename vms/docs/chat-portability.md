@@ -5,12 +5,13 @@ into one inspectable `.tar.gz` file. Import merges that snapshot into another
 guest. Export never deletes the source, and import refuses conflicting files
 or conversation identities.
 
-This is an experimental, version-specific adapter for **Codex 0.154.0 and 0.157.0**.
+This is an experimental, version-specific adapter for **Codex 0.154.0, 0.157.0,
+and 0.159.1**.
 The original round trip was validated with 0.153.3 on disposable scrubs guests;
 the 0.154.0 adapter additionally preserves the nullable `originator` and
 `daybreak_enabled` task fields. Both source and destination must use the adapter
-version for import. The checked-in `chats-schema.json` and
-`chats/schema-0.157.json` contain native schema
+version for import. The checked-in `chats-schema.json`,
+`chats/schema-0.157.json`, and `chats/schema-0.159.json` contain native schema
 definitions and migration checksums, not user data. It lets a completely empty
 destination initialize its databases without running a model. Archive-provided
 SQL is never executed; its table definitions must match the destination schema.
@@ -48,6 +49,9 @@ history prefixes, validates indexed offsets, and retries incompatible changes.
 See [backup consistency and limitations](chat-backups.md) for the recovery-window
 contract. Import still requires a quiet destination. Version 0.157.0 preserves
 creator identities, the renamed task-attachment table, and item lifecycle times.
+Version 0.159.1 retains those fields and initializes migration 58's archive-sort
+indexes. Version matching remains exact; an older archive needs its matching
+adapter/runtime rather than an implicit database upgrade during import.
 
 The backup runner additionally passes `--chats-only`: this keeps task histories,
 metadata, attachments, and working-directory references, while omitting all
@@ -347,3 +351,16 @@ Pass the same `OLD=NEW` options used during import. This verifies stored
 IDs, names, project paths, history paths, fork ancestry, and readable turns.
 Validate a new Codex version in disposable guests before extending the
 schema adapter; changing the version string alone is insufficient.
+
+For a repeatable native compatibility check in a disposable guest running
+0.159.1, with the example repository available separately at `/home/jem/n64-2048`:
+
+```sh
+nu --no-config-file vms/tests/chats-native-roundtrip.nu DISPOSABLE_GUEST
+```
+
+The test uses isolated temporary homes and removes them on completion or
+failure. It restores 103 paginated turns, a saved fork, and an archived legacy
+chat through an encrypted local repository, then verifies native reads and
+migration checksums. The verifier's `--destination-home ABSOLUTE_GUEST_HOME` option selects
+an isolated destination home for these tests.

@@ -79,17 +79,17 @@ export def check-retained-history [expected: record turns: list history: record 
   (check-indexed-history $tid $turns $selected) | insert retained_superseded_turns ($old | where {|id| $id not-in $current_ids })
 }
 
-export def verify-records [instance: string manifest: record maps: list ancestry: list --checkpoint: path --rollout-root: path] {
+export def verify-records [instance: string manifest: record maps: list ancestry: list --checkpoint: path --rollout-root: path --codex-home: string] {
   # Verification needs identities, not another copy of every tool-result body.
   let saved = ($manifest.databases | get 'thread_history_1.sqlite')
   let history = {thread_turns: {rows: ($saved.thread_turns.rows | select thread_id turn_id)} thread_items: {rows: ($saved.thread_items.rows | select thread_id turn_id item_id rollout_ordinal)}}
   let proof = ($manifest | select source_home files)
   mut verified = []
   for batch in ($manifest.threads | chunks 10) {
-    let metadata = (guest-rpc $instance ($batch | each {|t| {method: 'thread/read' params: {threadId: $t.id includeTurns: true}} }) --timeout 120sec | get thread)
+    let metadata = (guest-rpc $instance ($batch | each {|t| {method: 'thread/read' params: {threadId: $t.id includeTurns: true}} }) --timeout 120sec --codex-home $codex_home | get thread)
     let paginated = ($metadata | where historyMode == paginated)
     let pages = if ($paginated | is-empty) { [] } else {
-      guest-rpc $instance ($paginated | each {|t| {method: 'thread/turns/list' params: {threadId: $t.id itemsView: full limit: 100 sortDirection: asc}} }) --timeout 120sec
+      guest-rpc $instance ($paginated | each {|t| {method: 'thread/turns/list' params: {threadId: $t.id itemsView: full limit: 100 sortDirection: asc}} }) --timeout 120sec --codex-home $codex_home
     }
     for entry in ($batch | enumerate) {
       let expected = $entry.item
@@ -108,7 +108,7 @@ export def verify-records [instance: string manifest: record maps: list ancestry
           let cursor = $page.nextCursor
           if $cursor in $cursors { fail $'Repeated history cursor: ($expected.id)' }
           $cursors = ($cursors | append $cursor)
-          $page = (guest-rpc $instance [{method: 'thread/turns/list' params: {threadId: $expected.id itemsView: full limit: 100 sortDirection: asc cursor: $cursor}}] --timeout 120sec | first)
+          $page = (guest-rpc $instance [{method: 'thread/turns/list' params: {threadId: $expected.id itemsView: full limit: 100 sortDirection: asc cursor: $cursor}}] --timeout 120sec --codex-home $codex_home | first)
           $turns = ($turns | append $page.data)
         }
       }
