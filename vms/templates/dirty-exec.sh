@@ -156,7 +156,7 @@ if [[ "$(basename "$0")" == "dirty-exec.sh" && "${1:-}" == "--local-node" ]]; th
   command_name="$1"
   shift
   case "$command_name" in
-    git | gh | codex | nu | carapace | mise | scrubs-dirty-exec | node-completion) die "reserved clean command: $command_name" ;;
+    git | gh | codex | nu | carapace | mise | scrubs-dirty-exec | comline-completion) die "reserved clean command: $command_name" ;;
   esac
   [[ "$command_name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._+-]*$ ]] || die "invalid local command name"
   if [[ -e "/run/current-system/sw/bin/$command_name" || -e "/run/wrappers/bin/$command_name" ]]; then

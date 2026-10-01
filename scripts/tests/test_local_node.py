@@ -49,7 +49,7 @@ class LocalNodeTests(unittest.TestCase):
         return tool
 
     def register(self, name='demo'):
-        directory = self.home / '.config/local-node'
+        directory = self.home / '.config/comline'
         directory.mkdir(parents=True, exist_ok=True)
         # JSON is a subset of NUON for these simple values.
         (directory / 'completions.nuon').write_text(json.dumps([name]))
@@ -93,10 +93,10 @@ local-node-refresh
         self.assertIsNone(json.loads(self.run_nu(code)))
 
     def test_registration_persists_and_removes(self):
-        self.run_nu('node-completion add demo')
-        self.assertEqual(json.loads(self.run_nu('node-completion list | to json')), ['demo'])
-        self.run_nu('node-completion remove demo')
-        self.assertEqual(json.loads(self.run_nu('node-completion list | to json')), [])
+        self.run_nu('comline-completion add demo')
+        self.assertEqual(json.loads(self.run_nu('comline-completion list | to json')), ['demo'])
+        self.run_nu('comline-completion remove demo')
+        self.assertEqual(json.loads(self.run_nu('comline-completion list | to json')), [])
 
     def test_completion_selects_current_local_version(self):
         self.register()

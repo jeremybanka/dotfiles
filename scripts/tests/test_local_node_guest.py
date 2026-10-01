@@ -30,7 +30,7 @@ fixture = home + '/.cache/' + run_id
 module = (ROOT / 'home/.config/nushell/local-node.nu').read_text()
 module = module.replace('scrubs dirty-exec.sh', f'scrubs {run_id}/dirty-exec.sh')
 module = module.replace('scrubs/dirty-exec.sh', f'scrubs/{run_id}/dirty-exec.sh')
-module = module.replace('.config local-node completions.nuon', f'.config {run_id} completions.nuon')
+module = module.replace('.config comline completions.nuon', f'.config {run_id} completions.nuon')
 launcher = (ROOT / 'vms/templates/dirty-exec.sh').read_text().replace(
     '${HOME}/.config/nushell/local-node-path.nu', stage + '/local-node-path.nu')
 probe = '''#!/usr/bin/env node
@@ -68,7 +68,7 @@ def main [fixture: string] {
     assert (not $result.cleanGh)
     assert (not $result.cleanConfig)
     assert ($result.path | str starts-with ($fixture | path join node_modules .bin))
-    node-completion add probe
+    comline-completion add probe
     let elapsed = (timeit {
         let candidates = (local-node-candidates probe [--])
         assert equal $candidates.0.value '--local'
@@ -98,7 +98,7 @@ def main [fixture: string] {
     let consumer = ($env.HOME | path join lasertag)
     if ($consumer | path join node_modules .bin break-check | path exists) {
         cd $consumer
-        node-completion add break-check
+        comline-completion add break-check
         local-node-refresh
         assert (which break-check | is-not-empty)
         let candidates = (local-node-candidates break-check [--])

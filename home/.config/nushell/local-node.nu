@@ -1,7 +1,7 @@
 use ./local-node-path.nu [nearest-node-bin node-bin-search-paths]
 
 # These names retain their clean-space meaning even if a dependency exports them.
-const reserved = [git gh codex nu carapace mise scrubs-dirty-exec node-completion]
+const reserved = [git gh codex nu carapace mise scrubs-dirty-exec comline-completion]
 
 def scrubs-launcher [] {
     $env.HOME | path join .local libexec scrubs dirty-exec.sh
@@ -12,7 +12,7 @@ def is-scrubs [] {
 }
 
 def registry-path [] {
-    $env.HOME | path join .config local-node completions.nuon
+    $env.HOME | path join .config comline completions.nuon
 }
 
 def registered-commands [] {
@@ -35,7 +35,7 @@ def check-name [name: string] {
 }
 
 # Registration is clean-owned data. Never source scripts supplied by a package.
-export def "node-completion add" [name: string] {
+export def "comline-completion add" [name: string] {
     check-name $name
     let file = (registry-path)
     mkdir ($file | path dirname)
@@ -45,7 +45,7 @@ export def "node-completion add" [name: string] {
     print $"Registered Comline completion for ($name)."
 }
 
-export def "node-completion remove" [name: string] {
+export def "comline-completion remove" [name: string] {
     let file = (registry-path)
     if ($file | path exists) {
         let temporary = $"($file).(random uuid)"
@@ -54,7 +54,7 @@ export def "node-completion remove" [name: string] {
     }
 }
 
-export def "node-completion list" [] { registered-commands }
+export def "comline-completion list" [] { registered-commands }
 
 export def --env local-node-refresh [] {
     let previous = ($env.LOCAL_NODE_PATH? | default "")

@@ -31,18 +31,18 @@ Install a Comline-based CLI such as `break-check` as a normal project dependency
 Then register its native Nushell completion protocol once:
 
 ```nu
-node-completion add break-check
+comline-completion add break-check
 ```
 
 Registration takes effect immediately and persists in
-`~/.config/local-node/completions.nuon`. It records command names, not package
+`~/.config/comline/completions.nuon`. It records command names, not package
 paths, options, or executable shell code. The same registration follows local
 versions as you change directories. Package upgrades update candidates without
 reinstalling an adapter, as long as the Comline protocol remains compatible.
 
 ```nu
-node-completion list
-node-completion remove break-check
+comline-completion list
+comline-completion remove break-check
 ```
 
 Command-name completion uses PATH. Argument completion for registered local

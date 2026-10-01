@@ -41,7 +41,7 @@
     ".bashrc.pre-scrubs"
     ".profile.pre-scrubs"
     ".config/nushell/history.txt"
-    ".config/local-node/completions.nuon"
+    ".config/comline/completions.nuon"
     ".local/share/scrubs/dirty-cache/bun/install/cache"
     "<project-working-trees>"
   ]
