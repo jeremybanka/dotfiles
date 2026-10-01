@@ -10,3 +10,7 @@ const host_config = if $host_os == "macos" {
 }
 
 source $host_config
+
+# Register after platform integration so mise updates PATH before our hook.
+use ~/.config/nushell/local-node.nu *
+local-node-init

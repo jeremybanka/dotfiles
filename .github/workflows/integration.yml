@@ -37,6 +37,8 @@ jobs:
           github_token: ${{ github.token }}
       - run: mise exec github:nushell/nushell@0.114.1 -- just scrubs-validation-static
       - run: just scrubs-image-export-test
+      - name: Local Node commands and native completion (Nu 0.116+)
+        run: python3 -B -m unittest discover -s scripts/tests -p 'test_local_node.py' -v
 
   Test:
     runs-on: macos-26
