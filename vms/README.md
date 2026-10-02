@@ -94,17 +94,6 @@ keeping the VM isolation model intact.
 
 It does not assume the cloned project owns a flake.
 
-Codex comes from the separate `nixpkgs-codex` input, pinned to Codex 0.159.1
-for its bundled GPT-6.1 Sol catalog. To upgrade Codex independently, change
-that input's commit in `flake.nix`, then run `nix flake lock` in `vms/` and
-commit both files. The existing NixOS and unstable inputs remain independent.
-Re-bootstrap existing guests to apply the package update; the instance audit
-also compares the Codex input revision.
-
-This pin is temporary. Once `nixpkgs-unstable` supplies Codex 0.159.1 or newer
-with a cached `aarch64-linux` build, return Codex to that input and remove
-`nixpkgs-codex` and its audit metadata.
-
 ## Project-local Node commands and completion
 
 Scrubs exposes executables from the nearest ancestor `node_modules/.bin` through
