@@ -58,7 +58,7 @@ scrubs_prune_pnpm_stores() {
         registered_count=$((registered_count + 1))
         registered_project="$(readlink -f "$registry")" || registered_project=""
         case "$registered_project" in
-          "$project_dir"|"$project_dir"/*) ;;
+          "$project_dir" | "$project_dir"/*) ;;
           *) unsafe_store=1 ;;
         esac
       done
@@ -81,7 +81,7 @@ scrubs_prune_pnpm_stores() {
     -name node_modules -o -name .pnpm-store -o -name .git -o \
     -name .local -o -name .cache -o -name .bun -o -name .rustup -o \
     -name target \
-  \) -prune -print0)
+    \) -prune -print0)
 
   # A shared/global store can register projects outside the dirty sandbox's
   # view. Pruning it there could garbage-collect a live global virtual store.
