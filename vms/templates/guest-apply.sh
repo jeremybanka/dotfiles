@@ -102,6 +102,8 @@ for nushell_file in \
   env.shared.nu \
   env.linux.nu \
   kolo.nu \
+  local-node.nu \
+  local-node-path.nu \
   ni-completions.nu \
   vite-plus.nu; do
   converge_file "$payload/home/.config/nushell/$nushell_file" "$HOME/.config/nushell/$nushell_file"
