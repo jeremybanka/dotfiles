@@ -34,6 +34,19 @@ issue(id="0008" status="open")
     criterion If a prototype is pursued, it is validated against at least one real package-manager workflow that currently tends to create repo-local state such as `.pnpm-store`.
     criterion Any chosen path keeps tool-specific policy out of neutral scrubs base unless a generic habitat design proves insufficient.
   review-items
+    item(status="covered").
+      October 5, 2026: a Wayforge audit found 21 pnpm stores with roughly
+      7.1 GiB of identical content on distinct inodes. Modern pnpm also uses
+      `node_modules/.pnpm-store` when no writable ancestor accepts a hard
+      link. Cleanup now discovers root and nested stores and explicitly
+      prunes each one through its project's dirty mise runtime.
+    item(status="covered").
+      A shared writable pnpm store is not a transparent habitat fix: pnpm
+      treats all store writers as mutually trusted, and a separate bind
+      mount still prevents workspace hard links. Global-store pruning also
+      needs a complete registered-project view, which a per-project dirty
+      sandbox deliberately lacks. Keep the global store and project trust
+      boundaries intact while the generic habitat design remains open.
     item(status="open").
       Decide whether the right primitive is an overlay-backed workspace,
       another synthetic writable root shape, or a deliberate decision to keep

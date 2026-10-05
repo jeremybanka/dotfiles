@@ -1,5 +1,7 @@
 #!/usr/bin/env nu
 
+const pnpm_cleanup_script = path self templates/prune-pnpm-stores.sh
+
 def timestamp [] {
   date now | format date "%Y-%m-%dT%H:%M:%S%z"
 }
@@ -204,36 +206,10 @@ def build-guest-script [dry_run: bool] {
     '  log INFO "mise not found; skipping mise prune"'
     'fi'
     ''
-    'if have pnpm; then'
-    '  log INFO "Found pnpm; scanning for local pnpm stores"'
-    '  local_store_dirs="$(find "$HOME" -maxdepth 4 -type d -name .pnpm-store 2>/dev/null | sort)"'
-    ''
-    '  if [ -z "$local_store_dirs" ]; then'
-    '    log INFO "No local .pnpm-store directories found"'
-    '  else'
-    '    printf "%s\n" "$local_store_dirs" | while IFS= read -r store_dir; do'
-    '      [ -n "$store_dir" ] || continue'
-    '      project_dir="$(dirname "$store_dir")"'
-    '      size="$(size_of "$store_dir")"'
-    ''
-    '      if [ ! -f "$project_dir/package.json" ]; then'
-    '        log WARN "Skipping $store_dir because $project_dir does not look like a package root"'
-    '        continue'
-    '      fi'
-    ''
-    '      log INFO "Pruning pnpm store for $project_dir ($size)"'
-    '      if [ "$FREE_DRY_RUN" = "1" ]; then'
-    '        log INFO "dry-run: would change into $project_dir and run pnpm store prune"'
-    '      else'
-    '        ('
-    '          cd "$project_dir"'
-    '          pnpm store prune'
-    '        )'
-    '      fi'
-    '    done'
-    '  fi'
-    'else'
-    '  log INFO "pnpm not found; skipping pnpm cleanup"'
+    (open --raw $pnpm_cleanup_script)
+    'if ! scrubs_prune_pnpm_stores; then'
+    '  log ERROR "pnpm store cleanup failed; stopping before further cleanup"'
+    '  exit 1'
     'fi'
     ''
     'if have nix-collect-garbage; then'
@@ -293,7 +269,7 @@ def main [
   run-command "Guest root filesystem usage before cleanup" { ^limactl shell $instance_name -- df -h / }
 
   let guest_script = (build-guest-script $dry_run)
-  run-command $"Guest cleanup for ($instance_name)" { ^limactl shell $instance_name -- sh -lc $guest_script }
+  run-command $"Guest cleanup for ($instance_name)" { ^limactl shell $instance_name -- /run/current-system/sw/bin/bash -lc $guest_script }
 
   run-command "Host disk allocation after cleanup" { ^du -sh $disk_path }
   run-command "Host disk logical size after cleanup" { ^ls -lh $disk_path }

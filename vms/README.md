@@ -138,6 +138,50 @@ This split is deliberate. Bootstrap should remove retired scrubs-owned
 artifacts from the exact managed surface, but it should not wipe unrelated
 guest-local work just because a guest is re-bootstrapped in place.
 
+## Guest package-store cleanup
+
+Run `nu ./vms/free.nu <instance> --dry-run` to inspect cleanup, then omit
+`--dry-run` to apply it. The pnpm step discovers both `<project>/.pnpm-store`
+and `<project>/node_modules/.pnpm-store`, including stores in deeply nested
+worktrees. It does not descend into installed dependencies or tool caches.
+
+Each store is pruned from its package root through `scrubs-dirty-exec pnpm`,
+using that project's mise-managed version and an explicit `--store-dir`.
+This matters when an older root store and a newer nested store coexist:
+changing directory alone can select the newer store and leave the old cache
+untouched. pnpm removes unreferenced cache files while installed hard links
+remain usable; a later install may need to fetch pruned packages again.
+
+Cleanup skips pnpm pruning while dirty-space processes are active. It also
+skips symlinked stores and store-version directories, orphan stores without a
+package manifest, and global virtual stores whose registry includes projects
+outside the current worktree. A pnpm
+failure is reported and makes `free.nu` fail instead of reporting success.
+Dry-run never invokes pnpm. The global `~/.local/share/pnpm/store` remains
+intact: its project registry can refer to projects outside any one dirty
+sandbox, and pruning its global virtual store with an incomplete project
+view can remove live entries.
+
+The current dirty habitat intentionally retains per-project pnpm stores.
+A shared writable cache introduces trust between the projects that use it,
+and a separate cache bind mount does not enable hard links across the
+workspace mount. The generic same-mount habitat design is tracked in
+`tasks/open/0008-design-same-mount-dirty-workspace-habitat.pug`; this cleanup
+change does not expose the real home, clean credentials, or global package
+stores to dirty commands.
+
+Regression checks:
+
+```sh
+python3 -B -m unittest discover -s vms/tests -p 'test_pnpm_cleanup.py'
+```
+
+`tests/test_pnpm_cleanup_guest.sh` additionally tests offline installation and
+pruning through a real bootstrapped guest sandbox. It requires already installed
+mise versions pnpm 12.8.1 and Node 26.10.0, creates an isolated temporary Git
+project, and verifies exact store selection, usable installed dependencies,
+and continued isolation from clean home data.
+
 ## Bootstrap Model
 
 `bootstrap.nu` no longer depends on `darwin.linux-builder`.
