@@ -1,7 +1,7 @@
 [tools]
 "github:terror/just-lsp" = "0.10.0"
 "github:nushell/nushell" = "0.116.0"
-delta = "0.19.2"
+delta = "0.20.0"
 dprint = "0.60.1"
 just = "1.58.0"
 ripgrep = "15.2.0"
