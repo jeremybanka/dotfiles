@@ -8,10 +8,17 @@ let
     e2fsprogs
     util-linux
   ];
-  buildEnv = {
+  toolchainSuffix = builtins.replaceStrings [ "-" ] [ "_" ] pkgs.stdenv.hostPlatform.config;
+  buildEnv = rec {
     CPPFLAGS = lib.concatStringsSep " " (map (pkg: "-I${lib.getDev pkg}/include") buildDeps);
     LDFLAGS = lib.concatStringsSep " " (map (pkg: "-L${lib.getLib pkg}/lib") buildDeps);
-    PKG_CONFIG_PATH = lib.makeSearchPathOutput "dev" "lib/pkgconfig" buildDeps;
+    # Ordinary compiler invocations need the same paths as configure scripts.
+    "NIX_CFLAGS_COMPILE_${toolchainSuffix}" = CPPFLAGS;
+    "NIX_LDFLAGS_${toolchainSuffix}" = LDFLAGS;
+    PKG_CONFIG_PATH = lib.concatStringsSep ":" [
+      (lib.makeSearchPathOutput "dev" "lib/pkgconfig" buildDeps)
+      (lib.makeSearchPathOutput "dev" "share/pkgconfig" buildDeps)
+    ];
     LIBS = "-lncurses";
   };
 in
