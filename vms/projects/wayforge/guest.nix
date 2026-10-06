@@ -5,12 +5,10 @@ in
 {
   imports = [
     ../../modules/clean-postgres.nix
+    ../../modules/dirty-postgres-build.nix
   ];
 
   environment.systemPackages = with pkgs; [
-    gcc
-    gnumake
-    pkg-config
     python3
     (writeShellScriptBin "python" ''
       exec ${python3}/bin/python3 "$@"
