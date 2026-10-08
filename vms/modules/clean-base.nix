@@ -71,6 +71,8 @@
     unstablePkgs.nushell
     openssl
     ripgrep
+    # Clean-side chat export/restore uses SQLite's online backup API.
+    sqlite
     tokei
     tmux
     wget
