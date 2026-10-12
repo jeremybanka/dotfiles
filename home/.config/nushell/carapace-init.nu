@@ -10,18 +10,8 @@ let carapace_completer = {|place|
     CARAPACE_SHELL_FUNCTIONS: (help commands | where category == "" | get name | each { split row " " | first } | uniq | str join "\n")
   }
 
-  let spans = if ($place | describe) == "list<string>" {
-    # Nu < 0.116 passes positional spans, regardless of the parameter name.
-    let expanded_alias = (scope aliases | where name == $place.0 | $in.0?.expansion?)
-    if $expanded_alias != null {
-      $place | skip 1 | prepend ($expanded_alias | split row " " | take 1)
-    } else {
-      $place
-    }
-  } else {
-    # Nu 0.116+ supplies a place record with aliases already expanded.
-    $place.command
-  }
+  # Nushell supplies the command's tokens with aliases already expanded.
+  let spans = $place.command
 
   carapace $spans.0 nushell ...$spans
   | from json
