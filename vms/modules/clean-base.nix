@@ -1,4 +1,4 @@
-{ pkgs, unstablePkgs, ... }:
+{ pkgs, unstablePkgs, guestNushell, ... }:
 {
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
@@ -68,7 +68,7 @@
     lazygit
     unstablePkgs.codex
     unstablePkgs.mise
-    unstablePkgs.nushell
+    guestNushell
     openssl
     ripgrep
     tokei
