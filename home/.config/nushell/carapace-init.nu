@@ -4,21 +4,14 @@ def --env get-env [name] { $env | get $name }
 def --env set-env [name, value] { load-env { $name: $value } }
 def --env unset-env [name] { hide-env $name }
 
-let carapace_completer = {|spans|
+let carapace_completer = {|place|
   load-env {
     CARAPACE_SHELL_BUILTINS: (help commands | where category != "" | get name | each { split row " " | first } | uniq | str join "\n")
     CARAPACE_SHELL_FUNCTIONS: (help commands | where category == "" | get name | each { split row " " | first } | uniq | str join "\n")
   }
 
-  # If the current command is an alias, get its expansion.
-  let expanded_alias = (scope aliases | where name == $spans.0 | $in.0?.expansion?)
-
-  let spans = (if $expanded_alias != null {
-    # Put the first word of the expanded alias first in the span.
-    $spans | skip 1 | prepend ($expanded_alias | split row " " | take 1)
-  } else {
-    $spans | skip 1 | prepend ($spans.0)
-  })
+  # Nushell supplies the command's tokens with aliases already expanded.
+  let spans = $place.command
 
   carapace $spans.0 nushell ...$spans
   | from json
