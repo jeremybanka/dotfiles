@@ -56,6 +56,20 @@ The important caveats today are:
 - the current sealed-secret design is strong against the dirty-runtime
   boundary, but it is not meant to survive a full clean-guest compromise
 
+Codex and mise temporarily use the separate `nixpkgs-cached-tools` input at
+`7a6522c868711d06e3a520bbcdfafe9806f4337f`: Codex **0.163.0** and mise
+**2026.10.3**, with verified `aarch64-linux` binaries on `cache.nixos.org`.
+The normal unstable input remains available for other tools and Renovate updates.
+The published channel's previous ARM recipes were cancelled on Hydra, leaving
+guests attempting builds they cannot reliably complete.
+
+A recurring check watches for a newer cached version of each package on the
+published `nixpkgs-unstable` channel. Remove that package's `specialArgs` override
+only after evaluating its exact output and verifying its cached runtime closure
+and a build dry run; never compile these packages to check availability. Remove
+`nixpkgs-cached-tools` and its lock node once both overrides have been retired.
+Until then, ordinary flake updates must retain this fixed revision.
+
 ## Why This Shape
 
 We explored two broad approaches:
