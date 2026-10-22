@@ -94,6 +94,9 @@
     # Keep this clean-side compatibility path narrow; dirty space builds its
     # own /usr and already has an explicitly allowed uname helper.
     "L+ /usr/bin/uname - - - - /run/current-system/sw/bin/uname"
+    # Codex Desktop streams remote files through an absolute /bin/cat.
+    # Dirty space supplies its own /bin from the allowed helper set.
+    "L+ /bin/cat - - - - /run/current-system/sw/bin/cat"
   ];
 
   system.activationScripts.limaCompatBash = ''
