@@ -784,6 +784,7 @@ longer needed.
 Keep for now:
 
 - `services.cloud-init.enable = true` in [modules/clean-base.nix](/Users/jem/dotfiles/vms/modules/clean-base.nix)
+- the clean-side `/bin/cat` compatibility link in [modules/clean-base.nix](/Users/jem/dotfiles/vms/modules/clean-base.nix): Codex Desktop streams remote file previews through this absolute path; dirty space retains its own helper directory
 - `services.envfs.enable` plus the `/bin/bash` fallback in [seed/base.nix](/Users/jem/dotfiles/vms/seed/base.nix)
 - `user.shell = "/bin/sh"` in [lima.yaml](/Users/jem/dotfiles/vms/lima.yaml)
 - the `mode: boot` unlock provision in [lima.yaml](/Users/jem/dotfiles/vms/lima.yaml)
