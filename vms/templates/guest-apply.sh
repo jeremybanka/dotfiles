@@ -284,7 +284,9 @@ if ! sudo -n true > /dev/null 2>&1; then
   exit 1
 fi
 
-if sudo "$scrubs_nixos_rebuild" boot --flake "$payload/scrubs#scrubs-base"; then
+# The copied payload is a standalone tree. Explicitly select the path fetcher
+# so a .git directory anywhere above it cannot trigger Git repository discovery.
+if sudo "$scrubs_nixos_rebuild" boot --flake "path:$payload/scrubs#scrubs-base"; then
   sudo install -d -m 755 "$(dirname "$bootstrap_marker")"
   sudo touch "$bootstrap_marker"
   exit 0
