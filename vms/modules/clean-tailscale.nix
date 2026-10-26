@@ -1,4 +1,4 @@
-{ tailscalePackage, ... }:
+{ unstablePkgs, ... }:
 {
-  services.tailscale.package = tailscalePackage;
+  services.tailscale.package = unstablePkgs.tailscale;
 }
