@@ -170,6 +170,10 @@ workspace mount. The generic same-mount habitat design is tracked in
 change does not expose the real home, clean credentials, or global package
 stores to dirty commands.
 
+pnpm's metadata and `dlx` cache are shared across dirty runtime profiles through `~/.local/share/scrubs/dirty-cache/pnpm`, mounted at the synthetic home's `~/.cache/pnpm`. This is a dedicated dirty cache, separate from the clean host's pnpm cache and credentials. pnpm retains its versioned cache layout; project package stores and explicit `cache-dir` overrides keep their existing behavior. Existing runtime profiles use the mount on their next invocation, without a profile rebuild. Older profiles may still contain hidden metadata copies on disk; those can be removed once no old sandbox process is using them.
+
+`python3 -B vms/tests/test_pnpm_shared_cache_guest.py` tests two distinct sandbox profiles against a local registry: the second install must reuse metadata even when the registry rejects new metadata requests, while each project retains its own package store and clean-home data stays hidden. It requires installed pnpm 12.16.1 and Node 26.13.0; `SCRUBS_TEST_PNPM` and `SCRUBS_TEST_NODE` select other installed versions, and `SCRUBS_TEST_PROXY` selects a staged launcher. No public registry requests are made.
+
 Regression checks:
 
 ```sh
