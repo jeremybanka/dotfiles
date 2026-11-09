@@ -6,6 +6,7 @@ in
   imports = [
     ../../modules/clean-postgres.nix
     ../../modules/dirty-postgres-build.nix
+    ./wayfarer-ci.nix
   ];
 
   environment.systemPackages = with pkgs; [
