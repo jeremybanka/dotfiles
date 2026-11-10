@@ -37,6 +37,8 @@
   # comes mostly from bootstrap simply not claiming these paths as exact
   # managed state rather than from `guest-apply.sh` consulting this list.
   preserved_durable_paths: [
+    ".claude"
+    ".claude.json"
     ".codex"
     ".bashrc.pre-scrubs"
     ".profile.pre-scrubs"

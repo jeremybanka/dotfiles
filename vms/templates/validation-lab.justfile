@@ -2,6 +2,8 @@ probe-dirty-boundary:
     test ! -e "$HOME/.local/share/scrubs/clean-auth"
     ! command -v gh >/dev/null 2>&1
     ! command -v codex >/dev/null 2>&1
+    ! command -v claude >/dev/null 2>&1
+    test ! -e "$HOME/.claude"
 
 probe-aube-runtime:
     ni --version >/dev/null

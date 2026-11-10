@@ -66,6 +66,7 @@
     helix
     jq
     lazygit
+    unstablePkgs.claude-code
     unstablePkgs.codex
     unstablePkgs.mise
     unstablePkgs.nushell
@@ -79,6 +80,9 @@
   environment.variables = {
     EDITOR = "hx";
     VISUAL = "hx";
+    # Claude Code lives in the read-only Nix store; upgrades arrive through
+    # the pinned nixpkgs-unstable input instead of its self-updater.
+    DISABLE_AUTOUPDATER = "1";
     MISE_CACHE_DIR = "/tmp/mise-cache";
   };
 
