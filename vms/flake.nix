@@ -12,6 +12,8 @@
       specialArgs = {
         unstablePkgs = import nixpkgs-unstable {
           system = "aarch64-linux";
+          config.allowUnfreePredicate = pkg:
+            builtins.elem (nixpkgs.lib.getName pkg) [ "claude-code" ];
         };
       };
       modules = [ ./configuration.nix ];

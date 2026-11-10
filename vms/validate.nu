@@ -382,7 +382,7 @@ def probe-dirty-boundary [instance_name: string, lab_dir: string, label: string]
     return (fail-entry $label (summarize-command-failure $result "Dirty-space probe reached a clean-only path or wrapper"))
   }
 
-  pass-entry $label "Dirty space could not see clean-auth, gh, or codex"
+  pass-entry $label "Dirty space could not see clean-auth, gh, codex, or claude"
 }
 
 def probe-aube-runtime [instance_name: string, lab_dir: string, label: string] {

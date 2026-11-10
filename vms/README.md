@@ -89,7 +89,7 @@ keeping the VM isolation model intact.
 - a persistent dirty-only Bun package cache plus a conservative eight-request
   install concurrency limit
 - a writable `mise` cache under `/tmp` so sandboxed commands stay quiet
-- `git`, `nushell`, `mise`, `bun`, `codex`, and common CLI utilities
+- `git`, `nushell`, `mise`, `bun`, `codex`, `claude`, and common CLI utilities
 - hardened SSH defaults inside the guest
 
 It does not assume the cloned project owns a flake.
@@ -124,6 +124,7 @@ On repeat bootstrap, scrubs treats guest-home state in three classes:
 - preserved durable operator state:
   also declared in [`guest-home-policy.nuon`](./guest-home-policy.nuon). Today
   that includes project working trees, guest-local Codex state in `~/.codex/`,
+  guest-local Claude Code state in `~/.claude/` and `~/.claude.json`,
   preserved pre-scrubs shell backups such as `~/.bashrc.pre-scrubs`, and
   guest-local Nushell history such as `~/.config/nushell/history.txt`. Bun's
   package cache is also preserved under
@@ -533,6 +534,21 @@ are migrated automatically the next time the scrubs `codex` wrapper launches:
 the wrapper copies forward non-secret state from the legacy runtime home into
 the durable `~/.codex` directory and continues to source auth from the sealed
 runtime path.
+
+## Claude Code
+
+Clean space also ships `claude` from the pinned `nixpkgs-unstable` input,
+admitted through a narrow unfree allowance for that one package. Its
+self-updater is disabled with `DISABLE_AUTOUPDATER=1` because the binary lives
+in the read-only Nix store; upgrades arrive through the normal nixpkgs digest
+bumps.
+
+Scrubs does not seal Claude Code auth yet. Run `claude` in the guest and log
+in interactively; the resulting credentials and settings stay in
+`~/.claude/` and `~/.claude.json`, which bootstrap preserves across re-runs.
+Dirty space runs under a synthetic home, so it can see neither those paths nor
+the `claude` binary, and `claude` is a reserved clean command for local-node
+launchers.
 
 ## Browser Automation For Codex
 
