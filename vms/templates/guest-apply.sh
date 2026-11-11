@@ -138,6 +138,7 @@ chmod 755 "$HOME/.local/libexec/scrubs/"*.sh
 chmod 755 "$HOME/.local/libexec/scrubs/codex-clean.nu"
 "$scrubs_nu" "$HOME/.local/libexec/scrubs/install-dirty-tools.nu"
 ensure_symlink "$HOME/.local/libexec/scrubs/gh-clean.sh" "$HOME/.local/bin/gh"
+ensure_symlink "$HOME/.local/libexec/scrubs/claude-clean.sh" "$HOME/.local/bin/claude"
 ensure_symlink "$HOME/.local/libexec/scrubs/codex-clean.nu" "$HOME/.local/bin/codex"
 
 configure_codex_playwright_mcp() {

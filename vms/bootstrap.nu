@@ -321,6 +321,29 @@ def resolve-github-token [settings: record, profile_name: string, profile_suffix
   macos-keychain-secret $legacy_service $legacy_account
 }
 
+def default-claude-keychain-service [profile_name: string] {
+  $"scrubs-claude-oauth-token-($profile_name)"
+}
+
+def resolve-claude-oauth-token [settings: record, profile_name: string, profile_suffix: string] {
+  let explicit_value = (get-profiled-setting $settings "SCRUBS_CLAUDE_OAUTH_TOKEN" $profile_suffix "")
+  if $explicit_value != "" {
+    return $explicit_value
+  }
+
+  let configured_service = (get-profiled-setting $settings "SCRUBS_CLAUDE_OAUTH_TOKEN_KEYCHAIN_SERVICE" $profile_suffix "")
+  let keychain_account = (get-profiled-setting $settings "SCRUBS_CLAUDE_OAUTH_TOKEN_KEYCHAIN_ACCOUNT" $profile_suffix "claude.ai")
+  if $configured_service != "" {
+    return (macos-keychain-secret $configured_service $keychain_account)
+  }
+
+  if $profile_name == "" {
+    return ""
+  }
+
+  macos-keychain-secret-optional (default-claude-keychain-service $profile_name) $keychain_account
+}
+
 def resolve-tailscale-oauth-secret [settings: record] {
   let explicit_value = (get-setting $settings "SCRUBS_TAILSCALE_OAUTH_SECRET" "")
   if $explicit_value != "" {
@@ -694,6 +717,7 @@ def main [
   cp ($vms_dir | path join "templates" "mise-wrapper.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "mise-wrapper.sh")
   cp ($vms_dir | path join "templates" "clean-auth-lib.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "clean-auth-lib.sh")
   cp ($vms_dir | path join "templates" "gh-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "gh-clean.sh")
+  cp ($vms_dir | path join "templates" "claude-clean.sh") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "claude-clean.sh")
   cp ($vms_dir | path join "templates" "codex-clean.nu") ($payload_dir | path join "home" ".local" "libexec" "scrubs" "codex-clean.nu")
   cp $guest_home_policy_path ($payload_dir | path join "home" ".local" "share" "scrubs" "guest-home-policy.nuon")
   let default_sandbox_policy = ($vms_dir | path join "templates" "sandbox-default-policy.nuon")
@@ -738,6 +762,7 @@ def main [
 
   let gh_token = if $for_base_image { "" } else { resolve-github-token $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix }
   let codex_auth_json = if $for_base_image { "" } else { resolve-codex-auth-json $settings $selected_clean_auth_profile.suffix }
+  let claude_oauth_token = if $for_base_image { "" } else { resolve-claude-oauth-token $settings $selected_clean_auth_profile.name $selected_clean_auth_profile.suffix }
   let tailscale_enabled = (not $for_base_image) and ($resolved_tailscale_mode == "tailscale-enabled")
   let tailscale_oauth_secret = if $tailscale_enabled {
     (resolve-tailscale-oauth-secret $settings)
@@ -757,6 +782,11 @@ def main [
       name: "codex"
       ciphertext_file: "codex-auth.json.enc"
       value: $codex_auth_json
+    }
+    {
+      name: "claude"
+      ciphertext_file: "claude-oauth-token.enc"
+      value: $claude_oauth_token
     }
     {
       name: "tailscale"

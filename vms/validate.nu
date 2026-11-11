@@ -225,14 +225,14 @@ printf "codex-file-ready\n" > "$probe_path"
 }
 
 def probe-sealed-auth-artifacts [instance_name: string] {
-  let command = "test -f \"$HOME/.local/share/scrubs/clean-auth/gh-token.enc\" && test -f \"$HOME/.local/share/scrubs/clean-auth/codex-auth.json.enc\" && test -f \"$HOME/.local/share/scrubs/clean-auth/seal-key\""
+  let command = "test -f \"$HOME/.local/share/scrubs/clean-auth/gh-token.enc\" && test -f \"$HOME/.local/share/scrubs/clean-auth/codex-auth.json.enc\" && test -f \"$HOME/.local/share/scrubs/clean-auth/claude-oauth-token.enc\" && test -f \"$HOME/.local/share/scrubs/clean-auth/seal-key\""
   let result = (guest-run $instance_name $command)
 
   if $result.exit_code != 0 {
-    return (fail-entry "Sealed clean auth artifacts" "Missing guest-sealed gh or Codex auth material; check host secrets with `just scrubs-auth-status` before rerunning")
+    return (fail-entry "Sealed clean auth artifacts" "Missing guest-sealed gh, Codex, or Claude Code auth material; check host secrets with `just scrubs-auth-status` before rerunning")
   }
 
-  pass-entry "Sealed clean auth artifacts" "Guest bootstrap produced sealed gh and Codex auth artifacts"
+  pass-entry "Sealed clean auth artifacts" "Guest bootstrap produced sealed gh, Codex, and Claude Code auth artifacts"
 }
 
 def probe-gh-auth [instance_name: string, label: string] {
@@ -251,6 +251,17 @@ def probe-codex-login-status [instance_name: string, label: string] {
   }
 
   pass-entry $label "Codex login status succeeded without interactive login"
+}
+
+def probe-claude-prompt [instance_name: string, label: string] {
+  # `claude auth status` only reports that a token is present; a real request
+  # is the only check that catches a truncated or revoked sealed token.
+  let result = (guest-run $instance_name "cd /tmp && claude -p 'Reply with exactly: scrubs-claude-ok' | grep -Fq scrubs-claude-ok")
+  if $result.exit_code != 0 {
+    return (fail-entry $label (summarize-command-failure $result "claude -p failed with the sealed token"))
+  }
+
+  pass-entry $label "Claude Code answered a prompt without interactive login"
 }
 
 def probe-playwright-mcp-config [instance_name: string, label: string] {
@@ -578,6 +589,7 @@ def main [
   $results = ($results | append (probe-codex-canonical-home-login-status $instance_name "Codex SSH-style auth smoke"))
   $results = ($results | append (probe-gh-auth $instance_name "gh auth smoke"))
   $results = ($results | append (probe-codex-login-status $instance_name "Codex auth smoke"))
+  $results = ($results | append (probe-claude-prompt $instance_name "Claude Code auth smoke"))
   $results = ($results | append (probe-playwright-mcp-config $instance_name "Codex Playwright MCP config"))
 
   let marker_result = (probe-codex-marker $instance_name $marker_path $marker)
@@ -644,6 +656,7 @@ def main [
   $results = ($results | append (probe-gh-auth $instance_name "gh auth smoke after re-bootstrap"))
   $results = ($results | append (probe-codex-canonical-home-login-status $instance_name "Codex SSH-style auth smoke after re-bootstrap"))
   $results = ($results | append (probe-codex-login-status $instance_name "Codex auth smoke after re-bootstrap"))
+  $results = ($results | append (probe-claude-prompt $instance_name "Claude Code auth smoke after re-bootstrap"))
   $results = ($results | append (probe-playwright-mcp-config $instance_name "Codex Playwright MCP config after re-bootstrap"))
 
   if $lab_ready {
