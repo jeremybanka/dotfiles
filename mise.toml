@@ -1,6 +1,6 @@
 [tools]
 "github:terror/just-lsp" = "0.11.1"
-"github:nushell/nushell" = "0.116.1"
+"github:nushell/nushell" = "0.117.0"
 delta = "0.20.1"
 dprint = "0.64.3"
 just = "1.59.0"
