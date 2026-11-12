@@ -441,6 +441,8 @@ just scrubs-auth-set-gh
 just scrubs-auth-set-gh work
 just scrubs-auth-set-tailscale
 codex login
+claude setup-token
+just scrubs-auth-set-claude
 just scrubs-auth-status
 ```
 
@@ -460,6 +462,14 @@ GitHub uses the macOS Keychain entry:
 Tailscale uses the macOS Keychain entry:
 
 - service `scrubs-tailscale-oauth-secret`, account `tailscale`
+
+Claude Code uses the macOS Keychain entry:
+
+- service `scrubs-claude-oauth-token-personal`, account `claude.ai` for the
+  default `personal` profile, and likewise `scrubs-claude-oauth-token-work`
+- `SCRUBS_CLAUDE_OAUTH_TOKEN_KEYCHAIN_SERVICE` /
+  `SCRUBS_CLAUDE_OAUTH_TOKEN_KEYCHAIN_ACCOUNT` (with optional `__<PROFILE>`
+  suffixes) override that convention
 
 Codex uses the host ChatGPT auth bundle at:
 
@@ -507,6 +517,7 @@ For rotation or cleanup:
 ```sh
 just scrubs-auth-delete-gh
 just scrubs-auth-delete-tailscale
+just scrubs-auth-delete-claude
 just scrubs-auth-delete-codex
 ```
 
@@ -538,17 +549,35 @@ runtime path.
 ## Claude Code
 
 Clean space also ships `claude` from the pinned `nixpkgs-unstable` input,
-admitted through a narrow unfree allowance for that one package. Its
-self-updater is disabled with `DISABLE_AUTOUPDATER=1` because the binary lives
-in the read-only Nix store; upgrades arrive through the normal nixpkgs digest
-bumps.
+admitted through a narrow unfree allowance for that one package. The nixpkgs
+build disables Claude Code's self-updater, so upgrades arrive through the
+normal nixpkgs digest bumps.
 
-Scrubs does not seal Claude Code auth yet. Run `claude` in the guest and log
-in interactively; the resulting credentials and settings stay in
-`~/.claude/` and `~/.claude.json`, which bootstrap preserves across re-runs.
-Dirty space runs under a synthetic home, so it can see neither those paths nor
-the `claude` binary, and `claude` is a reserved clean command for local-node
-launchers.
+Claude Code auth follows the `gh` pattern rather than copying the host login.
+The host login lives in the macOS Keychain and rotates its refresh token, so a
+copy in a guest would race the host and revoke one side. Instead, run
+`claude setup-token` on the host and store the resulting long-lived token with
+`just scrubs-auth-set-claude [profile]`. Bootstrap seals it into
+`~/.local/share/scrubs/clean-auth/claude-oauth-token.enc`, and the
+`~/.local/bin/claude` wrapper decrypts it per launch and execs the real binary
+with `CLAUDE_CODE_OAUTH_TOKEN`. The token never lands unsealed on disk.
+
+Claude Code already drops `CLAUDE_CODE_OAUTH_TOKEN` from the commands its Bash
+tool runs. The wrapper also enables `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1`
+unless you set it yourself, as defense in depth for other credentials and
+launched processes, and dirty tools are additionally started with a cleared
+environment by the scrubs sandbox.
+
+Long-lived tokens are inference-only, so features such as Remote Control
+need a full login. Run `claude auth login` in the guest when you need them:
+the wrapper defers to `~/.claude/.credentials.json` whenever it exists, as it
+does to an explicit `CLAUDE_CODE_OAUTH_TOKEN`, `ANTHROPIC_API_KEY`, or
+`ANTHROPIC_AUTH_TOKEN`. `claude auth logout` returns to the sealed token.
+
+Durable Claude Code state stays in `~/.claude/` and `~/.claude.json`, which
+bootstrap preserves across re-runs. Dirty space runs under a synthetic home,
+so it can see neither those paths nor the `claude` binary, and `claude` is a
+reserved clean command for local-node launchers.
 
 ## Browser Automation For Codex
 
@@ -851,8 +880,9 @@ For any new or materially changed guest flow, the baseline pass is:
 
 1. create a fresh throwaway guest
 2. confirm `limactl shell <instance>` opens an interactive shell
-3. confirm clean-space `gh` and Codex auth are usable without interactive login,
-   including the desktop SSH-style `CODEX_HOME=$HOME/.codex` launch path
+3. confirm clean-space `gh`, Codex, and Claude Code auth are usable without
+   interactive login, including the desktop SSH-style
+   `CODEX_HOME=$HOME/.codex` launch path
 4. create a simple Codex continuity marker, for example with `codex exec`, and
    confirm the resulting guest-local session or history artifact appears under
    `~/.codex`

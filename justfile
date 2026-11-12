@@ -132,6 +132,10 @@ scrubs-auth-status profile="":
             fi; \
         fi; \
         echo "GitHub Keychain item ($service/github.com): $gh_status$legacy_fragment"; \
+        claude_status=missing; \
+        claude_service="scrubs-claude-oauth-token-${clean_profile}"; \
+        security find-generic-password -s "$claude_service" -a claude.ai > /dev/null 2>&1 && claude_status=present; \
+        echo "Claude Code Keychain item ($claude_service/claude.ai): $claude_status"; \
     done; \
     tailscale_status=missing; \
     tailscale_fragment=""; \
@@ -175,6 +179,14 @@ scrubs-auth-set-codex:
     @echo "Codex clean auth is sourced from the host ChatGPT login bundle, not an API key."; \
     echo "Run 'codex login' on the host, then re-run 'just scrubs-auth-status'."
 
+scrubs-auth-set-claude profile="personal":
+    @echo "Generate a long-lived token on the host with 'claude setup-token' first."; \
+    read -s "?Claude Code OAuth token: " token; \
+    service="scrubs-claude-oauth-token-{{ profile }}"; \
+    echo; \
+    security add-generic-password -U -s "$service" -a claude.ai -w "$token"; \
+    echo "Stored Claude Code OAuth token in macOS Keychain as $service/claude.ai"
+
 scrubs-auth-delete-gh profile="personal":
     @service="scrubs-gh-token-{{ profile }}"; \
     security delete-generic-password -s "$service" -a github.com || true
@@ -188,6 +200,10 @@ scrubs-auth-delete-tailscale profile="":
     security delete-generic-password -s "$deprecated_personal_service" -a tailscale || true; \
     security delete-generic-password -s "$legacy_service" -a tailscale || true; \
     security delete-generic-password -s "$deprecated_personal_legacy_service" -a tailscale || true
+
+scrubs-auth-delete-claude profile="personal":
+    @service="scrubs-claude-oauth-token-{{ profile }}"; \
+    security delete-generic-password -s "$service" -a claude.ai || true
 
 scrubs-auth-delete-codex:
     @echo "Codex clean auth is sourced from the host ChatGPT login bundle."; \
