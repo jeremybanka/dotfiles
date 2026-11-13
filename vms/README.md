@@ -1089,3 +1089,28 @@ Inside the guest:
 - run `atomic-red-team` to print the repo path or `atomic-red-team ls atomics`
 - inspect tests with `atomic-red-team-path`
 - refresh the downloaded tool payloads with `atomic-red-team-update`
+
+### Dirty package caches inside a task sandbox
+
+A native agent sandbox may permit writes to its Git worktree and `/tmp` while
+keeping the guest's real home read-only. For that case, the existing dirty command
+launcher accepts an opt-in payload-cache location:
+
+```sh
+SCRUBS_DIRTY_CACHE_ROOT="$(git rev-parse --show-toplevel)/.scrubs-dirty-cache" node --version
+```
+
+Only that exact reserved directory inside the current worktree is accepted.
+Symlinked, non-directory, or foreign-owned cache paths are rejected. Keep the
+cache ignored and task-owned; preserve existing contents rather than deleting
+unknown files. The override relocates Bun's package payload cache and the mise
+cache, not credentials, clean helper metadata, or the clean executable closure.
+Synthetic runtime and helper-closure caches remain in their existing `/tmp`
+locations. Without the override, existing cache locations are unchanged.
+
+This does not grant extra native sandbox access or remove Scrubs' bubblewrap
+namespaces, environment clearing, or restricted mounts. Test the launcher inside
+the actual native sandbox before declaring it usable: nested user namespaces,
+mount restrictions, and native network policy can independently prevent dirty
+execution. Do not work around those failures by running dirty binaries directly
+in clean space or disabling namespace isolation.

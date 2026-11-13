@@ -9,6 +9,27 @@ die() {
   exit 1
 }
 
+# Task-cache override is deliberately one reserved directory, not an arbitrary
+# writable bind. It stays inside the already-authorized project mount.
+configure_task_cache() {
+  [[ -n "${SCRUBS_DIRTY_CACHE_ROOT:-}" ]] || return 0
+  [[ -n "${project_root}" && "${project_root}" == /* ]] || die "task cache requires a git worktree"
+  local expected="${project_root}/.scrubs-dirty-cache"
+  [[ "${SCRUBS_DIRTY_CACHE_ROOT}" == "${expected}" ]] || die "task cache must be ${expected}"
+  local suffix target
+  # Refuse redirected or foreign-owned cache directories before chmod/mkdir.
+  for suffix in "" /mise /bun /bun/install /bun/install/cache; do
+    target="${expected}${suffix}"
+    [[ ! -L "${target}" ]] || die "task cache directory must not be a symlink: ${target}"
+    if [[ -e "${target}" ]]; then
+      [[ -d "${target}" && -O "${target}" ]] || die "task cache directory must be owned by this user: ${target}"
+    fi
+  done
+  dirty_cache_root="${expected}"
+  mise_cache_root="${expected}/mise"
+}
+# End task-cache validation.
+
 resolve_host_command_path() {
   local command_name="$1"
   local resolved
@@ -215,6 +236,8 @@ helper_closure_cache_root="/tmp/scrubs-helper-closure-cache/${current_user}"
 # Persist only Bun's package payload cache across synthetic-home/runtime-key
 # changes. The surrounding real home remains outside the dirty boundary.
 dirty_cache_root="${HOME}/.local/share/scrubs/dirty-cache"
+mise_cache_root="/tmp/mise-cache"
+configure_task_cache
 bun_install_cache="${dirty_cache_root}/bun/install/cache"
 bun_install_network_concurrency="8"
 node_modules_bin=""
@@ -288,7 +311,7 @@ mkdir -p \
   "${runtime_cache_root}" \
   "${helper_closure_cache_root}" \
   "${bun_install_cache}" \
-  /tmp/mise-cache
+  "${mise_cache_root}"
 chmod 700 "${runtime_cache_root}" "${helper_closure_cache_root}"
 chmod 700 \
   "${dirty_cache_root}" \
@@ -510,7 +533,7 @@ exec "${BWRAP_BIN}" \
   --setenv TMPDIR /tmp \
   --setenv MISE_DATA_DIR "/home/${current_user}/.local/share/mise" \
   --setenv MISE_CONFIG_DIR "/home/${current_user}/.config/mise" \
-  --setenv MISE_CACHE_DIR /tmp/mise-cache \
+  --setenv MISE_CACHE_DIR "${mise_cache_root}" \
   --setenv MISE_STATE_DIR "/home/${current_user}/.local/state/mise" \
   --setenv RUSTUP_HOME "/home/${current_user}/.local/share/mise/rustup-home" \
   --setenv CARGO_HOME "/home/${current_user}/.cargo" \
