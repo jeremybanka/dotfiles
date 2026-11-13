@@ -62,5 +62,7 @@
   ]
   git_metadata_roots: []
   git_metadata_worktrees: []
+  task_library_worktrees: []
+  task_library_paths: []
   enable_proc: true
 }

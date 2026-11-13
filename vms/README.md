@@ -1135,3 +1135,14 @@ This supports history-based checks such as Breakage's baseline lookup without
 granting dirty commands permission to commit. Git formats requiring additional
 metadata (for example reftable or external object alternates) are not implicitly
 granted access; validate those separately rather than broadening the mount.
+
+### Task-scoped browser libraries
+
+Clean policy can opt a canonical task worktree into existing immutable runtime
+libraries with `task_library_worktrees` and `task_library_paths`. Both default to
+empty. Library entries must be canonical, non-symlink `/nix/store/<hash>-<name>/lib`
+(or `lib64`) directories. Only listed worktrees receive read-only library mounts
+and the corresponding `LD_LIBRARY_PATH`; sibling projects receive neither.
+This does not expose a replacement browser executable, install packages, grant
+writes, or disable Chromium sandboxing. Choose the library set from verified
+installed dependencies and validate the matching browser in the task sandbox.

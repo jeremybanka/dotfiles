@@ -8,6 +8,8 @@ export def normalize-sandbox-policy [policy: record] {
     ro_bind_paths: ($policy.ro_bind_paths | each {|value| $value | into string })
     git_metadata_worktrees: ($policy.git_metadata_worktrees? | default [] | each {|value| $value | into string })
     git_metadata_roots: ($policy.git_metadata_roots? | default [] | each {|value| $value | into string })
+    task_library_worktrees: ($policy.task_library_worktrees? | default [] | each {|value| $value | into string })
+    task_library_paths: ($policy.task_library_paths? | default [] | each {|value| $value | into string })
     enable_proc: ($policy.enable_proc | into bool)
   }
 }
@@ -38,6 +40,8 @@ export def render-sandbox-definition [policy: record] {
   let ro_bind_paths = (render-shell-list $policy.ro_bind_paths)
   let git_metadata_worktrees = (render-shell-list ($policy.git_metadata_worktrees? | default []))
   let git_metadata_roots = (render-shell-list ($policy.git_metadata_roots? | default []))
+  let task_library_worktrees = (render-shell-list ($policy.task_library_worktrees? | default []))
+  let task_library_paths = (render-shell-list ($policy.task_library_paths? | default []))
   let enable_proc = if $policy.enable_proc { "1" } else { "0" }
 
   [
@@ -58,6 +62,10 @@ export def render-sandbox-definition [policy: record] {
     $"SCRUBS_GIT_METADATA_ROOTS=($git_metadata_roots)"
     ""
     $"SCRUBS_GIT_METADATA_WORKTREES=($git_metadata_worktrees)"
+    ""
+    $"SCRUBS_TASK_LIBRARY_WORKTREES=($task_library_worktrees)"
+    ""
+    $"SCRUBS_TASK_LIBRARY_PATHS=($task_library_paths)"
     ""
     $"SCRUBS_ENABLE_PROC=($enable_proc)"
     ""

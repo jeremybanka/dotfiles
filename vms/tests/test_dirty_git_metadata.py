@@ -97,7 +97,7 @@ printf '%s\\0' "${git_metadata_binds[@]}"
     def test_metadata_mounts_follow_home_and_project_mounts(self):
         self.assertGreater(SOURCE.index('  "${git_metadata_binds[@]}"'),
                            SOURCE.index('  --bind "${project_root}"'))
-        self.assertIn('SCRUBS_GIT_METADATA_ROOTS=()\nSCRUBS_GIT_METADATA_WORKTREES=()\nsource "${SANDBOX_DEFINITION}"',SOURCE)
+        self.assertIn('SCRUBS_GIT_METADATA_ROOTS=()\nSCRUBS_GIT_METADATA_WORKTREES=()\nSCRUBS_TASK_LIBRARY_WORKTREES=()\nSCRUBS_TASK_LIBRARY_PATHS=()\nsource "${SANDBOX_DEFINITION}"',SOURCE)
 
 
 if __name__=='__main__': unittest.main()

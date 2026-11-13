@@ -68,6 +68,25 @@ append_readonly_git_metadata() {
 }
 # End read-only Git metadata selection.
 
+# Clean policy grants library directories to exact canonical task roots only.
+append_task_libraries() {
+  local root path approved=0 search=""
+  for root in "${SCRUBS_TASK_LIBRARY_WORKTREES[@]}"; do
+    [[ "${root}" == /* && "${root}" != / && ! -L "${root}" ]] || die "invalid task library worktree"
+    [[ "$(realpath "${root}")" == "${root}" ]] || die "task library worktree must be canonical"
+    [[ "${project_root}" == "${root}" ]] && approved=1
+  done
+  [[ "${approved}" == 1 ]] || return 0
+  for path in "${SCRUBS_TASK_LIBRARY_PATHS[@]}"; do
+    [[ "${path}" =~ ^/nix/store/[a-z0-9]{32}-[^/]+/lib(64)?$ ]] || die "task libraries must be Nix store library directories"
+    [[ -d "${path}" && ! -L "${path}" && "$(realpath "${path}")" == "${path}" ]] || die "task library directory must be canonical"
+    task_library_binds+=(--ro-bind "${path}" "${path}")
+    search="${search:+${search}:}${path}"
+  done
+  [[ -z "${search}" ]] || task_library_env+=(--setenv LD_LIBRARY_PATH "${search}")
+}
+# End task library selection.
+
 resolve_host_command_path() {
   local command_name="$1"
   local resolved
@@ -244,6 +263,8 @@ SANDBOX_DEFINITION="${SCRUBS_DIR}/sandbox-definition.sh"
 # shellcheck source=/dev/null
 SCRUBS_GIT_METADATA_ROOTS=()
 SCRUBS_GIT_METADATA_WORKTREES=()
+SCRUBS_TASK_LIBRARY_WORKTREES=()
+SCRUBS_TASK_LIBRARY_PATHS=()
 source "${SANDBOX_DEFINITION}"
 
 current_user="$(id -un)"
@@ -388,6 +409,9 @@ declare -A seen_sandbox_dirs=()
 declare -a extra_ro_binds=()
 declare -a git_metadata_binds=()
 append_readonly_git_metadata
+declare -a task_library_binds=()
+declare -a task_library_env=()
+append_task_libraries
 declare -a helper_file_binds=()
 declare -a aube_store_bind=()
 
@@ -586,5 +610,7 @@ exec "${BWRAP_BIN}" \
   "${terminal_env_args[@]}" \
   "${mise_state_bind[@]}" \
   "${store_ro_binds[@]}" \
+  "${task_library_binds[@]}" \
+  "${task_library_env[@]}" \
   -- \
   "${sandbox_target}" "$@"
