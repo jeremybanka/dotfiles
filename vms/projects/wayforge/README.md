@@ -39,3 +39,10 @@ The NixOS package disables the upstream runner self-updater. Keep its pinned nix
 The [working crew plan](openrig/PLAN.md) describes a VM-owned, cross-repository
 OpenRig expedition and its task/worktree lifecycle. It is a design draft, not a
 deployed rig or cleanup policy.
+
+## OpenRig expedition
+
+The crew lives in its own guest repository, `/home/jem/wayforge-rig`. See the
+[OpenRig integration](openrig/README.md) for the opt-in clean runtime package,
+validation commands and remaining activation gates. No daemon or timer is enabled
+by importing this shim.

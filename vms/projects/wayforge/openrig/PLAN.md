@@ -1,7 +1,7 @@
 # Wayforge expedition: working plan
 
-Status: design draft, updated 13 November 2026. This is a working plan, not a deployed
-rig, executable permission policy, or authorization to launch a crew.
+Status: working design, updated 13 November 2026. The crew repository now exists
+on Wayforge; operational activation is incomplete. See [integration status](README.md).
 
 ## Purpose and ownership
 
@@ -16,11 +16,10 @@ be separate VMs later. Today the crew belongs on the developer side, not in the
 credentials, workspaces, and the Scrubs clean/dirty execution boundary. Shared
 CPU, memory, disk, database, and ports still need coordination.
 
-Versioned crew source belongs here beside the [Wayforge shim](../README.md).
-Runtime queues, sessions, telemetry, and working copies belong in guest runtime
-storage, not Git. No guest installation or readiness is established by this
-plan. Role names describe responsibilities, not mandatory always-running model
-sessions or new privileges.
+Versioned crew source lives in its own guest repository at
+`/home/jem/wayforge-rig`. Dotfiles owns the VM integration and this design record.
+Runtime queues, sessions, telemetry, and working copies stay out of Git. Role names
+describe responsibilities, not mandatory always-running sessions or new privileges.
 
 ## Crew manifest
 
@@ -49,7 +48,7 @@ not yet settle concurrency, models, or whether a seat is continuously occupied.
 | Hierophant               | Own genuine unresolved questions through investigation, human judgment, reconciliation, and a scoped continuation.                                 | Research answerable facts first. Do not resume execution from a raw answer before reconciling its implications.                                                |
 | Chronicler               | Keep decisions, rationale, documentation, and results coherent and understandable.                                                                 | Commander owns the direct relationship and original intent; Chronicler makes the record useful without duplicating questions.                                  |
 | Inquisitor               | Investigate major bugs, locate the responsible subsystem, and explain underlying causes across system boundaries.                                  | Diagnosis, not merely devil's advocacy or routine candidate review.                                                                                            |
-| Warden                   | Independently evaluate exact candidate revisions in the refinery against real goals and acceptance criteria.                                       | Does not certify its own substantive repairs. Review acceptance is not merge or publication authority.                                                         |
+| Warden                   | Independently evaluate exact candidate revisions, then serialize authorized integration with matching evidence.                                    | Does not certify its own substantive repairs. Review acceptance is not merge or publication authority.                                                         |
 | Deckhand (proposed name) | Swab the deck: track task-owned worktrees, verify safe retirement, and keep the ship free of abandoned working copies.                             | Never discard unique uncommitted work merely because it is old. The name is a proposal; the cleanup responsibility is requested.                               |
 
 Knight is removed as a separate seat. Bug fixes and hardening return to the
@@ -71,9 +70,8 @@ than silently narrowing it to a generic rewrite or adversarial test role.
    Defects return to the responsible worker, normally a Strider. Inquisitor takes major
    causal uncertainty; Witch tests a specific hypothesis; Hierophant owns
    decisions that evidence alone cannot settle.
-6. **Integrate:** an explicitly designated integration owner serializes accepted
-   changes and verifies the resulting revision. This owner remains to be chosen;
-   Warden's review is not implicit authority to merge, push, publish, or deploy.
+6. **Integrate:** Warden serializes accepted changes and verifies the resulting
+   revision. Its review is not implicit authority to merge, push, publish, or deploy.
 7. **Close:** Commander returns the outcome; Chronicler preserves the useful
    record; the worker and Deckhand complete or explicitly hold cleanup.
 
@@ -103,16 +101,11 @@ Changed post-rebase revisions require matching evidence. Review, retry, QA, and
 integration each require admission; builds and emulator captures are serialized.
 Accepted proof still does not grant publication authority.
 
-Warden currently matches the independent-review portion, while this plan leaves
-integration ownership open. Thus the closest description is **the same kind of
-seat, but CS16ND's Refinery has a broader integration remit**. The expedition's
-refinery remains the workflow stage; Warden is its named responsible reviewer.
-
-A natural next choice is to let Warden own review plus serialized integration,
-following CS16ND rather than adding another seat. That is a recommendation, not
-a settled expansion of this plan or permission to merge. Keep Inquisitor's causal
-investigation distinct, and preserve independent evaluation after substantive
-repairs regardless of who holds the integration role.
+Warden now inherits the full Refinery remit: independent review plus serialized
+integration, without adding another seat. The refinery is the workflow stage;
+Warden is its responsible seat. Inquisitor retains root-cause investigation.
+Substantive evaluator-authored repairs still require independent evaluation,
+and publication still requires the appropriate authority.
 
 Evidence inspected on 13 November: CS16ND
 `openrig/agents/team/guidance/refinery.md` (lines 3–14),
@@ -231,7 +224,7 @@ operational work is paused. No monitoring is launched by this document.
 ## Decisions still open
 
 - Confirm **Deckhand**, or choose another name for the cleanup role.
-- Assign integration ownership and define its publication boundary.
+- Define Warden's concrete publication boundary for each task.
 - Choose models, provider policy, concurrency, startup/idle behavior, and resource
   limits. Two Strider seats do not by themselves authorize two simultaneous turns.
 - Define the initial Lancer stance and what positive/neutral delta means for its
@@ -253,6 +246,6 @@ seven-role local checkout and Wayfarer's team proposal; neither is changed here.
 Claude quota references: [status-line contract](https://code.claude.com/docs/en/statusline)
 and [usage documentation](https://code.claude.com/docs/en/costs).
 
-This branch adds planning documentation only. It does not deploy a rig, start
-agents, modify Counter-Strike, install monitoring, clean any working copies, or
-change system/credential permissions.
+Dotfiles now also proposes an opt-in, pinned clean runtime package. This branch
+does not switch the running system, start agents, modify Counter-Strike, install
+monitoring, clean working copies, or change credential permissions.
