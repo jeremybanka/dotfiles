@@ -1,19 +1,12 @@
 # Wayforge OpenRig integration
 
-Wayforge owns the crew, but **the crew is its own repository**:
-`/home/jem/wayforge-rig` in the guest. Dotfiles owns the Scrubs platform integration,
-not the crew's evolving prompts, queues, budget ledger or worktrees. The
-[working plan](PLAN.md) records the design; the guest repository's `SETUP.md`
-records its current installation and activation gaps.
+Dotfiles owns the VM/runtime integration only. The canonical crew configuration,
+workflow, model policy, budget enforcement and repository/worktree hygiene live
+in the separate guest repository at `/home/jem/wayforge-rig`. Consult that
+repository's `README.md` and `SETUP.md` for its documentation and operational
+status. It has no remote yet, so no remote link is provided here.
 
-## Current state
-
-On 13 November 2026 the guest repository was initialized on `main` at `b35a44d`
-with 14 seats, independent Codex/Claude budget controllers, and cautious
-worktree-retirement tooling. It has no remote yet. Its pinned dirty npm install
-is useful for schema checks, **not** a clean agent-launch runtime. Tests and
-schema validation are not proof that real native sessions obey budget admission.
-Neither a daemon, provider timer, cleanup timer nor crew has been started.
+## Runtime package
 
 This integration supplies a reproducible **clean-runtime package**, pinned to
 `@openrig/cli` 0.7.3 and a complete public npm dependency lock. It does not copy
@@ -44,53 +37,24 @@ be validated together, not bypassed with a broad PATH or credential mount.
 The CLI's presence alone does not establish safe agent launch or effective
 budget enforcement.
 
-## Remaining activation gates
+## Integration contract and activation boundary
 
-1. Apply the reviewed clean package to the developer environment; verify clean
-   agent-wrapper resolution and absence from dirty space. Never substitute the
-   repository's npm dependency for the trusted runtime.
-2. Wire and test provider-native hooks in actual seat workspaces. Cover stable
-   session/turn identity, start/stop/interruption/compaction and child launches.
-   Denial or missing identity must stop admission, not fabricate a permit.
-3. Bind each controller to its provider/account and select allowance windows and
-   concurrency. Floors are supplied per factory opening: `50/40` means Codex
-   50% remaining and Claude 40% remaining, not permanent defaults. Both start
-   disarmed. Provider gates are independent: a floor/reset closes only the affected
-   provider while eligible work continues on the other, following the
-   [ordered seat preferences](PLAN.md#ordered-model-preferences). Reopening the
-   closed provider is explicit; percentages are never summed. Verify exact native
-   model identifiers, especially Fable 5.2, before activation.
-4. Verify a fresh, account-bound Claude quota source. Status-line samples alone
-   remain observation-only; automatic Haiku probing is not enabled. Codex's
-   one-shot native quota read was tested without a model turn, but no persistent
-   collector is installed here.
-5. Exercise one small implementation and independent Warden review/integration
-   flow before expanding concurrency. The factory works queued items and opens
-   reviewed stacked PRs for Jeremy to merge; it does not merge or deploy.
-6. Validate task closure and Deckhand cleanup holds. Dirty/untracked files,
-   unique/unpushed commits, locked or active trees and uncertain evidence prevent
-   retirement. No age-based forced deletion or cleanup timer is installed.
+- Dotfiles owns the pinned clean CLI, its opt-in NixOS module and the existing
+  clean/dirty execution boundary. It does not own crew seats, model preferences,
+  workflow policy, budget state, GitHub adapters or cleanup implementation.
+- The rig repository consumes the clean CLI and must validate its native
+  launch/hook contracts against this pinned version. Installing the package is
+  not proof of budget enforcement, safe session handover or operational workflow.
+- Before activation, verify clean Claude/Codex wrapper resolution and that dirty
+  tools cannot reach the runtime or credentials. Review any service environment
+  or narrowly scoped integration separately; do not broaden sandbox access.
+- Runtime deployment, native session/hook enforcement and an end-to-end rig test
+  remain separate activation gates. Current implementation gaps and the crew's
+  operating policies belong in the rig repository's `SETUP.md`, not this module.
 
-The guest repository remains the source for `CULTURE.md`, `SOP.md`, role guidance,
-project catalog, budget code and hygiene code. Publish it separately only when a
-remote and publication scope have been chosen. This PR does not invent a remote,
-clone on boot, replace the guest repository, or copy secrets into Nix/Git.
-
-## Issue-driven delivery boundary
-
-The approved workflow starts with Jeremy selecting a repository and issue.
-Commander captures intent, Sky Command decomposes it into bounded dependent tasks
-with acceptance criteria, the native OpenRig queue records ownership, Captain
-assigns, and Warden independently reviews. The factory delivers linked dependent
-PRs with correct bases and evidence for Jeremy to merge. After a verified merge,
-Deckhand applies safe cleanup checks rather than deleting an open PR's worktree.
-
-A future ready-label scope must be explicitly chosen; none is configured now.
-Do not infer scope from repositories present in the VM. The guest rig owns the
-GitHub adapter, task/PR lineage and dispatch implementation; this dotfiles module
-only supplies the opt-in runtime package. No end-to-end GitHub queue-to-PR flow,
-restacking, native handover or operational launch is established by this PR.
-See the [issue/PR contract](PLAN.md#issue-scope-and-stacked-pr-contract).
+This integration does not clone or replace the rig repository, register projects,
+copy secrets into Nix/Git, or activate any daemon, agent, collector or cleanup
+timer. No running NixOS configuration has been switched by this PR.
 
 ## Package validation
 

@@ -34,13 +34,7 @@ When changing the module on an existing guest, sync it into the guest's material
 
 The NixOS package disables the upstream runner self-updater. Keep its pinned nixpkgs current using the reviewed scrubs update process. If scrubs runtime templates change, refresh the provisioned developer runtime first and restart `wayfarer-ci-home` and the runner to copy the allowlisted runtime into CI.
 
-## OpenRig expedition planning
-
-The [working crew plan](openrig/PLAN.md) describes a VM-owned, cross-repository
-OpenRig expedition and its task/worktree lifecycle. It is a design draft, not a
-deployed rig or cleanup policy.
-
-## OpenRig expedition
+## OpenRig runtime integration
 
 The crew lives in its own guest repository, `/home/jem/wayforge-rig`. See the
 [OpenRig integration](openrig/README.md) for the opt-in clean runtime package,
