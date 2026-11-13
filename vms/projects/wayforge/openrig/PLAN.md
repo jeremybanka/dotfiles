@@ -1,6 +1,6 @@
 # Wayforge expedition: working plan
 
-Status: design draft, 12 November 2026. This is a working plan, not a deployed
+Status: design draft, updated 13 November 2026. This is a working plan, not a deployed
 rig, executable permission policy, or authorization to launch a crew.
 
 ## Purpose and ownership
@@ -48,14 +48,13 @@ not yet settle concurrency, models, or whether a seat is continuously occupied.
 | Cleric                   | Developer experience for the crew: tooling, configuration validation, reproducibility, diagnostics, and prevention of recurring workflow failures. | Heals the workflow; does not become the default janitor or get blanket infrastructure privileges.                                                              |
 | Hierophant               | Own genuine unresolved questions through investigation, human judgment, reconciliation, and a scoped continuation.                                 | Research answerable facts first. Do not resume execution from a raw answer before reconciling its implications.                                                |
 | Chronicler               | Keep decisions, rationale, documentation, and results coherent and understandable.                                                                 | Commander owns the direct relationship and original intent; Chronicler makes the record useful without duplicating questions.                                  |
-| Knight                   | Repair bugs, add regression proof, and harden software.                                                                                            | Retained from the established roster; major ambiguous failures go to Inquisitor, and its own fixes require independent review.                                 |
 | Inquisitor               | Investigate major bugs, locate the responsible subsystem, and explain underlying causes across system boundaries.                                  | Diagnosis, not merely devil's advocacy or routine candidate review.                                                                                            |
 | Warden                   | Independently evaluate exact candidate revisions in the refinery against real goals and acceptance criteria.                                       | Does not certify its own substantive repairs. Review acceptance is not merge or publication authority.                                                         |
 | Deckhand (proposed name) | Swab the deck: track task-owned worktrees, verify safe retirement, and keep the ship free of abandoned working copies.                             | Never discard unique uncommitted work merely because it is old. The name is a proposal; the cleanup responsibility is requested.                               |
 
-Knight, Inquisitor, and Warden remain because they were established and not
-removed by the latest roster. Their final staffing can be adjusted without
-conflating repair, diagnosis, and independent review. Lancer's “parodies” wording
+Knight is removed as a separate seat. Bug fixes and hardening return to the
+responsible implementor, normally a Strider, with Inquisitor available for major
+root-cause investigations and Warden for independent review. Lancer's “parodies” wording
 is deliberate: the first task should make the particular stance concrete rather
 than silently narrowing it to a generic rewrite or adversarial test role.
 
@@ -69,7 +68,7 @@ than silently narrowing it to a generic rewrite or adversarial test role.
 4. **Work:** a Strider or specialist receives an explicit repository, base
    revision, isolated worktree, scope, acceptance criteria, and stop conditions.
 5. **Refine:** Warden examines the exact candidate revision and its evidence.
-   Defects return to the responsible worker or Knight. Inquisitor takes major
+   Defects return to the responsible worker, normally a Strider. Inquisitor takes major
    causal uncertainty; Witch tests a specific hypothesis; Hierophant owns
    decisions that evidence alone cannot settle.
 6. **Integrate:** an explicitly designated integration owner serializes accepted
@@ -88,6 +87,40 @@ Messages alone are not the task ledger. If a question blocks one task, unrelated
 admitted work can continue. Hierophant preserves the answer with its explanatory
 context, reconciles it with Sky Command, and returns a scoped continuation via
 Captain.
+
+## Warden compared with the CS16ND Refinery
+
+These have the same core purpose: independent judgment of candidate work. In
+CS16ND, **Refinery is an actual seat** (`dev.review`, profile `refinery`), not only
+a stage name. Its guidance owns both independent review **and final integration**
+in a separate checkout. It receives an exact worker revision and criteria, queues
+repairs without editing the worker's tree, and must not independently certify its
+own substantive repair.
+
+The CS16ND seat also holds the integration slot, rebases onto the current target,
+runs affected QA on the resulting revision, and performs an authorized merge.
+Changed post-rebase revisions require matching evidence. Review, retry, QA, and
+integration each require admission; builds and emulator captures are serialized.
+Accepted proof still does not grant publication authority.
+
+Warden currently matches the independent-review portion, while this plan leaves
+integration ownership open. Thus the closest description is **the same kind of
+seat, but CS16ND's Refinery has a broader integration remit**. The expedition's
+refinery remains the workflow stage; Warden is its named responsible reviewer.
+
+A natural next choice is to let Warden own review plus serialized integration,
+following CS16ND rather than adding another seat. That is a recommendation, not
+a settled expansion of this plan or permission to merge. Keep Inquisitor's causal
+investigation distinct, and preserve independent evaluation after substantive
+repairs regardless of who holds the integration role.
+
+Evidence inspected on 13 November: CS16ND
+`openrig/agents/team/guidance/refinery.md` (lines 3–14),
+`openrig/rig.yaml` (the `dev.review` member), and
+`openrig/factory/README.md` (Work and questions). Local HEAD was `80c2582`; the
+refinery guidance matched that commit. The rig and factory README contained
+existing uncommitted changes, which were read but not modified. This comparison
+is about declared responsibility, not a claim about current running occupants.
 
 ## Deckhand and the spirit of hygiene
 
@@ -178,7 +211,7 @@ operational work is paused. No monitoring is launched by this document.
 
 1. Walk one feature task through Commander, Sky Command, Captain, a Strider,
    Warden, integration, and Deckhand. Exercise a cleanup hold as well as success.
-2. Walk a major cross-system bug through Inquisitor, Witch if needed, Knight,
+2. Walk a major cross-system bug through Inquisitor, Witch if needed, a Strider,
    Warden, and Hierophant if diagnosis exposes a genuine decision.
 3. Choose the first bounded Lancer stance and Pyro simplification; define proof
    that distinguishes useful alternatives or deletion from cosmetic churn.
