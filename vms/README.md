@@ -1114,3 +1114,24 @@ the actual native sandbox before declaring it usable: nested user namespaces,
 mount restrictions, and native network policy can independently prevent dirty
 execution. Do not work around those failures by running dirty binaries directly
 in clean space or disabling namespace isolation.
+
+### Read-only Git history for linked task worktrees
+
+The clean sandbox policy may opt a repository into linked-worktree history
+access with both `git_metadata_roots: ["/absolute/repository/.git"]` and
+`git_metadata_worktrees: ["/absolute/task-worktree"]`. Both default to empty.
+The exact canonical worktree must be independently listed; authorizing a common
+repository never authorizes its other linked worktrees. This is a security-sensitive read-access change requiring operator review;
+a task's `.git` file or environment variable cannot authorize it.
+
+For an opted-in common directory, Scrubs verifies the current linked worktree's
+slot and backlink, then mounts only common `HEAD`, `objects`, `refs`, optional
+`packed-refs`/`shallow`, and that worktree's `HEAD`, `commondir`, `gitdir`, and
+`index`. Every source mount is read-only. No common config, hooks, logs, other
+worktree slots, credentials, or entire home/repository tree are exposed. The
+mounts follow the synthetic-home and project mounts so those cannot hide them.
+
+This supports history-based checks such as Breakage's baseline lookup without
+granting dirty commands permission to commit. Git formats requiring additional
+metadata (for example reftable or external object alternates) are not implicitly
+granted access; validate those separately rather than broadening the mount.

@@ -30,6 +30,44 @@ configure_task_cache() {
 }
 # End task-cache validation.
 
+# Only clean policy can authorize a common Git metadata directory. A worktree's
+# .git indirection is not authority to expose an arbitrary host path.
+append_readonly_git_metadata() {
+  local common gitdir approved root path rel backlink
+  approved=0
+  for root in "${SCRUBS_GIT_METADATA_WORKTREES[@]}"; do
+    [[ "${root}" == /* && "${root}" != / && ! -L "${root}" ]] || die "invalid clean Git metadata worktree"
+    [[ "$(realpath "${root}")" == "${root}" ]] || die "Git metadata worktree must be canonical"
+    [[ "${project_root}" == "${root}" ]] && approved=1
+  done
+  [[ "${approved}" == 1 ]] || return 0
+  [[ -f "${project_root}/.git" && ! -L "${project_root}/.git" ]] || return 0
+  common="$(git -C "${project_root}" rev-parse --path-format=absolute --git-common-dir)" || die "cannot resolve Git common directory"
+  gitdir="$(git -C "${project_root}" rev-parse --absolute-git-dir)" || die "cannot resolve Git worktree directory"
+  approved=0
+  for root in "${SCRUBS_GIT_METADATA_ROOTS[@]}"; do
+    [[ "${root}" == /* && "${root}" != / && ! -L "${root}" ]] || die "invalid clean Git metadata root"
+    [[ "$(realpath "${root}")" == "${root}" ]] || die "Git metadata root must be canonical"
+    [[ "${common}" == "${root}" ]] && approved=1
+  done
+  [[ "${approved}" == 1 ]] || return 0
+  [[ "${gitdir}" == "${common}/worktrees/"* ]] || die "Git worktree metadata is outside its authorized root"
+  rel="${gitdir#"${common}/worktrees/"}"
+  [[ -n "${rel}" && "${rel}" != */* && ! -L "${gitdir}" ]] || die "invalid Git worktree slot"
+  [[ "$(realpath "${gitdir}")" == "${gitdir}" ]] || die "Git worktree slot must be canonical"
+  backlink="$(cat "${gitdir}/gitdir")"
+  [[ "${backlink}" == "${project_root}/.git" ]] || die "Git worktree backlink mismatch"
+  git_metadata_binds+=(--dir "${common}" --dir "${gitdir}")
+  # Deliberately omit config, hooks, logs and all other worktree slots. Objects
+  # and refs provide history/baselines; index supports read-only diff/status.
+  for path in "${common}"/{HEAD,objects,refs,packed-refs,shallow} "${gitdir}"/{HEAD,commondir,gitdir,index}; do
+    [[ ! -L "${path}" ]] || die "Git metadata entry must not be a symlink: ${path}"
+    [[ -e "${path}" ]] || continue
+    git_metadata_binds+=(--ro-bind "${path}" "${path}")
+  done
+}
+# End read-only Git metadata selection.
+
 resolve_host_command_path() {
   local command_name="$1"
   local resolved
@@ -204,6 +242,8 @@ SANDBOX_DEFINITION="${SCRUBS_DIR}/sandbox-definition.sh"
 [[ -f "${SANDBOX_DEFINITION}" ]] || die "missing sandbox definition at ${SANDBOX_DEFINITION}"
 
 # shellcheck source=/dev/null
+SCRUBS_GIT_METADATA_ROOTS=()
+SCRUBS_GIT_METADATA_WORKTREES=()
 source "${SANDBOX_DEFINITION}"
 
 current_user="$(id -un)"
@@ -346,6 +386,8 @@ declare -a helper_input_paths=()
 declare -a sandbox_dirs=()
 declare -A seen_sandbox_dirs=()
 declare -a extra_ro_binds=()
+declare -a git_metadata_binds=()
+append_readonly_git_metadata
 declare -a helper_file_binds=()
 declare -a aube_store_bind=()
 
@@ -523,6 +565,7 @@ exec "${BWRAP_BIN}" \
   --ro-bind "${mise_root}" "/home/${current_user}/.local/share/mise" \
   --ro-bind "${mise_config_dir}" "/home/${current_user}/.config/mise" \
   --bind "${project_root}" "${project_root}" \
+  "${git_metadata_binds[@]}" \
   --chdir "${working_dir}" \
   --setenv HOME "/home/${current_user}" \
   --setenv USER "${current_user}" \
