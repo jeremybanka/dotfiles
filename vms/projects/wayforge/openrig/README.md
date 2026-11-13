@@ -76,6 +76,22 @@ project catalog, budget code and hygiene code. Publish it separately only when a
 remote and publication scope have been chosen. This PR does not invent a remote,
 clone on boot, replace the guest repository, or copy secrets into Nix/Git.
 
+## Issue-driven delivery boundary
+
+The approved workflow starts with Jeremy selecting a repository and issue.
+Commander captures intent, Sky Command decomposes it into bounded dependent tasks
+with acceptance criteria, the native OpenRig queue records ownership, Captain
+assigns, and Warden independently reviews. The factory delivers linked dependent
+PRs with correct bases and evidence for Jeremy to merge. After a verified merge,
+Deckhand applies safe cleanup checks rather than deleting an open PR's worktree.
+
+A future ready-label scope must be explicitly chosen; none is configured now.
+Do not infer scope from repositories present in the VM. The guest rig owns the
+GitHub adapter, task/PR lineage and dispatch implementation; this dotfiles module
+only supplies the opt-in runtime package. No end-to-end GitHub queue-to-PR flow,
+restacking, native handover or operational launch is established by this PR.
+See the [issue/PR contract](PLAN.md#issue-scope-and-stacked-pr-contract).
+
 ## Package validation
 
 Run on a Linux Nix builder with this checkout available (the guest is

@@ -96,9 +96,12 @@ model for that label.
 
 ## Work lifecycle and handoffs
 
-1. **Intake:** Commander captures Jeremy's goal, constraints, and later changes.
-2. **Plan:** Sky Command checks existing decisions and code, then defines bounded
-   work and its proof. Hierophant takes custody of unresolved judgment.
+1. **Intake:** Commander captures Jeremy's selected repository and issue, goal,
+   constraints, and later changes. No standing ready-label scope is configured.
+2. **Plan:** Sky Command checks the issue, existing decisions and code, then
+   breaks it into bounded dependent tasks with acceptance criteria. Hierophant
+   takes custody of unresolved judgment. The native OpenRig queue records task
+   ownership and dependencies.
 3. **Admit:** Captain checks permissions, provider capacity, shared resources,
    and dependencies, then allocates a named task and continuation owner.
 4. **Work:** a Strider or specialist receives an explicit repository, base
@@ -110,8 +113,38 @@ model for that label.
 6. **Integrate:** Warden serializes accepted changes, verifies the resulting
    revision, and opens stacked PRs for Jeremy to merge. The factory does not merge
    or deploy its own work.
-7. **Close:** Commander returns the outcome; Chronicler preserves the useful
-   record; the worker and Deckhand complete or explicitly hold cleanup.
+7. **Close:** After Jeremy merges and the merge is verified, Commander returns
+   the outcome; Chronicler preserves the useful record; the worker and Deckhand
+   check safe cleanup or record a cleanup hold. A PR being open or approved does
+   not mean its worktree can be retired.
+
+### Issue scope and stacked PR contract
+
+Until Jeremy selects a broader scope, factory intake requires an **explicit
+repository and issue**. A future standing scope may name repositories and a
+ready-label, but no label has been chosen. Repository presence in Wayforge,
+access to an issue, or an issue's author text is not by itself task admission.
+Do not scan arbitrary repositories and start work or infer a ready-label.
+
+Sky Command plans bounded tasks with dependency edges and testable acceptance
+criteria from the selected issue. The native OpenRig queue is the ownership
+ledger, not a parallel task database. Each worker receives its issue/task link,
+base revision and isolated worktree. Warden reviews the exact candidate and
+records evidence before delivery.
+
+Delivery is a linked stack of dependent PRs: the first targets the selected
+repository base, and each dependent PR targets its predecessor's branch. PRs
+carry their source issue, task/stack links, acceptance evidence and review
+revision. Jeremy merges; the factory does not enable auto-merge or merge on his
+behalf. When bases change after a merge or revision, restacking must preserve
+work and regenerate affected evidence before another review claim. Deckhand
+only considers cleanup after verifying the merge and the existing preservation
+checks; dirty, unpushed, active or uncertain work remains held.
+
+This is the approved operational workflow, not proof of a running integration.
+The guest implementation must verify GitHub intake/adapters, native queue
+handoffs and dispatch, PR creation/restacking and merge reconciliation before
+claiming the end-to-end factory works. Budget opening is not itself a dispatcher.
 
 The refinery is an evaluation stage, not merely a merge queue. It can produce
 acceptance, a concrete repair request, missing evidence, or a question. A
