@@ -83,11 +83,11 @@ must not discard the seat's context or its independent-review obligations.
 | Warden      | Opus             | Sol               |
 | Deckhand    | Sol              | Opus              |
 | Cleric      | Sol              | Opus              |
+| Inquisitor  | Sol              | Opus              |
 
 These are Jeremy's model labels, not guessed CLI identifiers. Verify native IDs
 before activation, especially **Fable 5.2**. Do not silently substitute a different
-model for that label. Inquisitor remains in the crew; its ordered model preference
-was not specified in this update and remains open.
+model for that label.
 
 ## Work lifecycle and handoffs
 
@@ -280,8 +280,8 @@ operational work is paused. No monitoring is launched by this document.
 
 - Confirm **Deckhand**, or choose another name for the cleanup role.
 - Define task-specific PR targets and stack bases; Jeremy retains merge authority.
-- Verify the native model IDs, choose Inquisitor's preferences, and set
-  concurrency, startup/idle behavior and resource limits. Two Strider seats do
+- Verify the native model IDs and set concurrency, startup/idle behavior and
+  resource limits. Two Strider seats do
   not by themselves authorize two simultaneous turns.
 - Define the initial Lancer stance and what positive/neutral delta means for its
   acceptance criteria; keep the intended “parody” character.
