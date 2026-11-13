@@ -52,15 +52,19 @@ budget enforcement.
 2. Wire and test provider-native hooks in actual seat workspaces. Cover stable
    session/turn identity, start/stop/interruption/compaction and child launches.
    Denial or missing identity must stop admission, not fabricate a permit.
-3. Bind each controller to its provider/account and select independent allowance
-   windows, floors and concurrency. Both start disarmed. No cross-provider
-   fallback or summed percentages.
+3. Bind each controller to its provider/account and select allowance windows and
+   concurrency. Floors are supplied per factory opening: `50/40` means Codex
+   50% remaining and Claude 40% remaining, not permanent defaults. Both start
+   disarmed. The first provider floor or reset pauses new admission across the
+   factory without forcibly cancelling existing turns; reopening is explicit. No
+   cross-provider fallback or summed percentages.
 4. Verify a fresh, account-bound Claude quota source. Status-line samples alone
    remain observation-only; automatic Haiku probing is not enabled. Codex's
    one-shot native quota read was tested without a model turn, but no persistent
    collector is installed here.
 5. Exercise one small implementation and independent Warden review/integration
-   flow before expanding concurrency. A review pass is not permission to publish.
+   flow before expanding concurrency. The factory works queued items and opens
+   reviewed stacked PRs for Jeremy to merge; it does not merge or deploy.
 6. Validate task closure and Deckhand cleanup holds. Dirty/untracked files,
    unique/unpushed commits, locked or active trees and uncertain evidence prevent
    retirement. No age-based forced deletion or cleanup timer is installed.

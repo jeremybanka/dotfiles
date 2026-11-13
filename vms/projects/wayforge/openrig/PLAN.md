@@ -70,8 +70,9 @@ than silently narrowing it to a generic rewrite or adversarial test role.
    Defects return to the responsible worker, normally a Strider. Inquisitor takes major
    causal uncertainty; Witch tests a specific hypothesis; Hierophant owns
    decisions that evidence alone cannot settle.
-6. **Integrate:** Warden serializes accepted changes and verifies the resulting
-   revision. Its review is not implicit authority to merge, push, publish, or deploy.
+6. **Integrate:** Warden serializes accepted changes, verifies the resulting
+   revision, and opens stacked PRs for Jeremy to merge. The factory does not merge
+   or deploy its own work.
 7. **Close:** Commander returns the outcome; Chronicler preserves the useful
    record; the worker and Deckhand complete or explicitly hold cleanup.
 
@@ -193,7 +194,27 @@ provider, account binding (or explicit uncertainty), allowance window, reset, an
 freshness. Do not sum percentages across providers or treat unknown as unused.
 Captain consumes admission decisions; Cleric maintains instrumentation; Commander
 preserves Jeremy's spending policy. No automatic model probing, account changes,
-spending floors, or provider fallback is selected here.
+or provider fallback is selected here.
+
+### Per-opening factory policy
+
+Floors are chosen when Jeremy opens the factory, not fixed as permanent settings.
+For example, “open the factory with a floor of 50/40” means keep at least **50%
+Codex allowance remaining** and **40% Claude allowance remaining**, in that order.
+These are remaining-percentage thresholds, not permission to spend that percentage
+or combine the two providers' balances. The example is not a live opening command
+or a default floor.
+
+An opening records its explicit floors and the observed provider/account/window
+identities. The factory works queued items and returns reviewed work as stacked
+PRs for Jeremy to merge, within admitted queue scope and repository destinations.
+Each dependent PR targets its predecessor. Conservatively, the first provider
+floor or quota-window reset pauses new admission across the factory without
+forcibly cancelling existing turns; there is no provider spillover. A reset does
+not silently renew the opening. Resume requires a new explicit
+opening with current readings. Unknown, stale or unbound data remains a closed
+admission state. Existing in-flight work can still consume quota, so thresholds
+are admission controls, not an account-wide hard billing cap.
 
 Before activation, test account switches, resets, stale or missing readings,
 restart continuity, interrupted permits, shared-account consumption, hook
@@ -224,7 +245,7 @@ operational work is paused. No monitoring is launched by this document.
 ## Decisions still open
 
 - Confirm **Deckhand**, or choose another name for the cleanup role.
-- Define Warden's concrete publication boundary for each task.
+- Define task-specific PR targets and stack bases; Jeremy retains merge authority.
 - Choose models, provider policy, concurrency, startup/idle behavior, and resource
   limits. Two Strider seats do not by themselves authorize two simultaneous turns.
 - Define the initial Lancer stance and what positive/neutral delta means for its
