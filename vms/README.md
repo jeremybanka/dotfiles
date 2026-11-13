@@ -1089,3 +1089,65 @@ Inside the guest:
 - run `atomic-red-team` to print the repo path or `atomic-red-team ls atomics`
 - inspect tests with `atomic-red-team-path`
 - refresh the downloaded tool payloads with `atomic-red-team-update`
+
+### Dirty package caches inside a task sandbox
+
+A native agent sandbox may permit writes to its Git worktree and `/tmp` while
+keeping the guest's real home read-only. For that case, the existing dirty command
+launcher accepts an opt-in payload-cache location:
+
+```sh
+SCRUBS_DIRTY_CACHE_ROOT="$(git rev-parse --show-toplevel)/.scrubs-dirty-cache" node --version
+```
+
+Only that exact reserved directory inside the current worktree is accepted.
+Symlinked, non-directory, or foreign-owned cache paths are rejected. Keep the
+cache ignored and task-owned; preserve existing contents rather than deleting
+unknown files. The override relocates Bun's package payload cache and the mise
+cache, not credentials, clean helper metadata, or the clean executable closure.
+Synthetic runtime and helper-closure caches remain in their existing `/tmp`
+locations. Without the override, existing cache locations are unchanged.
+
+This does not grant extra native sandbox access or remove Scrubs' bubblewrap
+namespaces, environment clearing, or restricted mounts. Test the launcher inside
+the actual native sandbox before declaring it usable: nested user namespaces,
+mount restrictions, and native network policy can independently prevent dirty
+execution. Do not work around those failures by running dirty binaries directly
+in clean space or disabling namespace isolation.
+
+### Read-only Git history for linked task worktrees
+
+The clean sandbox policy may opt a repository into linked-worktree history
+access with both `git_metadata_roots: ["/absolute/repository/.git"]` and
+`git_metadata_worktrees: ["/absolute/task-worktree"]`. Both default to empty.
+The exact canonical worktree must be independently listed; authorizing a common
+repository never authorizes its other linked worktrees. This is a security-sensitive read-access change requiring operator review;
+a task's `.git` file or environment variable cannot authorize it.
+
+For an opted-in common directory, Scrubs verifies the current linked worktree's
+slot and backlink, then mounts only common `HEAD`, `objects`, `refs`, optional
+`packed-refs`/`shallow`, and that worktree's `HEAD`, `commondir`, `gitdir`, and
+`index`. Every source mount is read-only. No common config, hooks, logs, other
+worktree slots, credentials, or entire home/repository tree are exposed. The
+mounts follow the synthetic-home and project mounts so those cannot hide them.
+
+This supports history-based checks such as Breakage's baseline lookup without
+granting dirty commands permission to commit. Git formats requiring additional
+metadata (for example reftable or external object alternates) are not implicitly
+granted access; validate those separately rather than broadening the mount.
+
+### Task-scoped browser libraries
+
+Clean policy can opt a canonical task worktree into existing immutable runtime
+libraries with `task_library_worktrees` and `task_library_paths`. Both default to
+empty. Library entries must be canonical, non-symlink `/nix/store/<hash>-<name>/lib`
+(or `lib64`) directories. Only listed worktrees receive read-only library mounts
+and the corresponding `LD_LIBRARY_PATH`; sibling projects receive neither.
+This does not expose a replacement browser executable, install packages, grant
+writes, or disable Chromium sandboxing. Choose the library set from verified
+installed dependencies and validate the matching browser in the task sandbox.
+
+Optional `task_font_paths` uses that same task allowlist for read-only, canonical
+Nix `share/fonts` directories. It defaults to empty and never exposes personal
+font directories. A browser test can supply a minimal `FONTCONFIG_FILE` and cache
+inside its already-writable task cache, referring only to the selected font.

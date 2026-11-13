@@ -60,5 +60,10 @@
     "/etc/localtime"
     "/sys"
   ]
+  git_metadata_roots: []
+  git_metadata_worktrees: []
+  task_library_worktrees: []
+  task_library_paths: []
+  task_font_paths: []
   enable_proc: true
 }

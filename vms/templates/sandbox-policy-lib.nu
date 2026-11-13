@@ -6,6 +6,11 @@ export def normalize-sandbox-policy [policy: record] {
     helper_link_files: ($policy.helper_link_files | each {|value| $value | into string })
     dir_paths: ($policy.dir_paths | each {|value| $value | into string })
     ro_bind_paths: ($policy.ro_bind_paths | each {|value| $value | into string })
+    git_metadata_worktrees: ($policy.git_metadata_worktrees? | default [] | each {|value| $value | into string })
+    git_metadata_roots: ($policy.git_metadata_roots? | default [] | each {|value| $value | into string })
+    task_library_worktrees: ($policy.task_library_worktrees? | default [] | each {|value| $value | into string })
+    task_library_paths: ($policy.task_library_paths? | default [] | each {|value| $value | into string })
+    task_font_paths: ($policy.task_font_paths? | default [] | each {|value| $value | into string })
     enable_proc: ($policy.enable_proc | into bool)
   }
 }
@@ -34,6 +39,11 @@ export def render-sandbox-definition [policy: record] {
   let helper_link_files = (render-shell-list $policy.helper_link_files)
   let dir_paths = (render-shell-list $policy.dir_paths)
   let ro_bind_paths = (render-shell-list $policy.ro_bind_paths)
+  let git_metadata_worktrees = (render-shell-list ($policy.git_metadata_worktrees? | default []))
+  let git_metadata_roots = (render-shell-list ($policy.git_metadata_roots? | default []))
+  let task_library_worktrees = (render-shell-list ($policy.task_library_worktrees? | default []))
+  let task_library_paths = (render-shell-list ($policy.task_library_paths? | default []))
+  let task_font_paths = (render-shell-list ($policy.task_font_paths? | default []))
   let enable_proc = if $policy.enable_proc { "1" } else { "0" }
 
   [
@@ -50,6 +60,16 @@ export def render-sandbox-definition [policy: record] {
     $"SCRUBS_DIR_PATHS=($dir_paths)"
     ""
     $"SCRUBS_RO_BIND_PATHS=($ro_bind_paths)"
+    ""
+    $"SCRUBS_GIT_METADATA_ROOTS=($git_metadata_roots)"
+    ""
+    $"SCRUBS_GIT_METADATA_WORKTREES=($git_metadata_worktrees)"
+    ""
+    $"SCRUBS_TASK_LIBRARY_WORKTREES=($task_library_worktrees)"
+    ""
+    $"SCRUBS_TASK_LIBRARY_PATHS=($task_library_paths)"
+    ""
+    $"SCRUBS_TASK_FONT_PATHS=($task_font_paths)"
     ""
     $"SCRUBS_ENABLE_PROC=($enable_proc)"
     ""
