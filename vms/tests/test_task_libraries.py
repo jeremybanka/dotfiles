@@ -14,7 +14,7 @@ class TaskLibraries(unittest.TestCase):
         self.task = self.root/'task'; self.task.mkdir()
         self.lib = self.root/('a'*32+'-glib')/'lib'; self.lib.mkdir(parents=True)
 
-    def run_select(self, listed=True, path=None, fixture=True):
+    def run_select(self, listed=True, path=None, fixture=True, font=None):
         # Relocate only the immutable-store prefix for a portable real-dir fixture.
         fn = FUNCTION.replace('/nix/store/',str(self.root)+'/') if fixture else FUNCTION
         return subprocess.run(['bash','-eu','-c', '''
@@ -22,11 +22,13 @@ die() { echo "$*" >&2; exit 1; }
 project_root="$1"
 SCRUBS_TASK_LIBRARY_WORKTREES=("$2")
 SCRUBS_TASK_LIBRARY_PATHS=("$3")
+SCRUBS_TASK_FONT_PATHS=()
+[[ "$4" == none ]] || SCRUBS_TASK_FONT_PATHS=("$4")
 task_library_binds=(); task_library_env=()
 '''+fn+'''
 append_task_libraries
 printf '%s\\n' "${task_library_binds[@]}" "${task_library_env[@]}"
-''','test',str(self.task),str(self.task if listed else self.root),str(path or self.lib)],capture_output=True,text=True)
+''','test',str(self.task),str(self.task if listed else self.root),str(path or self.lib), str(font) if font else "none"],capture_output=True,text=True)
 
     def test_scoped_readonly_library_and_search_path(self):
         r=self.run_select(); self.assertEqual(r.returncode,0,r.stderr)
@@ -49,3 +51,16 @@ printf '%s\\n' "${task_library_binds[@]}" "${task_library_env[@]}"
         before=SOURCE.split('source "${SANDBOX_DEFINITION}"')[0]
         self.assertIn('SCRUBS_TASK_LIBRARY_WORKTREES=()',before)
         self.assertIn('SCRUBS_TASK_LIBRARY_PATHS=()',before)
+
+    def test_immutable_font_mount_is_readonly(self):
+        font=self.root/('c'*32+'-dejavu')/'share/fonts'; font.mkdir(parents=True)
+        r=self.run_select(font=font); self.assertEqual(r.returncode,0,r.stderr)
+        self.assertIn('--ro-bind\n'+str(font)+'\n'+str(font),r.stdout)
+
+    def test_personal_fonts_are_rejected(self):
+        font=self.root/'personal-fonts'; font.mkdir()
+        self.assertNotEqual(self.run_select(font=font).returncode,0)
+
+    def test_unlisted_project_gets_no_font_mount(self):
+        font=self.root/('c'*32+'-dejavu')/'share/fonts'; font.mkdir(parents=True)
+        r=self.run_select(listed=False,font=font); self.assertEqual(r.returncode,0); self.assertEqual(r.stdout.strip(),'')

@@ -1146,3 +1146,8 @@ and the corresponding `LD_LIBRARY_PATH`; sibling projects receive neither.
 This does not expose a replacement browser executable, install packages, grant
 writes, or disable Chromium sandboxing. Choose the library set from verified
 installed dependencies and validate the matching browser in the task sandbox.
+
+Optional `task_font_paths` uses that same task allowlist for read-only, canonical
+Nix `share/fonts` directories. It defaults to empty and never exposes personal
+font directories. A browser test can supply a minimal `FONTCONFIG_FILE` and cache
+inside its already-writable task cache, referring only to the selected font.

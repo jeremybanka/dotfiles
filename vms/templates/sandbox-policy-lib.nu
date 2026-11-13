@@ -10,6 +10,7 @@ export def normalize-sandbox-policy [policy: record] {
     git_metadata_roots: ($policy.git_metadata_roots? | default [] | each {|value| $value | into string })
     task_library_worktrees: ($policy.task_library_worktrees? | default [] | each {|value| $value | into string })
     task_library_paths: ($policy.task_library_paths? | default [] | each {|value| $value | into string })
+    task_font_paths: ($policy.task_font_paths? | default [] | each {|value| $value | into string })
     enable_proc: ($policy.enable_proc | into bool)
   }
 }
@@ -42,6 +43,7 @@ export def render-sandbox-definition [policy: record] {
   let git_metadata_roots = (render-shell-list ($policy.git_metadata_roots? | default []))
   let task_library_worktrees = (render-shell-list ($policy.task_library_worktrees? | default []))
   let task_library_paths = (render-shell-list ($policy.task_library_paths? | default []))
+  let task_font_paths = (render-shell-list ($policy.task_font_paths? | default []))
   let enable_proc = if $policy.enable_proc { "1" } else { "0" }
 
   [
@@ -66,6 +68,8 @@ export def render-sandbox-definition [policy: record] {
     $"SCRUBS_TASK_LIBRARY_WORKTREES=($task_library_worktrees)"
     ""
     $"SCRUBS_TASK_LIBRARY_PATHS=($task_library_paths)"
+    ""
+    $"SCRUBS_TASK_FONT_PATHS=($task_font_paths)"
     ""
     $"SCRUBS_ENABLE_PROC=($enable_proc)"
     ""

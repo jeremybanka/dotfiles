@@ -83,6 +83,11 @@ append_task_libraries() {
     task_library_binds+=(--ro-bind "${path}" "${path}")
     search="${search:+${search}:}${path}"
   done
+  for path in "${SCRUBS_TASK_FONT_PATHS[@]}"; do
+    [[ "${path}" =~ ^/nix/store/[a-z0-9]{32}-[^/]+/share/fonts$ ]] || die "task fonts must be Nix store font directories"
+    [[ -d "${path}" && ! -L "${path}" && "$(realpath "${path}")" == "${path}" ]] || die "task font directory must be canonical"
+    task_library_binds+=(--ro-bind "${path}" "${path}")
+  done
   [[ -z "${search}" ]] || task_library_env+=(--setenv LD_LIBRARY_PATH "${search}")
 }
 # End task library selection.
@@ -265,6 +270,7 @@ SCRUBS_GIT_METADATA_ROOTS=()
 SCRUBS_GIT_METADATA_WORKTREES=()
 SCRUBS_TASK_LIBRARY_WORKTREES=()
 SCRUBS_TASK_LIBRARY_PATHS=()
+SCRUBS_TASK_FONT_PATHS=()
 source "${SANDBOX_DEFINITION}"
 
 current_user="$(id -un)"
