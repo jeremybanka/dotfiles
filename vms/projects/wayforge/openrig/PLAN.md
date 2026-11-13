@@ -32,8 +32,9 @@ The latest names replace the earlier party terminology:
 - Ranger is omitted for now. Each task still includes the reconnaissance it
   needs; no separate scouting seat is required.
 
-Only the implementation pool's counts have been selected. Other role names do
-not yet settle concurrency, models, or whether a seat is continuously occupied.
+The implementation pool's counts and the ordered model preferences below are
+selected. They do not by themselves settle concurrency or require every seat to
+be continuously occupied.
 
 | Role                     | Responsibility and output                                                                                                                          | Boundary                                                                                                                                                       |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -56,6 +57,37 @@ responsible implementor, normally a Strider, with Inquisitor available for major
 root-cause investigations and Warden for independent review. Lancer's “parodies” wording
 is deliberate: the first task should make the particular stance concrete rather
 than silently narrowing it to a generic rewrite or adversarial test role.
+
+## Ordered model preferences
+
+For each seat, use the first eligible model in its ordered list. Eligibility
+includes that model's provider admission gate, availability and a verified native
+model identifier. If the preferred provider is exhausted or otherwise closed,
+continue with the listed alternative when that provider remains eligible. If
+neither is eligible, park that seat without stopping unrelated eligible work.
+A handover must preserve the task, evidence and continuation; switching provider
+must not discard the seat's context or its independent-review obligations.
+
+| Seat        | First preference | Second preference |
+| ----------- | ---------------- | ----------------- |
+| Commander   | Sol              | Opus              |
+| Captain     | Opus             | Sol               |
+| Sky Command | Fable 5.2        | Sol               |
+| Hierophant  | Opus             | Sol               |
+| Strider 1   | Sol              | Opus              |
+| Strider 2   | Opus             | Sol               |
+| Lancer      | Sol              | Opus              |
+| Witch       | Opus             | Sol               |
+| Pyro        | Opus             | Sol               |
+| Chronicler  | Fable 5.2        | Sol               |
+| Warden      | Opus             | Sol               |
+| Deckhand    | Sol              | Opus              |
+| Cleric      | Sol              | Opus              |
+
+These are Jeremy's model labels, not guessed CLI identifiers. Verify native IDs
+before activation, especially **Fable 5.2**. Do not silently substitute a different
+model for that label. Inquisitor remains in the crew; its ordered model preference
+was not specified in this update and remains open.
 
 ## Work lifecycle and handoffs
 
@@ -193,8 +225,8 @@ Separate observation, identity, policy, and admission. Preserve source timestamp
 provider, account binding (or explicit uncertainty), allowance window, reset, and
 freshness. Do not sum percentages across providers or treat unknown as unused.
 Captain consumes admission decisions; Cleric maintains instrumentation; Commander
-preserves Jeremy's spending policy. No automatic model probing, account changes,
-or provider fallback is selected here.
+preserves Jeremy's spending policy. Provider selection follows the ordered seat
+preferences above. No automatic model probing or account changes are selected here.
 
 ### Per-opening factory policy
 
@@ -208,13 +240,15 @@ or a default floor.
 An opening records its explicit floors and the observed provider/account/window
 identities. The factory works queued items and returns reviewed work as stacked
 PRs for Jeremy to merge, within admitted queue scope and repository destinations.
-Each dependent PR targets its predecessor. Conservatively, the first provider
-floor or quota-window reset pauses new admission across the factory without
-forcibly cancelling existing turns; there is no provider spillover. A reset does
-not silently renew the opening. Resume requires a new explicit
-opening with current readings. Unknown, stale or unbound data remains a closed
-admission state. Existing in-flight work can still consume quota, so thresholds
-are admission controls, not an account-wide hard billing cap.
+Each dependent PR targets its predecessor. **Provider gates are independent**:
+a Codex floor or reset closes Codex admission, not Claude admission, and vice
+versa. Eligible work continues on the other provider using the seat's ordered
+preferences. A provider's reset does not silently renew its authorization;
+reopening that provider requires an explicit decision with current readings.
+Unknown, stale or unbound data closes only the affected provider. Do not forcibly
+cancel existing turns merely because another provider closes. Existing in-flight
+work can still consume quota, so thresholds are admission controls, not an
+account-wide hard billing cap.
 
 Before activation, test account switches, resets, stale or missing readings,
 restart continuity, interrupted permits, shared-account consumption, hook
@@ -246,8 +280,9 @@ operational work is paused. No monitoring is launched by this document.
 
 - Confirm **Deckhand**, or choose another name for the cleanup role.
 - Define task-specific PR targets and stack bases; Jeremy retains merge authority.
-- Choose models, provider policy, concurrency, startup/idle behavior, and resource
-  limits. Two Strider seats do not by themselves authorize two simultaneous turns.
+- Verify the native model IDs, choose Inquisitor's preferences, and set
+  concurrency, startup/idle behavior and resource limits. Two Strider seats do
+  not by themselves authorize two simultaneous turns.
 - Define the initial Lancer stance and what positive/neutral delta means for its
   acceptance criteria; keep the intended “parody” character.
 - Set retention/review intervals and approved recovery destinations. Seven days

@@ -55,9 +55,11 @@ budget enforcement.
 3. Bind each controller to its provider/account and select allowance windows and
    concurrency. Floors are supplied per factory opening: `50/40` means Codex
    50% remaining and Claude 40% remaining, not permanent defaults. Both start
-   disarmed. The first provider floor or reset pauses new admission across the
-   factory without forcibly cancelling existing turns; reopening is explicit. No
-   cross-provider fallback or summed percentages.
+   disarmed. Provider gates are independent: a floor/reset closes only the affected
+   provider while eligible work continues on the other, following the
+   [ordered seat preferences](PLAN.md#ordered-model-preferences). Reopening the
+   closed provider is explicit; percentages are never summed. Verify exact native
+   model identifiers, especially Fable 5.2, before activation.
 4. Verify a fresh, account-bound Claude quota source. Status-line samples alone
    remain observation-only; automatic Haiku probing is not enabled. Codex's
    one-shot native quota read was tested without a model turn, but no persistent
