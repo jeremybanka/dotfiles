@@ -85,6 +85,11 @@ must not discard the seat's context or its independent-review obligations.
 | Cleric      | Sol              | Opus              |
 | Inquisitor  | Sol              | Opus              |
 
+All crew seats default to **high effort**, including when using the second-choice
+model. Preserve that setting across provider handovers. Verify the corresponding
+native effort control for each model/provider rather than silently dropping it
+or inventing an unsupported flag.
+
 These are Jeremy's model labels, not guessed CLI identifiers. Verify native IDs
 before activation, especially **Fable 5.2**. Do not silently substitute a different
 model for that label.
@@ -281,8 +286,8 @@ operational work is paused. No monitoring is launched by this document.
 - Confirm **Deckhand**, or choose another name for the cleanup role.
 - Define task-specific PR targets and stack bases; Jeremy retains merge authority.
 - Verify the native model IDs and set concurrency, startup/idle behavior and
-  resource limits. Two Strider seats do
-  not by themselves authorize two simultaneous turns.
+  resource limits. Two Strider seats do not by themselves authorize two
+  simultaneous turns.
 - Define the initial Lancer stance and what positive/neutral delta means for its
   acceptance criteria; keep the intended “parody” character.
 - Set retention/review intervals and approved recovery destinations. Seven days
