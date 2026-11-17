@@ -33,3 +33,10 @@ limactl shell wayforge -- sudo systemctl restart github-runner-wayfarer
 When changing the module on an existing guest, sync it into the guest's materialized project shim, build/review the NixOS configuration, then switch. The initial deployment used `/home/jem/scrubs-bootstrap/scrubs#scrubs-base` and did not rebootstrap or reboot the guest. The main scrubs bootstrap also includes this project import for future provisioning.
 
 The NixOS package disables the upstream runner self-updater. Keep its pinned nixpkgs current using the reviewed scrubs update process. If scrubs runtime templates change, refresh the provisioned developer runtime first and restart `wayfarer-ci-home` and the runner to copy the allowlisted runtime into CI.
+
+## OpenRig runtime integration
+
+The crew lives in its own guest repository, `/home/jem/wayforge-rig`. See the
+[OpenRig integration](openrig/README.md) for the opt-in clean runtime package,
+validation commands and remaining activation gates. No daemon or timer is enabled
+by importing this shim.

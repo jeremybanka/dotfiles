@@ -1,0 +1,8 @@
+{
+  "name": "scrubs-openrig",
+  "version": "0.7.3",
+  "private": true,
+  "dependencies": {
+    "@openrig/cli": "0.7.3"
+  }
+}

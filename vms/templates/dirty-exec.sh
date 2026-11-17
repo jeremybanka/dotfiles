@@ -9,6 +9,89 @@ die() {
   exit 1
 }
 
+# Task-cache override is deliberately one reserved directory, not an arbitrary
+# writable bind. It stays inside the already-authorized project mount.
+configure_task_cache() {
+  [[ -n "${SCRUBS_DIRTY_CACHE_ROOT:-}" ]] || return 0
+  [[ -n "${project_root}" && "${project_root}" == /* ]] || die "task cache requires a git worktree"
+  local expected="${project_root}/.scrubs-dirty-cache"
+  [[ "${SCRUBS_DIRTY_CACHE_ROOT}" == "${expected}" ]] || die "task cache must be ${expected}"
+  local suffix target
+  # Refuse redirected or foreign-owned cache directories before chmod/mkdir.
+  for suffix in "" /mise /bun /bun/install /bun/install/cache; do
+    target="${expected}${suffix}"
+    [[ ! -L "${target}" ]] || die "task cache directory must not be a symlink: ${target}"
+    if [[ -e "${target}" ]]; then
+      [[ -d "${target}" && -O "${target}" ]] || die "task cache directory must be owned by this user: ${target}"
+    fi
+  done
+  dirty_cache_root="${expected}"
+  mise_cache_root="${expected}/mise"
+}
+# End task-cache validation.
+
+# Only clean policy can authorize a common Git metadata directory. A worktree's
+# .git indirection is not authority to expose an arbitrary host path.
+append_readonly_git_metadata() {
+  local common gitdir approved root path rel backlink
+  approved=0
+  for root in "${SCRUBS_GIT_METADATA_WORKTREES[@]}"; do
+    [[ "${root}" == /* && "${root}" != / && ! -L "${root}" ]] || die "invalid clean Git metadata worktree"
+    [[ "$(realpath "${root}")" == "${root}" ]] || die "Git metadata worktree must be canonical"
+    [[ "${project_root}" == "${root}" ]] && approved=1
+  done
+  [[ "${approved}" == 1 ]] || return 0
+  [[ -f "${project_root}/.git" && ! -L "${project_root}/.git" ]] || return 0
+  common="$(git -C "${project_root}" rev-parse --path-format=absolute --git-common-dir)" || die "cannot resolve Git common directory"
+  gitdir="$(git -C "${project_root}" rev-parse --absolute-git-dir)" || die "cannot resolve Git worktree directory"
+  approved=0
+  for root in "${SCRUBS_GIT_METADATA_ROOTS[@]}"; do
+    [[ "${root}" == /* && "${root}" != / && ! -L "${root}" ]] || die "invalid clean Git metadata root"
+    [[ "$(realpath "${root}")" == "${root}" ]] || die "Git metadata root must be canonical"
+    [[ "${common}" == "${root}" ]] && approved=1
+  done
+  [[ "${approved}" == 1 ]] || return 0
+  [[ "${gitdir}" == "${common}/worktrees/"* ]] || die "Git worktree metadata is outside its authorized root"
+  rel="${gitdir#"${common}/worktrees/"}"
+  [[ -n "${rel}" && "${rel}" != */* && ! -L "${gitdir}" ]] || die "invalid Git worktree slot"
+  [[ "$(realpath "${gitdir}")" == "${gitdir}" ]] || die "Git worktree slot must be canonical"
+  backlink="$(cat "${gitdir}/gitdir")"
+  [[ "${backlink}" == "${project_root}/.git" ]] || die "Git worktree backlink mismatch"
+  git_metadata_binds+=(--dir "${common}" --dir "${gitdir}")
+  # Deliberately omit config, hooks, logs and all other worktree slots. Objects
+  # and refs provide history/baselines; index supports read-only diff/status.
+  for path in "${common}"/{HEAD,objects,refs,packed-refs,shallow} "${gitdir}"/{HEAD,commondir,gitdir,index}; do
+    [[ ! -L "${path}" ]] || die "Git metadata entry must not be a symlink: ${path}"
+    [[ -e "${path}" ]] || continue
+    git_metadata_binds+=(--ro-bind "${path}" "${path}")
+  done
+}
+# End read-only Git metadata selection.
+
+# Clean policy grants library directories to exact canonical task roots only.
+append_task_libraries() {
+  local root path approved=0 search=""
+  for root in "${SCRUBS_TASK_LIBRARY_WORKTREES[@]}"; do
+    [[ "${root}" == /* && "${root}" != / && ! -L "${root}" ]] || die "invalid task library worktree"
+    [[ "$(realpath "${root}")" == "${root}" ]] || die "task library worktree must be canonical"
+    [[ "${project_root}" == "${root}" ]] && approved=1
+  done
+  [[ "${approved}" == 1 ]] || return 0
+  for path in "${SCRUBS_TASK_LIBRARY_PATHS[@]}"; do
+    [[ "${path}" =~ ^/nix/store/[a-z0-9]{32}-[^/]+/lib(64)?$ ]] || die "task libraries must be Nix store library directories"
+    [[ -d "${path}" && ! -L "${path}" && "$(realpath "${path}")" == "${path}" ]] || die "task library directory must be canonical"
+    task_library_binds+=(--ro-bind "${path}" "${path}")
+    search="${search:+${search}:}${path}"
+  done
+  for path in "${SCRUBS_TASK_FONT_PATHS[@]}"; do
+    [[ "${path}" =~ ^/nix/store/[a-z0-9]{32}-[^/]+/share/fonts$ ]] || die "task fonts must be Nix store font directories"
+    [[ -d "${path}" && ! -L "${path}" && "$(realpath "${path}")" == "${path}" ]] || die "task font directory must be canonical"
+    task_library_binds+=(--ro-bind "${path}" "${path}")
+  done
+  [[ -z "${search}" ]] || task_library_env+=(--setenv LD_LIBRARY_PATH "${search}")
+}
+# End task library selection.
+
 resolve_host_command_path() {
   local command_name="$1"
   local resolved
@@ -183,6 +266,11 @@ SANDBOX_DEFINITION="${SCRUBS_DIR}/sandbox-definition.sh"
 [[ -f "${SANDBOX_DEFINITION}" ]] || die "missing sandbox definition at ${SANDBOX_DEFINITION}"
 
 # shellcheck source=/dev/null
+SCRUBS_GIT_METADATA_ROOTS=()
+SCRUBS_GIT_METADATA_WORKTREES=()
+SCRUBS_TASK_LIBRARY_WORKTREES=()
+SCRUBS_TASK_LIBRARY_PATHS=()
+SCRUBS_TASK_FONT_PATHS=()
 source "${SANDBOX_DEFINITION}"
 
 current_user="$(id -un)"
@@ -215,6 +303,8 @@ helper_closure_cache_root="/tmp/scrubs-helper-closure-cache/${current_user}"
 # Persist only Bun's package payload cache across synthetic-home/runtime-key
 # changes. The surrounding real home remains outside the dirty boundary.
 dirty_cache_root="${HOME}/.local/share/scrubs/dirty-cache"
+mise_cache_root="/tmp/mise-cache"
+configure_task_cache
 bun_install_cache="${dirty_cache_root}/bun/install/cache"
 bun_install_network_concurrency="8"
 node_modules_bin=""
@@ -288,7 +378,7 @@ mkdir -p \
   "${runtime_cache_root}" \
   "${helper_closure_cache_root}" \
   "${bun_install_cache}" \
-  /tmp/mise-cache
+  "${mise_cache_root}"
 chmod 700 "${runtime_cache_root}" "${helper_closure_cache_root}"
 chmod 700 \
   "${dirty_cache_root}" \
@@ -323,6 +413,11 @@ declare -a helper_input_paths=()
 declare -a sandbox_dirs=()
 declare -A seen_sandbox_dirs=()
 declare -a extra_ro_binds=()
+declare -a git_metadata_binds=()
+append_readonly_git_metadata
+declare -a task_library_binds=()
+declare -a task_library_env=()
+append_task_libraries
 declare -a helper_file_binds=()
 declare -a aube_store_bind=()
 
@@ -500,6 +595,7 @@ exec "${BWRAP_BIN}" \
   --ro-bind "${mise_root}" "/home/${current_user}/.local/share/mise" \
   --ro-bind "${mise_config_dir}" "/home/${current_user}/.config/mise" \
   --bind "${project_root}" "${project_root}" \
+  "${git_metadata_binds[@]}" \
   --chdir "${working_dir}" \
   --setenv HOME "/home/${current_user}" \
   --setenv USER "${current_user}" \
@@ -510,7 +606,7 @@ exec "${BWRAP_BIN}" \
   --setenv TMPDIR /tmp \
   --setenv MISE_DATA_DIR "/home/${current_user}/.local/share/mise" \
   --setenv MISE_CONFIG_DIR "/home/${current_user}/.config/mise" \
-  --setenv MISE_CACHE_DIR /tmp/mise-cache \
+  --setenv MISE_CACHE_DIR "${mise_cache_root}" \
   --setenv MISE_STATE_DIR "/home/${current_user}/.local/state/mise" \
   --setenv RUSTUP_HOME "/home/${current_user}/.local/share/mise/rustup-home" \
   --setenv CARGO_HOME "/home/${current_user}/.cargo" \
@@ -520,5 +616,7 @@ exec "${BWRAP_BIN}" \
   "${terminal_env_args[@]}" \
   "${mise_state_bind[@]}" \
   "${store_ro_binds[@]}" \
+  "${task_library_binds[@]}" \
+  "${task_library_env[@]}" \
   -- \
   "${sandbox_target}" "$@"
