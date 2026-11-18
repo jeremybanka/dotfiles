@@ -212,10 +212,13 @@ scrubs_rustup_home="${mise_root}/rustup-home"
 scrubs_rust_bootstrap_cargo_home="${mise_root}/rust-cargo-home"
 runtime_cache_root="/tmp/scrubs-dirty-runtime-cache/${current_user}"
 helper_closure_cache_root="/tmp/scrubs-helper-closure-cache/${current_user}"
-# Persist only Bun's package payload cache across synthetic-home/runtime-key
-# changes. The surrounding real home remains outside the dirty boundary.
+# Persist dirty package caches across synthetic-home/runtime-key changes.
+# The surrounding real home remains outside the dirty boundary.
 dirty_cache_root="${HOME}/.local/share/scrubs/dirty-cache"
 bun_install_cache="${dirty_cache_root}/bun/install/cache"
+# Share pnpm metadata between dirty profiles, never with the clean host cache.
+# Package stores remain per project; this mount does not change store-dir.
+pnpm_metadata_cache="${dirty_cache_root}/pnpm"
 bun_install_network_concurrency="8"
 node_modules_bin=""
 if [[ -n "${project_root}" ]]; then
@@ -288,13 +291,15 @@ mkdir -p \
   "${runtime_cache_root}" \
   "${helper_closure_cache_root}" \
   "${bun_install_cache}" \
+  "${pnpm_metadata_cache}" \
   /tmp/mise-cache
 chmod 700 "${runtime_cache_root}" "${helper_closure_cache_root}"
 chmod 700 \
   "${dirty_cache_root}" \
   "${dirty_cache_root}/bun" \
   "${dirty_cache_root}/bun/install" \
-  "${bun_install_cache}"
+  "${bun_install_cache}" \
+  "${pnpm_metadata_cache}"
 
 runtime_cache_key="$(
   printf '%s\n' \
@@ -496,6 +501,7 @@ exec "${BWRAP_BIN}" \
   "${extra_ro_binds[@]}" \
   --bind "${fake_home}" "/home/${current_user}" \
   --bind "${bun_install_cache}" "/home/${current_user}/.bun/install/cache" \
+  --bind "${pnpm_metadata_cache}" "/home/${current_user}/.cache/pnpm" \
   "${aube_store_bind[@]}" \
   --ro-bind "${mise_root}" "/home/${current_user}/.local/share/mise" \
   --ro-bind "${mise_config_dir}" "/home/${current_user}/.config/mise" \
