@@ -141,6 +141,15 @@ guest-local work just because a guest is re-bootstrapped in place.
 
 ## Guest package-store cleanup
 
+Bootstrap collects unreferenced Nix store paths before applying guest-home
+configuration and again after the restarted guest is reachable. It reports
+guest disk usage and trims free blocks back to the host's sparse Lima disk.
+This collection preserves all profile generations, including rollback
+systems; it does not prune project dependencies or durable home state. A
+Nixpkgs upgrade still needs room for the running and new system closures to
+coexist. If the guest is full of worktrees or retained generations, use the
+explicit cleanup below rather than repeatedly retrying bootstrap.
+
 Run `nu ./vms/free.nu <instance> --dry-run` to inspect cleanup, then omit
 `--dry-run` to apply it. The pnpm step discovers both `<project>/.pnpm-store`
 and `<project>/node_modules/.pnpm-store`, including stores in deeply nested
@@ -179,6 +188,7 @@ Regression checks:
 
 ```sh
 python3 -B -m unittest discover -s vms/tests -p 'test_pnpm_cleanup.py'
+python3 -B -m unittest discover -s vms/tests -p 'test_bootstrap_store_maintenance.py'
 ```
 
 `tests/test_pnpm_cleanup_guest.sh` additionally tests offline installation and

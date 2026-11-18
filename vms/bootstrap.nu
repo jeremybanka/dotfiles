@@ -57,6 +57,25 @@ def summarize-command-failure [result: record, fallback: string] {
   }
 }
 
+def maintain-guest-store [
+  ssh_args: list<string>
+  bootstrap_dir: string
+  instance_name: string
+  phase: string
+] {
+  print $"Maintaining the guest Nix store ($phase) bootstrap"
+  let command = $"sh \"($bootstrap_dir)/bootstrap-store-maintenance.sh\" ($phase)"
+  let result = (do { ^ssh ...$ssh_args (remote-shell-command $command) } | complete)
+  if $result.stdout != "" { print $result.stdout }
+  if $result.stderr != "" { print --stderr $result.stderr }
+  if $result.exit_code != 0 {
+    error make {
+      msg: $"Guest store maintenance failed ($phase) bootstrap for ($instance_name)."
+      help: $"Inspect with limactl shell ($instance_name) -- df -h /. Preview further cleanup with nu ./vms/free.nu ($instance_name) --dry-run."
+    }
+  }
+}
+
 def load-instance-info [instance_name: string] {
   let status_result = (do { ^limactl list --json $instance_name } | complete)
   if $status_result.exit_code != 0 {
@@ -990,6 +1009,7 @@ in
     | str replace --all "__SCRUBS_BOOTSTRAP_USER__" $bootstrap_user
   ) | save --force $guest_apply
   chmod +x $guest_apply
+  cp ($vms_dir | path join "templates" "bootstrap-store-maintenance.sh") ($payload_dir | path join "bootstrap-store-maintenance.sh")
 
   let dns_block = if $dns_servers == "" {
     ""
@@ -1126,6 +1146,8 @@ in
   ^ssh ...$ssh_args (remote-shell-command $"mkdir -p \"($bootstrap_dir)\"")
   ^scp ...$scp_args $"($payload_dir)/." $"($guest_user)@127.0.0.1:($bootstrap_dir)/"
 
+  maintain-guest-store $ssh_args $bootstrap_dir $instance_name "before"
+
   print "Applying scrubs base configuration inside the guest"
   ^ssh ...$ssh_args (remote-shell-command $"sh \"($bootstrap_dir)/guest-apply.sh\"")
 
@@ -1161,6 +1183,8 @@ in
       help: $"($state_detail). Last SSH failure: ($ssh_detail)"
     }
   }
+
+  maintain-guest-store $ssh_args $bootstrap_dir $instance_name "after"
 
   print ""
   print "Scrubs guest is ready."
